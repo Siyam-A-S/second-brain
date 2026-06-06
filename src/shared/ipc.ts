@@ -1,6 +1,7 @@
 import type {
   BrainNode,
   BrainSearchResult,
+  BoardChildNode,
   ExportBoardPlaintextInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
@@ -9,12 +10,14 @@ import type {
   McpServerStatus,
   SearchBrainNodesInput,
   UpdateNodeSignalsInput,
+  UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
 
 export type {
   BrainNode,
   BrainSearchResult,
+  BoardChildNode,
   ExportBoardPlaintextInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
@@ -23,6 +26,7 @@ export type {
   McpServerStatus,
   SearchBrainNodesInput,
   UpdateNodeSignalsInput,
+  UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
 
