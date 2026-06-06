@@ -1,9 +1,22 @@
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
-import { fileChannels, FilesDroppedPayload, windowChannels } from "../shared/ipc";
+import { brainChannels, fileChannels, FilesDroppedPayload, windowChannels } from "../shared/ipc";
+import type {
+  ExportBoardPlaintextInput,
+  ListBrainNodesInput,
+  SearchBrainNodesInput,
+  UpdateNodeSignalsInput,
+  WriteBrainNodeInput
+} from "../shared/brain";
+import { AgentController } from "./services/AgentController";
+import { EmbeddingService } from "./services/EmbeddingService";
+import { GraphRagService } from "./services/GraphRagService";
+import { LocalMcpServer } from "./services/LocalMcpServer";
+import { StorageService } from "./services/StorageService";
 
 let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
+let mcpServer: LocalMcpServer | null = null;
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 
@@ -118,7 +131,12 @@ function restoreMainWindow(): void {
   mainWindow.focus();
 }
 
-function registerIpc(): void {
+function registerIpc(
+  storage: StorageService,
+  embeddings: EmbeddingService,
+  graphRag: GraphRagService,
+  localMcpServer: LocalMcpServer
+): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
   });
@@ -150,10 +168,42 @@ function registerIpc(): void {
     console.info("Files dropped", payload);
     restoreMainWindow();
   });
+
+  ipcMain.handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => storage.writeNode(input));
+  ipcMain.handle(brainChannels.readNode, (_event, uuid: string) => storage.readNode(uuid));
+  ipcMain.handle(brainChannels.listNodes, (_event, input?: ListBrainNodesInput) => storage.listNodes(input));
+  ipcMain.handle(brainChannels.searchNodes, async (_event, input: SearchBrainNodesInput) => {
+    const nodes = await storage.listNodes();
+    return embeddings.search(input, nodes);
+  });
+  ipcMain.handle(brainChannels.mcpStatus, () => localMcpServer.getStatus());
+  ipcMain.handle(brainChannels.organizedBoard, () => graphRag.getOrganizedBoard());
+  ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) => graphRag.exportBoardPlaintext(input));
+  ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) => storage.updateNodeSignals(input));
 }
 
-app.whenReady().then(() => {
-  registerIpc();
+app.whenReady().then(async () => {
+  const userDataPath = app.getPath("userData");
+  const storage = new StorageService(path.join(userDataPath, "vault"));
+  const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
+  const graphRag = new GraphRagService(storage, embeddings);
+
+  mcpServer = new LocalMcpServer({
+    graphRag,
+    port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
+  });
+  const agentController = new AgentController(mcpServer);
+
+  await storage.initialize();
+
+  try {
+    await mcpServer.start();
+  } catch (error) {
+    console.error("Failed to start local MCP server", error);
+  }
+
+  registerIpc(storage, embeddings, graphRag, mcpServer);
+  agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();
 
@@ -171,4 +221,8 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+app.on("before-quit", () => {
+  void mcpServer?.stop();
 });
