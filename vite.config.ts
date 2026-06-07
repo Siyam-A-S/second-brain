@@ -13,6 +13,13 @@ export default defineConfig({
   },
   server: {
     port: devPort,
-    strictPort: true
+    strictPort: true,
+    proxy: {
+      "/local-llm": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/local-llm/, "")
+      }
+    }
   }
 });

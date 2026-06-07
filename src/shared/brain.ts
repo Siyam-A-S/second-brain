@@ -120,10 +120,42 @@ export type ProcessDroppedItem = {
   content?: string | undefined;
 };
 
+export type JobTrackerRecord = {
+  uuid: string;
+  company: string;
+  role: string;
+  job_posted: string;
+  application_date: string;
+  status: JobApplicationStatus;
+  resume: string;
+  description_summary: string;
+  source_node_uuid?: string | undefined;
+  raw_content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type JobApplicationStatus = "Applied" | "Interview" | "Offer" | "Rejected" | "Withdrawn";
+
+export type UpdateJobTrackerInput = {
+  uuid: string;
+  status?: JobApplicationStatus | undefined;
+  resume?: string | undefined;
+};
+
+export type JobIngestionStatus = {
+  stage: "idle" | "extracting" | "saved" | "error";
+  message: string;
+  job?: JobTrackerRecord | undefined;
+  error?: string | undefined;
+};
+
 export type ProcessDroppedItemsResult = {
   prompt: string;
-  createdNode: BrainNode;
-  routing: RoutingDecision;
+  createdNode?: BrainNode | undefined;
+  routing?: RoutingDecision | undefined;
+  job?: JobTrackerRecord | undefined;
+  jobError?: string | undefined;
 };
 
 export type McpServerStatus = {

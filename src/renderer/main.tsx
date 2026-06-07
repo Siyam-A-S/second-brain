@@ -11,6 +11,8 @@ const params = new URLSearchParams(window.location.search);
 const windowName = params.get("window");
 const RootView = windowName === "widget" ? FloatingWidget : MainApp;
 
+document.documentElement.dataset.window = windowName === "widget" ? "widget" : "main";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <RootView />

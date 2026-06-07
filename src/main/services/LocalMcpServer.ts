@@ -1,46 +1,16 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import * as z from "zod";
-import type {
-  ExportBoardPlaintextInput,
-  FetchFileSegmentsInput,
-  IngestAndRouteFragmentInput,
-  McpServerStatus,
-  SearchBoardTopologyInput
-} from "../../shared/brain";
+import type { McpServerStatus } from "../../shared/brain";
 import { GraphRagService } from "./GraphRagService";
+import { createGraphRagToolRegistry, filterLocalToolSpecs, type LocalToolDefinition, type LocalToolName, type LocalToolSpec } from "./LocalToolRegistry";
 
 type LocalMcpServerOptions = {
   graphRag: GraphRagService;
   port?: number;
   host?: string;
+  tools?: LocalToolDefinition[] | undefined;
 };
-
-const searchBoardTopologySchema = {
-  keywords: z.array(z.string()).default([])
-};
-const searchBoardTopologyInputSchema = z.object(searchBoardTopologySchema);
-
-const fetchFileSegmentsSchema = {
-  uuid: z.string().min(1),
-  sections: z.array(z.string()).optional()
-};
-const fetchFileSegmentsInputSchema = z.object(fetchFileSegmentsSchema);
-
-const ingestAndRouteFragmentSchema = {
-  raw_content: z.string().min(1),
-  inferred_title: z.string().min(1),
-  generated_summary: z.string(),
-  target_parent_uuid: z.string().optional()
-};
-const ingestAndRouteFragmentInputSchema = z.object(ingestAndRouteFragmentSchema);
-
-const exportBoardPlaintextSchema = {
-  root_uuid: z.string().optional(),
-  include_body: z.boolean().optional()
-};
-const exportBoardPlaintextInputSchema = z.object(exportBoardPlaintextSchema);
 
 function toolText(value: unknown): { content: Array<{ type: "text"; text: string }> } {
   return {
@@ -68,10 +38,12 @@ export class LocalMcpServer {
   private server: Server | null = null;
   private actualPort: number;
   private readonly host: string;
+  private readonly tools: LocalToolDefinition[];
 
   constructor(private readonly options: LocalMcpServerOptions) {
     this.host = options.host ?? "127.0.0.1";
     this.actualPort = options.port ?? 4127;
+    this.tools = options.tools ?? createGraphRagToolRegistry(options.graphRag);
   }
 
   async start(): Promise<McpServerStatus> {
@@ -134,23 +106,18 @@ export class LocalMcpServer {
     };
   }
 
-  async callLocalTool(name: "search_board_topology", input: SearchBoardTopologyInput): Promise<unknown>;
-  async callLocalTool(name: "fetch_file_segments", input: FetchFileSegmentsInput): Promise<unknown>;
-  async callLocalTool(name: "ingest_and_route_fragment", input: IngestAndRouteFragmentInput): Promise<unknown>;
-  async callLocalTool(name: "export_board_plaintext", input: ExportBoardPlaintextInput): Promise<unknown>;
+  listToolSpecs(names?: LocalToolName[]): LocalToolSpec[] {
+    return filterLocalToolSpecs(this.tools, names);
+  }
+
   async callLocalTool(name: string, input: unknown): Promise<unknown> {
-    switch (name) {
-      case "search_board_topology":
-        return this.options.graphRag.searchBoardTopology(searchBoardTopologyInputSchema.parse(input));
-      case "fetch_file_segments":
-        return this.options.graphRag.fetchFileSegments(fetchFileSegmentsInputSchema.parse(input));
-      case "ingest_and_route_fragment":
-        return this.options.graphRag.ingestAndRouteFragment(ingestAndRouteFragmentInputSchema.parse(input));
-      case "export_board_plaintext":
-        return this.options.graphRag.exportBoardPlaintext(exportBoardPlaintextInputSchema.parse(input));
-      default:
-        throw new Error(`Unknown local MCP tool "${name}".`);
+    const tool = this.tools.find((candidate) => candidate.name === name);
+
+    if (!tool) {
+      throw new Error(`Unknown local MCP tool "${name}".`);
     }
+
+    return tool.execute(input);
   }
 
   private createMcpServer(): McpServer {
@@ -166,45 +133,17 @@ export class LocalMcpServer {
       }
     );
 
-    server.registerTool(
-      "search_board_topology",
-      {
-        title: "Search board topology",
-        description: "Scan graph topology by keywords without returning markdown body text.",
-        inputSchema: searchBoardTopologySchema
-      },
-      async (input) => toolText(await this.options.graphRag.searchBoardTopology(input))
-    );
-
-    server.registerTool(
-      "fetch_file_segments",
-      {
-        title: "Fetch file segments",
-        description: "Fetch the full markdown body or selected text beneath specific ## headers.",
-        inputSchema: fetchFileSegmentsSchema
-      },
-      async (input) => toolText(await this.options.graphRag.fetchFileSegments(input))
-    );
-
-    server.registerTool(
-      "ingest_and_route_fragment",
-      {
-        title: "Ingest and route fragment",
-        description: "Create a new fragment markdown file and optionally link it from a parent node.",
-        inputSchema: ingestAndRouteFragmentSchema
-      },
-      async (input) => toolText(await this.options.graphRag.ingestAndRouteFragment(input))
-    );
-
-    server.registerTool(
-      "export_board_plaintext",
-      {
-        title: "Export board plaintext",
-        description: "Export a whole board or topic subtree as plaintext context for other AI services.",
-        inputSchema: exportBoardPlaintextSchema
-      },
-      async (input) => toolText(await this.options.graphRag.exportBoardPlaintext(input))
-    );
+    for (const tool of this.tools) {
+      server.registerTool(
+        tool.name,
+        {
+          title: tool.title,
+          description: tool.description,
+          inputSchema: tool.inputSchema
+        },
+        async (input) => toolText(await tool.execute(input))
+      );
+    }
 
     return server;
   }

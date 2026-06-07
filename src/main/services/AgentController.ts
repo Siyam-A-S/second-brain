@@ -1,9 +1,17 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { ipcMain } from "electron";
-import type { IngestAndRouteFragmentResult, ProcessDroppedItem, ProcessDroppedItemsResult } from "../../shared/brain";
-import { brainChannels } from "../../shared/ipc";
+import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from "electron";
+import type {
+  IngestAndRouteFragmentResult,
+  JobIngestionStatus,
+  ProcessDroppedItem,
+  ProcessDroppedItemsResult
+} from "../../shared/brain";
+import { brainChannels, jobChannels } from "../../shared/ipc";
+import type { JobTrackerService } from "./JobTrackerService";
 import { LocalMcpServer } from "./LocalMcpServer";
+import type { LlmService } from "./LlmService";
+import { agentMethods, agentPrompts } from "./AgentRuntimeConfig";
 
 type DraftFragment = {
   raw_content: string;
@@ -43,25 +51,56 @@ function inferContextHints(items: ProcessDroppedItem[]): string[] {
   ).slice(0, 8);
 }
 
+function looksLikeJobDescription(content: string): boolean {
+  const lower = content.toLowerCase();
+  const signals = [
+    "job description",
+    "responsibilities",
+    "requirements",
+    "qualifications",
+    "apply",
+    "salary",
+    "benefits",
+    "full-time",
+    "internship",
+    "about the role",
+    "we are hiring"
+  ];
+
+  return signals.filter((signal) => lower.includes(signal)).length >= 2;
+}
+
 export class AgentController {
-  constructor(private readonly localMcpServer: LocalMcpServer) {}
+  constructor(
+    private readonly localMcpServer: LocalMcpServer,
+    private readonly jobTracker: JobTrackerService,
+    private readonly llm: LlmService
+  ) {}
 
   registerIpc(): void {
-    ipcMain.handle(brainChannels.processDroppedItems, async (_event, items: ProcessDroppedItem[]) => {
-      return this.processDroppedItems(items);
+    ipcMain.handle(brainChannels.processDroppedItems, async (event, items: ProcessDroppedItem[]) => {
+      return this.processDroppedItems(event, items);
     });
   }
 
-  async processDroppedItems(items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
+  async processDroppedItems(event: IpcMainInvokeEvent, items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
     const rawContent = await this.readDroppedContent(items);
-    const prompt = this.buildDroppedItemsPrompt(rawContent);
-    const ingestResult = await this.placeholderLlmCall(prompt, {
+    if (looksLikeJobDescription(rawContent)) {
+      return {
+        prompt: this.buildJobDescriptionPrompt(rawContent),
+        ...(await this.tryIngestJobDescription(event, rawContent))
+      };
+    }
+
+    const draft = {
       raw_content: rawContent,
       inferred_title: inferTitle(items, rawContent),
       generated_summary: summarize(rawContent),
       importance: 0.65,
       context_hints: inferContextHints(items)
-    });
+    };
+    const prompt = this.buildDroppedItemsPrompt(rawContent, draft);
+    const ingestResult = await this.callDroppedContentTool(prompt, draft);
 
     return {
       prompt,
@@ -97,20 +136,91 @@ export class AgentController {
     return parts.filter(Boolean).join("\n\n---\n\n").trim();
   }
 
-  private buildDroppedItemsPrompt(rawContent: string): string {
+  private buildDroppedItemsPrompt(rawContent: string, draft: DraftFragment): string {
     return [
-      "You are the Second Brain ingestion agent.",
-      "Turn the dropped item into a concise local graph fragment.",
-      "Use the local MCP tool ingest_and_route_fragment to persist the result.",
+      "Route this dropped content using the enabled local tools.",
+      "Suggested fallback input:",
+      JSON.stringify(draft),
+      "Dropped content:",
+      rawContent
+    ].join("\n");
+  }
+
+  private buildJobDescriptionPrompt(rawContent: string): string {
+    return [
+      "You are the Second Brain job ingestion agent.",
+      "Extract the dropped job description into the local Jobs table only.",
+      "Do not create a graph topic, subtopic, or fragment for this job application.",
       "",
       "Dropped content:",
       rawContent
     ].join("\n");
   }
 
-  private async placeholderLlmCall(prompt: string, draft: DraftFragment): Promise<IngestAndRouteFragmentResult> {
-    console.info("Placeholder LLM prompt prepared", prompt);
+  private async callDroppedContentTool(prompt: string, draft: DraftFragment): Promise<IngestAndRouteFragmentResult> {
+    const method = agentMethods.droppedContentToolRouting;
+    const tools = this.localMcpServer.listToolSpecs(method.enabledTools);
 
-    return this.localMcpServer.callLocalTool("ingest_and_route_fragment", draft) as Promise<IngestAndRouteFragmentResult>;
+    try {
+      const toolCall = await this.llm.planLocalToolCall({
+        systemPrompt: agentPrompts.droppedContentToolRouter,
+        userPrompt: prompt,
+        tools,
+        method
+      });
+      const allowedToolNames = new Set(tools.map((tool) => tool.name as string));
+
+      if (!allowedToolNames.has(toolCall.tool)) {
+        throw new Error(`Local AI selected disabled tool "${toolCall.tool}".`);
+      }
+
+      console.info("Local tool call planned", {
+        tool: toolCall.tool,
+        reason: toolCall.reason
+      });
+
+      return this.localMcpServer.callLocalTool(toolCall.tool, toolCall.input) as Promise<IngestAndRouteFragmentResult>;
+    } catch (error) {
+      console.warn("Local tool routing failed; using fallback ingest tool.", error);
+      return this.localMcpServer.callLocalTool("ingest_and_route_fragment", draft) as Promise<IngestAndRouteFragmentResult>;
+    }
+  }
+
+  private sendJobStatus(event: IpcMainInvokeEvent, status: JobIngestionStatus): void {
+    event.sender.send(jobChannels.ingestionStatus, status);
+    for (const window of BrowserWindow?.getAllWindows?.() ?? []) {
+      if (!window.isDestroyed() && window.webContents !== event.sender) {
+        window.webContents.send(jobChannels.ingestionStatus, status);
+      }
+    }
+  }
+
+  private async tryIngestJobDescription(
+    event: IpcMainInvokeEvent,
+    rawContent: string,
+    sourceNodeUuid?: string
+  ): Promise<Pick<ProcessDroppedItemsResult, "job" | "jobError">> {
+    this.sendJobStatus(event, {
+      stage: "extracting",
+      message: "Extracting job details locally..."
+    });
+
+    try {
+      const job = await this.jobTracker.ingestJobDescription(rawContent, sourceNodeUuid);
+      this.sendJobStatus(event, {
+        stage: "saved",
+        message: `Saved ${job.role} at ${job.company}`,
+        job
+      });
+      return { job };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Local job extraction failed.";
+      this.sendJobStatus(event, {
+        stage: "error",
+        message,
+        error: message
+      });
+      return { jobError: message };
+    }
   }
 }

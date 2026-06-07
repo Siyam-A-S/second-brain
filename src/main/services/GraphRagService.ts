@@ -80,6 +80,10 @@ function deriveTopicTitle(input: IngestAndRouteFragmentInput): string {
   return input.inferred_title.trim().slice(0, 80) || "Untitled Topic";
 }
 
+function isBoardNode(node: BrainNode): boolean {
+  return node.type !== "job";
+}
+
 type CandidateScore = {
   node: BrainNode;
   score: number;
@@ -96,7 +100,7 @@ export class GraphRagService {
 
   async searchBoardTopology(input: SearchBoardTopologyInput): Promise<BoardTopologyNode[]> {
     const keywords = input.keywords.map((keyword) => keyword.trim()).filter(Boolean);
-    const nodes = await this.storage.listNodes();
+    const nodes = (await this.storage.listNodes()).filter(isBoardNode);
 
     if (keywords.length === 0) {
       return nodes.slice(0, 5).map(this.toTopologyNode);
@@ -186,7 +190,7 @@ export class GraphRagService {
   }
 
   async getOrganizedBoard(): Promise<OrganizedBoardTopic[]> {
-    const nodes = await this.storage.listNodes();
+    const nodes = (await this.storage.listNodes()).filter(isBoardNode);
     const topics = nodes.filter((node) => node.type === "topic" || !node.parent_uuid);
 
     return topics.map((topic) => {
@@ -204,7 +208,7 @@ export class GraphRagService {
   }
 
   async exportBoardPlaintext(input: ExportBoardPlaintextInput = {}): Promise<string> {
-    const nodes = await this.storage.listNodes();
+    const nodes = (await this.storage.listNodes()).filter(isBoardNode);
     const topics = await this.getOrganizedBoard();
     const selectedTopics = input.root_uuid ? topics.filter((topic) => topic.uuid === input.root_uuid) : topics;
     const nodeByUuid = new Map(nodes.map((node) => [node.uuid, node]));

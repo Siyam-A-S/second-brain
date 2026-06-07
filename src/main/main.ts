@@ -1,22 +1,27 @@
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
-import { brainChannels, fileChannels, FilesDroppedPayload, windowChannels } from "../shared/ipc";
+import { brainChannels, fileChannels, FilesDroppedPayload, jobChannels, WidgetMovePayload, windowChannels } from "../shared/ipc";
 import type {
   ExportBoardPlaintextInput,
   ListBrainNodesInput,
   SearchBrainNodesInput,
+  UpdateJobTrackerInput,
   UpdateNodeSignalsInput,
   WriteBrainNodeInput
 } from "../shared/brain";
 import { AgentController } from "./services/AgentController";
 import { EmbeddingService } from "./services/EmbeddingService";
 import { GraphRagService } from "./services/GraphRagService";
+import { JobTrackerService } from "./services/JobTrackerService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
+import { LlmService } from "./services/LlmService";
 import { StorageService } from "./services/StorageService";
 
 let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
 let mcpServer: LocalMcpServer | null = null;
+
+const widgetWindowSize = 96;
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 
@@ -69,8 +74,8 @@ function createMainWindow(): BrowserWindow {
 function createWidgetWindow(): BrowserWindow {
   const primaryDisplay = screen.getPrimaryDisplay();
   const { workArea } = primaryDisplay;
-  const width = 176;
-  const height = 176;
+  const width = widgetWindowSize;
+  const height = widgetWindowSize;
 
   const window = new BrowserWindow({
     width,
@@ -81,6 +86,7 @@ function createWidgetWindow(): BrowserWindow {
     movable: true,
     frame: false,
     transparent: true,
+    hasShadow: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     show: false,
@@ -103,6 +109,28 @@ function createWidgetWindow(): BrowserWindow {
 
   loadRenderer(window, "widget");
   return window;
+}
+
+function clampWidgetBounds(input: WidgetMovePayload): Electron.Rectangle | null {
+  if (!widgetWindow || widgetWindow.isDestroyed()) {
+    return null;
+  }
+
+  const currentBounds = widgetWindow.getBounds();
+  const targetCenter = {
+    x: input.x + Math.round(currentBounds.width / 2),
+    y: input.y + Math.round(currentBounds.height / 2)
+  };
+  const { workArea } = screen.getDisplayNearestPoint(targetCenter);
+  const maxX = workArea.x + workArea.width - currentBounds.width;
+  const maxY = workArea.y + workArea.height - currentBounds.height;
+
+  return {
+    x: Math.min(Math.max(Math.round(input.x), workArea.x), maxX),
+    y: Math.min(Math.max(Math.round(input.y), workArea.y), maxY),
+    width: currentBounds.width,
+    height: currentBounds.height
+  };
 }
 
 function showWidget(): void {
@@ -135,7 +163,8 @@ function registerIpc(
   storage: StorageService,
   embeddings: EmbeddingService,
   graphRag: GraphRagService,
-  localMcpServer: LocalMcpServer
+  localMcpServer: LocalMcpServer,
+  jobTracker: JobTrackerService
 ): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
@@ -164,6 +193,24 @@ function registerIpc(
     restoreMainWindow();
   });
 
+  ipcMain.handle(windowChannels.getWidgetBounds, () => {
+    if (!widgetWindow || widgetWindow.isDestroyed()) {
+      return null;
+    }
+
+    return widgetWindow.getBounds();
+  });
+
+  ipcMain.handle(windowChannels.moveWidget, (_event, payload: WidgetMovePayload) => {
+    const nextBounds = clampWidgetBounds(payload);
+    if (!nextBounds || !widgetWindow || widgetWindow.isDestroyed()) {
+      return null;
+    }
+
+    widgetWindow.setBounds(nextBounds, false);
+    return nextBounds;
+  });
+
   ipcMain.handle(fileChannels.dropped, (_event, payload: FilesDroppedPayload) => {
     console.info("Files dropped", payload);
     restoreMainWindow();
@@ -180,6 +227,8 @@ function registerIpc(
   ipcMain.handle(brainChannels.organizedBoard, () => graphRag.getOrganizedBoard());
   ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) => graphRag.exportBoardPlaintext(input));
   ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) => storage.updateNodeSignals(input));
+  ipcMain.handle(jobChannels.list, () => jobTracker.listJobs());
+  ipcMain.handle(jobChannels.update, (_event, input: UpdateJobTrackerInput) => jobTracker.updateJob(input));
 }
 
 app.whenReady().then(async () => {
@@ -187,12 +236,14 @@ app.whenReady().then(async () => {
   const storage = new StorageService(path.join(userDataPath, "vault"));
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
   const graphRag = new GraphRagService(storage, embeddings);
+  const llm = new LlmService();
+  const jobTracker = new JobTrackerService(storage, llm);
 
   mcpServer = new LocalMcpServer({
     graphRag,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const agentController = new AgentController(mcpServer);
+  const agentController = new AgentController(mcpServer, jobTracker, llm);
 
   await storage.initialize();
 
@@ -202,7 +253,7 @@ app.whenReady().then(async () => {
     console.error("Failed to start local MCP server", error);
   }
 
-  registerIpc(storage, embeddings, graphRag, mcpServer);
+  registerIpc(storage, embeddings, graphRag, mcpServer, jobTracker);
   agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();

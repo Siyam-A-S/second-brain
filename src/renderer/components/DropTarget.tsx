@@ -141,8 +141,19 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
           .processDroppedItems(items)
           .then((result) => {
             setLastResult(result);
-            setStatusText(`Routed to ${result.routing.parent_title}`);
-            setTone("success");
+            if (result.job) {
+              setStatusText(`Saved ${result.job.role} at ${result.job.company}`);
+              setTone("success");
+            } else if (result.jobError) {
+              setStatusText(result.jobError);
+              setTone("error");
+            } else if (result.routing) {
+              setStatusText(`Routed to ${result.routing.parent_title}`);
+              setTone("success");
+            } else {
+              setStatusText("Drop processed locally.");
+              setTone("success");
+            }
             onProcessed(result);
             scheduleReset();
           })
@@ -189,11 +200,19 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
           {lastResult ? (
             <div className="mt-4 rounded-md border border-emerald-200 bg-white/65 p-3">
               <p className="text-xs font-semibold uppercase text-emerald-700">
-                {lastResult.routing.strategy.replace("-", " ")}
+                {lastResult.job ? "jobs" : lastResult.routing?.strategy.replace("-", " ") ?? "processed"}
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{lastResult.createdNode.title}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {lastResult.job
+                  ? `${lastResult.job.company} · ${lastResult.job.role}`
+                  : lastResult.createdNode?.title ?? "Processed drop"}
+              </p>
               <p className="mt-1 text-xs leading-5 text-slate-600">
-                Confidence {Math.round(lastResult.routing.confidence * 100)}%
+                {lastResult.job
+                  ? "Saved to the Jobs table"
+                  : lastResult.routing
+                    ? `Confidence ${Math.round(lastResult.routing.confidence * 100)}%`
+                    : "Saved locally"}
               </p>
             </div>
           ) : null}

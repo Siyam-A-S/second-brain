@@ -27,6 +27,13 @@ body {
   background: #fffaf0;
 }
 
+html[data-window="widget"],
+html[data-window="widget"] body,
+html[data-window="widget"] #root {
+  min-width: 0;
+  background: transparent;
+}
+
 button,
 input,
 textarea,

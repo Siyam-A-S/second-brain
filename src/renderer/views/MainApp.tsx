@@ -2,15 +2,22 @@ import { useState } from "react";
 import type { ProcessDroppedItemsResult } from "../../shared/ipc";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
+import { JobTrackerTable } from "../components/JobTrackerTable";
 import { TopicCanvas } from "../components/TopicCanvas";
+
+type ActiveView = "jobs" | "board";
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastDropResult, setLastDropResult] = useState<ProcessDroppedItemsResult | null>(null);
+  const [activeView, setActiveView] = useState<ActiveView>("jobs");
 
   function handleDropProcessed(result: ProcessDroppedItemsResult): void {
     setLastDropResult(result);
     setRefreshKey((key) => key + 1);
+    if (result.job || result.jobError) {
+      setActiveView("jobs");
+    }
   }
 
   return (
@@ -18,7 +25,33 @@ export function MainApp(): JSX.Element {
       <TitleBar />
       <div className="flex min-h-0 flex-1">
         <Sidebar onDropProcessed={handleDropProcessed} />
-        <TopicCanvas lastDropResult={lastDropResult} refreshKey={refreshKey} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-11 shrink-0 items-center gap-1 border-b border-slate-900/5 bg-white/20 px-6">
+            <button
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                activeView === "jobs" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              }`}
+              type="button"
+              onClick={() => setActiveView("jobs")}
+            >
+              Jobs
+            </button>
+            <button
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                activeView === "board" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              }`}
+              type="button"
+              onClick={() => setActiveView("board")}
+            >
+              Board
+            </button>
+          </div>
+          {activeView === "jobs" ? (
+            <JobTrackerTable refreshKey={refreshKey} />
+          ) : (
+            <TopicCanvas lastDropResult={lastDropResult} refreshKey={refreshKey} />
+          )}
+        </div>
       </div>
     </div>
   );

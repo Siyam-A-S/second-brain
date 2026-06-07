@@ -3,6 +3,10 @@ import type {
   BrainSearchResult,
   BoardChildNode,
   ExportBoardPlaintextInput,
+  JobApplicationStatus,
+  JobIngestionStatus,
+  JobTrackerRecord,
+  UpdateJobTrackerInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
@@ -19,6 +23,10 @@ export type {
   BrainSearchResult,
   BoardChildNode,
   ExportBoardPlaintextInput,
+  JobApplicationStatus,
+  JobIngestionStatus,
+  JobTrackerRecord,
+  UpdateJobTrackerInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
@@ -34,7 +42,9 @@ export const windowChannels = {
   minimize: "window-minimize",
   maximize: "window-maximize",
   close: "window-close",
-  restore: "window-restore"
+  restore: "window-restore",
+  getWidgetBounds: "widget-get-bounds",
+  moveWidget: "widget-move"
 } as const;
 
 export const fileChannels = {
@@ -53,9 +63,16 @@ export const brainChannels = {
   updateNodeSignals: "brain-update-node-signals"
 } as const;
 
+export const jobChannels = {
+  list: "jobs-list",
+  update: "jobs-update",
+  ingestionStatus: "job-ingestion-status"
+} as const;
+
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
 export type FileChannel = (typeof fileChannels)[keyof typeof fileChannels];
 export type BrainChannel = (typeof brainChannels)[keyof typeof brainChannels];
+export type JobChannel = (typeof jobChannels)[keyof typeof jobChannels];
 
 export type DroppedFile = {
   name: string;
@@ -70,12 +87,26 @@ export type FilesDroppedPayload = {
   text?: string;
 };
 
+export type WidgetBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type WidgetMovePayload = {
+  x: number;
+  y: number;
+};
+
 export type SecondBrainApi = {
   window: {
     minimize: () => Promise<void>;
     maximize: () => Promise<boolean>;
     close: () => Promise<void>;
     restore: () => Promise<void>;
+    getWidgetBounds: () => Promise<WidgetBounds | null>;
+    moveWidget: (payload: WidgetMovePayload) => Promise<WidgetBounds | null>;
   };
   files: {
     dropped: (payload: FilesDroppedPayload) => Promise<void>;
@@ -90,5 +121,10 @@ export type SecondBrainApi = {
     getOrganizedBoard: () => Promise<OrganizedBoardTopic[]>;
     exportBoardPlaintext: (input?: ExportBoardPlaintextInput) => Promise<string>;
     updateNodeSignals: (input: UpdateNodeSignalsInput) => Promise<BrainNode>;
+  };
+  jobs: {
+    list: () => Promise<JobTrackerRecord[]>;
+    update: (input: UpdateJobTrackerInput) => Promise<JobTrackerRecord>;
+    onIngestionStatus: (handler: (status: JobIngestionStatus) => void) => () => void;
   };
 };

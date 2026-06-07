@@ -204,7 +204,7 @@ export function TopicCanvas({ refreshKey, lastDropResult }: TopicCanvasProps): J
         </div>
       </nav>
 
-      {lastDropResult ? (
+      {lastDropResult?.createdNode && lastDropResult.routing ? (
         <section className="border-b border-emerald-900/10 bg-emerald-50/60 px-6 py-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-emerald-900">
             <Sparkles size={16} />

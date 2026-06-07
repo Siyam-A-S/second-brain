@@ -4,7 +4,9 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { AgentController } = require("../../dist/main/services/AgentController.js");
 const { GraphRagService } = require("../../dist/main/services/GraphRagService.js");
+const { JobTrackerService } = require("../../dist/main/services/JobTrackerService.js");
 const { StorageService } = require("../../dist/main/services/StorageService.js");
 
 function createDeterministicEmbeddings() {
@@ -186,4 +188,207 @@ test("plaintext export gives a copyable board context", async () => {
   } finally {
     await harness.cleanup();
   }
+});
+
+test("job tracker persists extracted job metadata as a local vault node", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "second-brain-jobs-"));
+  const storage = new StorageService(path.join(root, "vault"));
+  const graph = new GraphRagService(storage, createDeterministicEmbeddings());
+  const llm = {
+    async extractJobMetadata() {
+      return {
+        company: "Acme Systems",
+        role: "Fullstack Intern",
+        job_posted: "2026-06-01",
+        description_summary: "Build React interfaces and Node services. Work with SQL schemas and deployment scripts."
+      };
+    }
+  };
+  const jobs = new JobTrackerService(storage, llm);
+
+  try {
+    await storage.initialize();
+    const created = await jobs.ingestJobDescription(
+      "Job Description: Acme Systems seeks a Fullstack Intern. Responsibilities include React, Node, and SQL.",
+      "source-node"
+    );
+    const listed = await jobs.listJobs();
+
+    assert.equal(created.company, "Acme Systems");
+    assert.equal(created.role, "Fullstack Intern");
+    assert.equal(created.job_posted, "2026-06-01");
+    assert.match(created.application_date, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal(created.status, "Applied");
+    assert.equal(created.resume, "");
+    const createdNode = await storage.readNode(created.uuid);
+    const createdContent = JSON.parse(createdNode.content);
+
+    assert.equal(createdContent.date, created.application_date);
+    assert.equal((await graph.getOrganizedBoard()).length, 0);
+    assert.equal(listed.length, 1);
+    assert.equal(listed[0].uuid, created.uuid);
+    assert.equal(listed[0].source_node_uuid, "source-node");
+    const updated = await jobs.updateJob({
+      uuid: created.uuid,
+      status: "Interview",
+      resume: "/resumes/acme-fullstack.pdf"
+    });
+
+    assert.equal(updated.status, "Interview");
+    assert.equal(updated.resume, "/resumes/acme-fullstack.pdf");
+    const updatedNode = await storage.readNode(updated.uuid);
+    const updatedContent = JSON.parse(updatedNode.content);
+
+    assert.equal(updatedContent.date, updated.application_date);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("job description drops go to jobs without creating graph topics", async () => {
+  let graphIngestCalls = 0;
+  const statuses = [];
+  const controller = new AgentController(
+    {
+      async callLocalTool() {
+        graphIngestCalls += 1;
+        throw new Error("Graph ingest should not be called for job descriptions.");
+      }
+    },
+    {
+      async ingestJobDescription(rawContent, sourceNodeUuid) {
+        assert.equal(sourceNodeUuid, undefined);
+        assert.match(rawContent, /Job Description/);
+
+        return {
+          uuid: "job-only",
+          company: "Acme Systems",
+          role: "Fullstack Intern",
+          job_posted: "2026-06-01",
+          application_date: "2026-06-07",
+          status: "Applied",
+          resume: "",
+          description_summary: "React, Node, SQL, deployment scripts.",
+          raw_content: rawContent,
+          createdAt: "2026-06-07T00:00:00.000Z",
+          updatedAt: "2026-06-07T00:00:00.000Z"
+        };
+      }
+    },
+    {
+      async planLocalToolCall() {
+        throw new Error("Tool router should not be called for job descriptions.");
+      }
+    }
+  );
+  const event = {
+    sender: {
+      send(_channel, status) {
+        statuses.push(status.stage);
+      }
+    }
+  };
+
+  const result = await controller.processDroppedItems(event, [
+    {
+      text: [
+        "Job Description",
+        "Responsibilities include React interfaces and Node services.",
+        "Requirements include SQL, TypeScript, and deployment scripts.",
+        "Apply by sending your resume."
+      ].join("\n")
+    }
+  ]);
+
+  assert.equal(graphIngestCalls, 0);
+  assert.equal(result.createdNode, undefined);
+  assert.equal(result.routing, undefined);
+  assert.equal(result.job.uuid, "job-only");
+  assert.deepEqual(statuses, ["extracting", "saved"]);
+});
+
+test("non-job drops use local LLM tool planning before MCP execution", async () => {
+  const plannedInput = {
+    raw_content: "Lecture note about B-tree index tradeoffs.",
+    inferred_title: "B-tree index tradeoffs",
+    generated_summary: "Lecture note about B-tree index tradeoffs.",
+    context_hints: ["database indexes"],
+    importance: 0.72
+  };
+  const calls = [];
+  const controller = new AgentController(
+    {
+      listToolSpecs(names) {
+        assert.deepEqual(names, ["ingest_and_route_fragment"]);
+        return [
+          {
+            name: "ingest_and_route_fragment",
+            title: "Ingest and route fragment",
+            description: "Create a new fragment markdown file.",
+            inputSchema: {},
+            inputSchemaJson: {}
+          }
+        ];
+      },
+      async callLocalTool(name, input) {
+        calls.push({ name, input });
+        return {
+          node: {
+            uuid: "fragment-1",
+            title: input.inferred_title,
+            type: "fragment",
+            summary: input.generated_summary,
+            parent_uuid: "topic-1",
+            connections: [],
+            tags: [],
+            content: input.raw_content,
+            path: "/tmp/fragment.md",
+            updatedAt: "2026-06-07T00:00:00.000Z",
+            created_at: "2026-06-07T00:00:00.000Z",
+            importance: input.importance,
+            user_validation: "unreviewed",
+            context_hints: input.context_hints
+          },
+          routing: {
+            strategy: "existing-context",
+            parent_uuid: "topic-1",
+            parent_title: "Database Management",
+            confidence: 0.8,
+            reasons: ["Planned by local LLM."]
+          }
+        };
+      }
+    },
+    {
+      async ingestJobDescription() {
+        throw new Error("Job tracker should not be called for non-job drops.");
+      }
+    },
+    {
+      async planLocalToolCall({ tools }) {
+        assert.equal(tools.length, 1);
+        return {
+          tool: "ingest_and_route_fragment",
+          input: plannedInput,
+          reason: "Database lecture note."
+        };
+      }
+    }
+  );
+  const event = {
+    sender: {
+      send() {}
+    }
+  };
+
+  const result = await controller.processDroppedItems(event, [
+    {
+      text: "Lecture note about B-tree index tradeoffs."
+    }
+  ]);
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].name, "ingest_and_route_fragment");
+  assert.deepEqual(calls[0].input, plannedInput);
+  assert.equal(result.routing.parent_title, "Database Management");
 });
