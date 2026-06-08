@@ -5,24 +5,24 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "electron-builder.json": {
-    "mtime": 1780636601.571156,
+    "mtime": 1780895400.5336041,
     "ast_hash": "7549684322ac72dc4bebfab4baa5a8a2",
     "semantic_hash": "7549684322ac72dc4bebfab4baa5a8a2"
   },
   "package.json": {
-    "mtime": 1780801706.491456,
+    "mtime": 1780895400.5364664,
     "ast_hash": "96fcb033aeff2d5ba9440863afa2b578",
     "semantic_hash": "96fcb033aeff2d5ba9440863afa2b578"
   },
   "src/main/main.ts": {
-    "mtime": 1780808313.3196473,
-    "ast_hash": "f3ef8c03a88e3ccba5e85d1df24c0a56",
-    "semantic_hash": "f3ef8c03a88e3ccba5e85d1df24c0a56"
+    "mtime": 1780948932.2559996,
+    "ast_hash": "3f423e6d93ec62f53bc64a29aa09f49a",
+    "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
-    "mtime": 1780808310.1776428,
-    "ast_hash": "0a4b9549d79da817a6ed12070fb0f67d",
-    "semantic_hash": "0a4b9549d79da817a6ed12070fb0f67d"
+    "mtime": 1780896345.6716774,
+    "ast_hash": "3fba4e61b1fad767c8291a8b2ee71d7c",
+    "semantic_hash": ""
   },
   "src/main/services/AgentRuntimeConfig.ts": {
     "mtime": 1780808228.384542,
@@ -40,14 +40,14 @@
     "semantic_hash": "98a7e51534b2fa6d4ae4268ff26bb9e5"
   },
   "src/main/services/JobTrackerService.ts": {
-    "mtime": 1780807092.6648421,
-    "ast_hash": "189c1de82f469f55d697efefb9226bec",
-    "semantic_hash": "189c1de82f469f55d697efefb9226bec"
+    "mtime": 1780896353.473687,
+    "ast_hash": "e6187dc93d4b3ef662451d8747edb5a2",
+    "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1780808287.2746124,
-    "ast_hash": "10f34c5fe0d67f3a03efd069d3b7a095",
-    "semantic_hash": "10f34c5fe0d67f3a03efd069d3b7a095"
+    "mtime": 1780896337.847668,
+    "ast_hash": "da2301f444328ae72998e6436630e98d",
+    "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
     "mtime": 1780808266.366586,
@@ -60,14 +60,14 @@
     "semantic_hash": "fc6486264716a57d0647740631c8eb64"
   },
   "src/main/services/StorageService.ts": {
-    "mtime": 1780724936.4526212,
-    "ast_hash": "ace2f164a61d063025a1417de02599aa",
-    "semantic_hash": "ace2f164a61d063025a1417de02599aa"
+    "mtime": 1780896359.368694,
+    "ast_hash": "d00fc039c89c2b8b88a95c875332da2c",
+    "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1780803675.0924382,
-    "ast_hash": "4e0d411aa8112d084df4c480cc9173e9",
-    "semantic_hash": "4e0d411aa8112d084df4c480cc9173e9"
+    "mtime": 1780948920.018968,
+    "ast_hash": "b3fc51375cb1b6eb4d9c9ba12b04a5a8",
+    "semantic_hash": ""
   },
   "src/renderer/components/ClipboardList.tsx": {
     "mtime": 1780638087.4118874,
@@ -75,14 +75,14 @@
     "semantic_hash": "3ea1016f1ba072bd25e57844379a52b2"
   },
   "src/renderer/components/DropTarget.tsx": {
-    "mtime": 1780806194.0093544,
-    "ast_hash": "793e9bcd99e79ae40963463307e626ff",
-    "semantic_hash": "793e9bcd99e79ae40963463307e626ff"
+    "mtime": 1780948995.685164,
+    "ast_hash": "256d454271a212b74655579bc0256418",
+    "semantic_hash": ""
   },
   "src/renderer/components/JobTrackerTable.tsx": {
-    "mtime": 1780806207.4024522,
-    "ast_hash": "061f6cb95fe1e1fa043ff7d4383ec406",
-    "semantic_hash": "061f6cb95fe1e1fa043ff7d4383ec406"
+    "mtime": 1780896537.611911,
+    "ast_hash": "5ce657d619d45d1b23a9f98e3ab0459b",
+    "semantic_hash": ""
   },
   "src/renderer/components/Sidebar.tsx": {
     "mtime": 1780726799.468149,
@@ -100,9 +100,9 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1780806237.6146681,
-    "ast_hash": "9bde23e334bc1d373eba0779f81c53f0",
-    "semantic_hash": "9bde23e334bc1d373eba0779f81c53f0"
+    "mtime": 1780948939.0940173,
+    "ast_hash": "4d7946133beefa907ef2fe35eac3766c",
+    "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
     "mtime": 1780636829.201932,
@@ -125,19 +125,19 @@
     "semantic_hash": "be95d21be044491f52df342a61f3ec6e"
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1780800157.8982193,
-    "ast_hash": "4d8242cbbd1155e21626e95ce603a845",
-    "semantic_hash": "4d8242cbbd1155e21626e95ce603a845"
+    "mtime": 1780947833.786119,
+    "ast_hash": "25481beb7fe1743b468f303d994d4ce4",
+    "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1780806176.6872258,
-    "ast_hash": "913dc7a7d8344e3955462e0f449221ba",
-    "semantic_hash": "913dc7a7d8344e3955462e0f449221ba"
+    "mtime": 1780896266.4595811,
+    "ast_hash": "0b0e686571ac858641822d000c432a0b",
+    "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1780803710.4224782,
-    "ast_hash": "5bb00a0bad9bba049a187886699c7d35",
-    "semantic_hash": "5bb00a0bad9bba049a187886699c7d35"
+    "mtime": 1780948915.7669573,
+    "ast_hash": "712de3f9bac0425528bc1d0d927dfee2",
+    "semantic_hash": ""
   },
   "src/shared/jobJson.ts": {
     "mtime": 1780803633.2573915,
@@ -235,9 +235,9 @@
     "semantic_hash": "62c05a2bf20bf036a0b2633478663e64"
   },
   "dev/chatnotes.md": {
-    "mtime": 1780640753.8600774,
-    "ast_hash": "d0524d48c21be9d76d288444574705a8",
-    "semantic_hash": "d0524d48c21be9d76d288444574705a8"
+    "mtime": 1780897475.8914654,
+    "ast_hash": "70435bc98324475c255134ae6013e099",
+    "semantic_hash": ""
   },
   "index.html": {
     "mtime": 1780636601.5721562,
@@ -248,5 +248,35 @@
     "mtime": 1780726924.2861843,
     "ast_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b",
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
+  },
+  "src/main/services/GraphifyController.ts": {
+    "mtime": 1780950059.36614,
+    "ast_hash": "67116c8795e87e764e820942235fcbab",
+    "semantic_hash": ""
+  },
+  "src/renderer/stores/useJobTrackerStore.ts": {
+    "mtime": 1780896528.8959005,
+    "ast_hash": "06cb54b62b26660dc1b857282eb92ff7",
+    "semantic_hash": ""
+  },
+  "src/main/services/GraphifyBoardService.ts": {
+    "mtime": 1780947800.440011,
+    "ast_hash": "0492b6603f77661bc0f38f6cbd7785ba",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/BoardRenderer.tsx": {
+    "mtime": 1780949090.0444133,
+    "ast_hash": "00030d29a1bc5189651a06c37fcadc70",
+    "semantic_hash": ""
+  },
+  "src/renderer/stores/useBoardStore.ts": {
+    "mtime": 1780898816.059959,
+    "ast_hash": "ae808597eb858541c69cbb122006c78e",
+    "semantic_hash": ""
+  },
+  "src/shared/types/board.ts": {
+    "mtime": 1780898730.4056098,
+    "ast_hash": "a0cf97d3c1a6467f3fa95767fb185141",
+    "semantic_hash": ""
   }
 }

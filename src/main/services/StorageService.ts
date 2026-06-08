@@ -181,7 +181,18 @@ export class StorageService {
     await this.initialize();
 
     const files = await this.listMarkdownFiles(this.vaultPath);
-    const nodes = await Promise.all(files.map((filePath) => this.readNodeFile(filePath)));
+    const nodes = (
+      await Promise.all(
+        files.map(async (filePath) => {
+          try {
+            return await this.readNodeFile(filePath);
+          } catch (error) {
+            console.warn(`Skipping non-vault markdown file at ${filePath}`, error);
+            return null;
+          }
+        })
+      )
+    ).filter((node): node is BrainNode => Boolean(node));
 
     return nodes
       .filter((node) => !input.type || node.type === input.type)
@@ -346,6 +357,10 @@ export class StorageService {
         const entryPath = path.join(directory, entry.name);
 
         if (entry.isDirectory()) {
+          if (entry.name === "raw" || entry.name === "graphify-out") {
+            return [];
+          }
+
           return this.listMarkdownFiles(entryPath);
         }
 

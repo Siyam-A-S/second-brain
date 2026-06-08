@@ -1,4 +1,4 @@
-const { copyFileSync, existsSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
+const { copyFileSync, cpSync, existsSync, readdirSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 
@@ -14,6 +14,8 @@ const buildId = rawBuildId.replace(/[^A-Za-z0-9._-]/g, "-");
 const archiveName = `Second-Brain-${packageJson.version}-${buildId}-win-unpacked.zip`;
 const latestArchiveName = `Second-Brain-${packageJson.version}-latest-win-unpacked.zip`;
 const legacyArchiveName = `Second-Brain-${packageJson.version}-win-unpacked.zip`;
+const portableRootName = `Second-Brain-${packageJson.version}-${buildId}-win-unpacked`;
+const portableRootDir = path.join(releaseDir, portableRootName);
 const archivePath = path.join(releaseDir, archiveName);
 const latestArchivePath = path.join(releaseDir, latestArchiveName);
 const legacyArchivePath = path.join(releaseDir, legacyArchiveName);
@@ -59,17 +61,48 @@ if (latestDistMtimeMs > appAsarMtimeMs + 1000 && process.env.SECOND_BRAIN_ALLOW_
   process.exit(1);
 }
 
-if (existsSync(archivePath)) {
-  rmSync(archivePath, { force: true });
+function removeIfPresent(filePath, label, required = false) {
+  if (!existsSync(filePath)) {
+    return true;
+  }
+
+  try {
+    rmSync(filePath, { recursive: true, force: true });
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const prefix = required ? "Unable to remove" : "Skipping locked";
+    console.warn(`${prefix} ${label}: ${message}`);
+    if (required) {
+      process.exit(1);
+    }
+    return false;
+  }
 }
 
-if (existsSync(latestArchivePath)) {
-  rmSync(latestArchivePath, { force: true });
-}
+removeIfPresent(archivePath, archiveName, true);
+removeIfPresent(latestArchivePath, latestArchiveName);
+removeIfPresent(legacyArchivePath, legacyArchiveName);
+removeIfPresent(portableRootDir, portableRootName, true);
 
-if (existsSync(legacyArchivePath)) {
-  rmSync(legacyArchivePath, { force: true });
-}
+cpSync(unpackedDir, portableRootDir, {
+  recursive: true,
+  force: true,
+  verbatimSymlinks: true
+});
+
+writeFileSync(
+  path.join(portableRootDir, "TESTING_NOTES.txt"),
+  [
+    "Second Brain portable test build",
+    "",
+    "This archive extracts into a unique folder for this build.",
+    "Run Second Brain.exe from this folder, and extract the next build into its own new folder.",
+    "If Windows says the executable is in use, close the running app from the previous extracted folder.",
+    ""
+  ].join("\n"),
+  "utf8"
+);
 
 const result =
   process.platform === "win32"
@@ -78,14 +111,16 @@ const result =
         [
           "-NoProfile",
           "-Command",
-          `Compress-Archive -Path ${JSON.stringify(unpackedDirName)} -DestinationPath ${JSON.stringify(archiveName)} -Force`
+          `Compress-Archive -Path ${JSON.stringify(portableRootName)} -DestinationPath ${JSON.stringify(archiveName)} -Force`
         ],
         { cwd: releaseDir, stdio: "inherit" }
       )
-    : spawnSync("zip", ["-qr", archiveName, unpackedDirName], {
+    : spawnSync("zip", ["-qr", archiveName, portableRootName], {
         cwd: releaseDir,
         stdio: "inherit"
       });
+
+removeIfPresent(portableRootDir, portableRootName);
 
 if (result.error) {
   console.error(result.error.message);
@@ -96,8 +131,14 @@ if (result.status !== 0) {
   process.exit(result.status ?? 1);
 }
 
-copyFileSync(archivePath, latestArchivePath);
-writeFileSync(path.join(releaseDir, "latest-win-unpacked.txt"), `${archiveName}\n`, "utf8");
+try {
+  copyFileSync(archivePath, latestArchivePath);
+  console.info(`Updated ${path.relative(rootDir, latestArchivePath)}`);
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`Created unique archive, but could not update latest alias: ${message}`);
+}
+
+writeFileSync(path.join(releaseDir, "latest-win-unpacked.txt"), `${archiveName}\n${portableRootName}\n`, "utf8");
 
 console.info(`Created ${path.relative(rootDir, archivePath)}`);
-console.info(`Updated ${path.relative(rootDir, latestArchivePath)}`);

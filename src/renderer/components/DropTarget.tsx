@@ -71,6 +71,7 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
   const [tone, setTone] = useState<DropTone>("idle");
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusText, setStatusText] = useState("Drop notes, PDFs, code, or copied text.");
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ProcessDroppedItemsResult | null>(null);
   const dragDepth = useRef(0);
   const resetTimer = useRef<number | null>(null);
@@ -93,9 +94,108 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       setIsProcessing(false);
       setTone("idle");
       setStatusText("Drop notes, PDFs, code, or copied text.");
+      setErrorDetails(null);
       setLastResult(null);
       dragDepth.current = 0;
     }, 5_000);
+  }
+
+  function errorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.stack || error.message;
+    }
+
+    if (typeof error === "string") {
+      return error;
+    }
+
+    try {
+      return JSON.stringify(error, null, 2);
+    } catch {
+      return "Drop failed.";
+    }
+  }
+
+  function processItems(items: ProcessDroppedItem[], initialStatus: string): void {
+    setIsProcessing(true);
+    setTone("success");
+    setStatusText(initialStatus);
+    setErrorDetails(null);
+
+    void window.api.brain
+      .processDroppedItems(items)
+      .then((result) => {
+        setLastResult(result);
+        if (result.job) {
+          setStatusText(`Saved ${result.job.role} at ${result.job.company}`);
+          setTone("success");
+        } else if (result.jobError) {
+          setStatusText(result.jobError);
+          setTone("error");
+        } else if (result.routing) {
+          setStatusText(`Routed to ${result.routing.parent_title}`);
+          setTone("success");
+        } else if (result.graphify) {
+          setStatusText(`Graphify updated ${result.graphify.graphNodeCount ?? 0} nodes`);
+          setTone(result.graphify.completed ? "success" : "error");
+        } else {
+          setStatusText("Drop processed locally.");
+          setTone("success");
+        }
+        onProcessed(result);
+        scheduleReset();
+      })
+      .catch((error) => {
+        console.error("Failed to process dropped items", error);
+        const message = errorMessage(error);
+        const firstLine = message.split(/\r?\n/).find(Boolean) ?? "Drop failed.";
+        setStatusText(firstLine);
+        setErrorDetails(message);
+        setTone("error");
+      })
+      .finally(() => {
+        setIsProcessing(false);
+      });
+  }
+
+  function handleClipboardIngest(): void {
+    if (isProcessing) {
+      return;
+    }
+
+    setTone("text");
+    setStatusText("Reading clipboard locally...");
+    setErrorDetails(null);
+
+    void window.api.clipboard
+      .readText()
+      .then((text) => {
+        const trimmed = text.trim();
+
+        if (!trimmed) {
+          setStatusText("Clipboard does not contain text.");
+          setTone("error");
+          scheduleReset();
+          return;
+        }
+
+        processItems(
+          [
+            {
+              name: "clipboard.txt",
+              text: trimmed,
+              type: "text/plain"
+            }
+          ],
+          "Routing clipboard locally..."
+        );
+      })
+      .catch((error) => {
+        const message = errorMessage(error);
+        setStatusText(message.split(/\r?\n/).find(Boolean) ?? "Clipboard read failed.");
+        setErrorDetails(message);
+        setTone("error");
+      });
   }
 
   return (
@@ -108,6 +208,10 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       transition={{
         duration: 0.22,
         ease: "easeOut"
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        handleClipboardIngest();
       }}
       onDragEnter={(event) => {
         event.preventDefault();
@@ -133,39 +237,7 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
 
         const payload = createDropPayload("main-drop-zone", event.dataTransfer);
         const items = toProcessItems(payload);
-        setIsProcessing(true);
-        setTone("success");
-        setStatusText("Reading and routing locally...");
-
-        void window.api.brain
-          .processDroppedItems(items)
-          .then((result) => {
-            setLastResult(result);
-            if (result.job) {
-              setStatusText(`Saved ${result.job.role} at ${result.job.company}`);
-              setTone("success");
-            } else if (result.jobError) {
-              setStatusText(result.jobError);
-              setTone("error");
-            } else if (result.routing) {
-              setStatusText(`Routed to ${result.routing.parent_title}`);
-              setTone("success");
-            } else {
-              setStatusText("Drop processed locally.");
-              setTone("success");
-            }
-            onProcessed(result);
-            scheduleReset();
-          })
-          .catch((error) => {
-            console.error("Failed to process dropped items", error);
-            setStatusText(error instanceof Error ? error.message : "Drop failed.");
-            setTone("error");
-            scheduleReset();
-          })
-          .finally(() => {
-            setIsProcessing(false);
-          });
+        processItems(items, "Reading and routing locally...");
       }}
     >
       {isProcessing ? (
@@ -200,20 +272,30 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
           {lastResult ? (
             <div className="mt-4 rounded-md border border-emerald-200 bg-white/65 p-3">
               <p className="text-xs font-semibold uppercase text-emerald-700">
-                {lastResult.job ? "jobs" : lastResult.routing?.strategy.replace("-", " ") ?? "processed"}
+                {lastResult.job ? "jobs" : lastResult.graphify ? "graphify" : lastResult.routing?.strategy.replace("-", " ") ?? "processed"}
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-900">
                 {lastResult.job
                   ? `${lastResult.job.company} · ${lastResult.job.role}`
+                  : lastResult.graphify
+                    ? `${lastResult.graphify.writtenFileCount} raw item${lastResult.graphify.writtenFileCount === 1 ? "" : "s"}`
                   : lastResult.createdNode?.title ?? "Processed drop"}
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-600">
                 {lastResult.job
                   ? "Saved to the Jobs table"
+                  : lastResult.graphify
+                    ? `${lastResult.graphify.graphEdgeCount ?? 0} graph connections`
                   : lastResult.routing
                     ? `Confidence ${Math.round(lastResult.routing.confidence * 100)}%`
                     : "Saved locally"}
               </p>
+            </div>
+          ) : null}
+          {errorDetails ? (
+            <div className="mt-4 max-h-48 overflow-auto rounded-md border border-rose-200 bg-white/75 p-3">
+              <p className="text-xs font-semibold uppercase text-rose-700">Error details</p>
+              <pre className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-rose-900">{errorDetails}</pre>
             </div>
           ) : null}
         </div>

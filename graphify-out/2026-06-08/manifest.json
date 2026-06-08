@@ -1,267 +1,282 @@
 {
-  "/home/rushat/second-brain/.codex/hooks.json": {
-    "mtime": 1780890998.5657732,
+  ".codex/hooks.json": {
+    "mtime": 1780891646.1461997,
     "ast_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93",
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
-  "/home/rushat/second-brain/electron-builder.json": {
-    "mtime": 1780636601.571156,
+  "electron-builder.json": {
+    "mtime": 1780895400.5336041,
     "ast_hash": "7549684322ac72dc4bebfab4baa5a8a2",
     "semantic_hash": "7549684322ac72dc4bebfab4baa5a8a2"
   },
-  "/home/rushat/second-brain/mockups/second-brain-live-demo/app.js": {
-    "mtime": 1780728158.853382,
-    "ast_hash": "c627dedd780b5596f47f3f828657d09a",
-    "semantic_hash": "c627dedd780b5596f47f3f828657d09a"
-  },
-  "/home/rushat/second-brain/package.json": {
-    "mtime": 1780801706.491456,
+  "package.json": {
+    "mtime": 1780895400.5364664,
     "ast_hash": "96fcb033aeff2d5ba9440863afa2b578",
     "semantic_hash": "96fcb033aeff2d5ba9440863afa2b578"
   },
-  "/home/rushat/second-brain/src/main/main.ts": {
-    "mtime": 1780808313.3196473,
-    "ast_hash": "f3ef8c03a88e3ccba5e85d1df24c0a56",
-    "semantic_hash": "f3ef8c03a88e3ccba5e85d1df24c0a56"
+  "src/main/main.ts": {
+    "mtime": 1780948932.2559996,
+    "ast_hash": "3f423e6d93ec62f53bc64a29aa09f49a",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/main/services/AgentController.ts": {
-    "mtime": 1780808310.1776428,
-    "ast_hash": "0a4b9549d79da817a6ed12070fb0f67d",
-    "semantic_hash": "0a4b9549d79da817a6ed12070fb0f67d"
+  "src/main/services/AgentController.ts": {
+    "mtime": 1780896345.6716774,
+    "ast_hash": "3fba4e61b1fad767c8291a8b2ee71d7c",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/main/services/AgentRuntimeConfig.ts": {
+  "src/main/services/AgentRuntimeConfig.ts": {
     "mtime": 1780808228.384542,
     "ast_hash": "2f7530e7922231404d1a1b1cb2337ee9",
     "semantic_hash": "2f7530e7922231404d1a1b1cb2337ee9"
   },
-  "/home/rushat/second-brain/src/main/services/EmbeddingService.ts": {
+  "src/main/services/EmbeddingService.ts": {
     "mtime": 1780724113.908389,
     "ast_hash": "8516a40e2cb22536c7d76f9224c5b762",
     "semantic_hash": "8516a40e2cb22536c7d76f9224c5b762"
   },
-  "/home/rushat/second-brain/src/main/services/GraphRagService.ts": {
+  "src/main/services/GraphRagService.ts": {
     "mtime": 1780807850.2669156,
     "ast_hash": "98a7e51534b2fa6d4ae4268ff26bb9e5",
     "semantic_hash": "98a7e51534b2fa6d4ae4268ff26bb9e5"
   },
-  "/home/rushat/second-brain/src/main/services/JobTrackerService.ts": {
-    "mtime": 1780807092.6648421,
-    "ast_hash": "189c1de82f469f55d697efefb9226bec",
-    "semantic_hash": "189c1de82f469f55d697efefb9226bec"
+  "src/main/services/JobTrackerService.ts": {
+    "mtime": 1780896353.473687,
+    "ast_hash": "e6187dc93d4b3ef662451d8747edb5a2",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/main/services/LlmService.ts": {
-    "mtime": 1780808287.2746124,
-    "ast_hash": "10f34c5fe0d67f3a03efd069d3b7a095",
-    "semantic_hash": "10f34c5fe0d67f3a03efd069d3b7a095"
+  "src/main/services/LlmService.ts": {
+    "mtime": 1780896337.847668,
+    "ast_hash": "da2301f444328ae72998e6436630e98d",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/main/services/LocalMcpServer.ts": {
+  "src/main/services/LocalMcpServer.ts": {
     "mtime": 1780808266.366586,
     "ast_hash": "63551648dec6ce99da4f5499fe8d3cc8",
     "semantic_hash": "63551648dec6ce99da4f5499fe8d3cc8"
   },
-  "/home/rushat/second-brain/src/main/services/LocalToolRegistry.ts": {
+  "src/main/services/LocalToolRegistry.ts": {
     "mtime": 1780808246.5975626,
     "ast_hash": "fc6486264716a57d0647740631c8eb64",
     "semantic_hash": "fc6486264716a57d0647740631c8eb64"
   },
-  "/home/rushat/second-brain/src/main/services/StorageService.ts": {
-    "mtime": 1780724936.4526212,
-    "ast_hash": "ace2f164a61d063025a1417de02599aa",
-    "semantic_hash": "ace2f164a61d063025a1417de02599aa"
+  "src/main/services/StorageService.ts": {
+    "mtime": 1780896359.368694,
+    "ast_hash": "d00fc039c89c2b8b88a95c875332da2c",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/preload/preload.ts": {
-    "mtime": 1780803675.0924382,
-    "ast_hash": "4e0d411aa8112d084df4c480cc9173e9",
-    "semantic_hash": "4e0d411aa8112d084df4c480cc9173e9"
+  "src/preload/preload.ts": {
+    "mtime": 1780948920.018968,
+    "ast_hash": "b3fc51375cb1b6eb4d9c9ba12b04a5a8",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/renderer/components/ClipboardList.tsx": {
+  "src/renderer/components/ClipboardList.tsx": {
     "mtime": 1780638087.4118874,
     "ast_hash": "3ea1016f1ba072bd25e57844379a52b2",
     "semantic_hash": "3ea1016f1ba072bd25e57844379a52b2"
   },
-  "/home/rushat/second-brain/src/renderer/components/DropTarget.tsx": {
-    "mtime": 1780806194.0093544,
-    "ast_hash": "793e9bcd99e79ae40963463307e626ff",
-    "semantic_hash": "793e9bcd99e79ae40963463307e626ff"
+  "src/renderer/components/DropTarget.tsx": {
+    "mtime": 1780948995.685164,
+    "ast_hash": "256d454271a212b74655579bc0256418",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/renderer/components/JobTrackerTable.tsx": {
-    "mtime": 1780806207.4024522,
-    "ast_hash": "061f6cb95fe1e1fa043ff7d4383ec406",
-    "semantic_hash": "061f6cb95fe1e1fa043ff7d4383ec406"
+  "src/renderer/components/JobTrackerTable.tsx": {
+    "mtime": 1780896537.611911,
+    "ast_hash": "5ce657d619d45d1b23a9f98e3ab0459b",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/renderer/components/Sidebar.tsx": {
+  "src/renderer/components/Sidebar.tsx": {
     "mtime": 1780726799.468149,
     "ast_hash": "6c2c964306442d768f98898e5c67411d",
     "semantic_hash": "6c2c964306442d768f98898e5c67411d"
   },
-  "/home/rushat/second-brain/src/renderer/components/TitleBar.tsx": {
+  "src/renderer/components/TitleBar.tsx": {
     "mtime": 1780636744.1032002,
     "ast_hash": "dec835e4dc950dc668e0f87e0cdba1e9",
     "semantic_hash": "dec835e4dc950dc668e0f87e0cdba1e9"
   },
-  "/home/rushat/second-brain/src/renderer/components/TopicCanvas.tsx": {
+  "src/renderer/components/TopicCanvas.tsx": {
     "mtime": 1780806200.7214036,
     "ast_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef",
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
-  "/home/rushat/second-brain/src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1780806237.6146681,
-    "ast_hash": "9bde23e334bc1d373eba0779f81c53f0",
-    "semantic_hash": "9bde23e334bc1d373eba0779f81c53f0"
+  "src/renderer/lib/browserApiFallback.ts": {
+    "mtime": 1780948939.0940173,
+    "ast_hash": "4d7946133beefa907ef2fe35eac3766c",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/renderer/lib/dropPayload.ts": {
+  "src/renderer/lib/dropPayload.ts": {
     "mtime": 1780636829.201932,
     "ast_hash": "299ece00535d7e5a011bd7dfd350f400",
     "semantic_hash": "299ece00535d7e5a011bd7dfd350f400"
   },
-  "/home/rushat/second-brain/src/renderer/main.tsx": {
+  "src/renderer/main.tsx": {
     "mtime": 1780797869.8546865,
     "ast_hash": "55447f0383a8f3eb598401c87c1ea144",
     "semantic_hash": "55447f0383a8f3eb598401c87c1ea144"
   },
-  "/home/rushat/second-brain/src/renderer/stores/useClipboardStore.ts": {
+  "src/renderer/stores/useClipboardStore.ts": {
     "mtime": 1780638132.8245006,
     "ast_hash": "2a2467e18a6330b2d54fc441a973efb0",
     "semantic_hash": "2a2467e18a6330b2d54fc441a973efb0"
   },
-  "/home/rushat/second-brain/src/renderer/views/FloatingWidget.tsx": {
+  "src/renderer/views/FloatingWidget.tsx": {
     "mtime": 1780800239.0873876,
     "ast_hash": "be95d21be044491f52df342a61f3ec6e",
     "semantic_hash": "be95d21be044491f52df342a61f3ec6e"
   },
-  "/home/rushat/second-brain/src/renderer/views/MainApp.tsx": {
-    "mtime": 1780800157.8982193,
-    "ast_hash": "4d8242cbbd1155e21626e95ce603a845",
-    "semantic_hash": "4d8242cbbd1155e21626e95ce603a845"
+  "src/renderer/views/MainApp.tsx": {
+    "mtime": 1780947833.786119,
+    "ast_hash": "25481beb7fe1743b468f303d994d4ce4",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/shared/brain.ts": {
-    "mtime": 1780806176.6872258,
-    "ast_hash": "913dc7a7d8344e3955462e0f449221ba",
-    "semantic_hash": "913dc7a7d8344e3955462e0f449221ba"
+  "src/shared/brain.ts": {
+    "mtime": 1780896266.4595811,
+    "ast_hash": "0b0e686571ac858641822d000c432a0b",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/shared/ipc.ts": {
-    "mtime": 1780803710.4224782,
-    "ast_hash": "5bb00a0bad9bba049a187886699c7d35",
-    "semantic_hash": "5bb00a0bad9bba049a187886699c7d35"
+  "src/shared/ipc.ts": {
+    "mtime": 1780948915.7669573,
+    "ast_hash": "712de3f9bac0425528bc1d0d927dfee2",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/src/shared/jobJson.ts": {
+  "src/shared/jobJson.ts": {
     "mtime": 1780803633.2573915,
     "ast_hash": "656cec11ac11dac8b9189b3ab5836af9",
     "semantic_hash": "656cec11ac11dac8b9189b3ab5836af9"
   },
-  "/home/rushat/second-brain/src/vite-env.d.ts": {
+  "src/vite-env.d.ts": {
     "mtime": 1780636744.1017172,
     "ast_hash": "bfc29b33035ee8fd93e5feb35b8777ab",
     "semantic_hash": "bfc29b33035ee8fd93e5feb35b8777ab"
   },
-  "/home/rushat/second-brain/tailwind.config.ts": {
+  "tailwind.config.ts": {
     "mtime": 1780636601.5721562,
     "ast_hash": "886e243dd788b6454dbc513395f4759e",
     "semantic_hash": "886e243dd788b6454dbc513395f4759e"
   },
-  "/home/rushat/second-brain/tsconfig.base.json": {
+  "tsconfig.base.json": {
     "mtime": 1780636601.571156,
     "ast_hash": "0cb37f7d09580cead4481c0a5ab2d0de",
     "semantic_hash": "0cb37f7d09580cead4481c0a5ab2d0de"
   },
-  "/home/rushat/second-brain/tsconfig.json": {
+  "tsconfig.json": {
     "mtime": 1780636601.571156,
     "ast_hash": "f0ffb4bf29a05dd721fc8f596baad520",
     "semantic_hash": "f0ffb4bf29a05dd721fc8f596baad520"
   },
-  "/home/rushat/second-brain/tsconfig.main.json": {
+  "tsconfig.main.json": {
     "mtime": 1780636888.9445217,
     "ast_hash": "0e862695486c74ccd6b523a45ca13849",
     "semantic_hash": "0e862695486c74ccd6b523a45ca13849"
   },
-  "/home/rushat/second-brain/tsconfig.preload.json": {
+  "tsconfig.preload.json": {
     "mtime": 1780636888.9458761,
     "ast_hash": "2cf9a80ca00a1669a41b169f60df69d0",
     "semantic_hash": "2cf9a80ca00a1669a41b169f60df69d0"
   },
-  "/home/rushat/second-brain/tsconfig.renderer.json": {
+  "tsconfig.renderer.json": {
     "mtime": 1780636601.5721562,
     "ast_hash": "23981ee2a2073129d2922d532d417b7e",
     "semantic_hash": "23981ee2a2073129d2922d532d417b7e"
   },
-  "/home/rushat/second-brain/vite.config.ts": {
+  "vite.config.ts": {
     "mtime": 1780800931.7918324,
     "ast_hash": "5db39eb102c3d9512b8c5905dc1c8e54",
     "semantic_hash": "5db39eb102c3d9512b8c5905dc1c8e54"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/SKILL.md": {
+  ".codex/skills/graphify/SKILL.md": {
     "mtime": 1780890998.5654724,
     "ast_hash": "161604e38be94d9064430c7b068fc492",
     "semantic_hash": "161604e38be94d9064430c7b068fc492"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/add-watch.md": {
+  ".codex/skills/graphify/references/add-watch.md": {
     "mtime": 1780889915.6455667,
     "ast_hash": "0df0589623217ca38a12bdcabfb42f4c",
     "semantic_hash": "0df0589623217ca38a12bdcabfb42f4c"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/exports.md": {
+  ".codex/skills/graphify/references/exports.md": {
     "mtime": 1780889915.6455667,
     "ast_hash": "7fb1a81aca17a462db70684a324fcfb0",
     "semantic_hash": "7fb1a81aca17a462db70684a324fcfb0"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/extraction-spec.md": {
+  ".codex/skills/graphify/references/extraction-spec.md": {
     "mtime": 1780889915.6455667,
     "ast_hash": "a86a7321597b23cc2b22e011b3dc6e1d",
     "semantic_hash": "a86a7321597b23cc2b22e011b3dc6e1d"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/github-and-merge.md": {
+  ".codex/skills/graphify/references/github-and-merge.md": {
     "mtime": 1780889915.6455667,
     "ast_hash": "cde13df085e4c492aeb7ba298a996d0d",
     "semantic_hash": "cde13df085e4c492aeb7ba298a996d0d"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/hooks.md": {
+  ".codex/skills/graphify/references/hooks.md": {
     "mtime": 1780889915.6469634,
     "ast_hash": "3f545db6ce646650bb9de588f5512a27",
     "semantic_hash": "3f545db6ce646650bb9de588f5512a27"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/query.md": {
+  ".codex/skills/graphify/references/query.md": {
     "mtime": 1780889915.6469634,
     "ast_hash": "c2a8e798674a81b02aa9975f43023819",
     "semantic_hash": "c2a8e798674a81b02aa9975f43023819"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/transcribe.md": {
+  ".codex/skills/graphify/references/transcribe.md": {
     "mtime": 1780889915.6469634,
     "ast_hash": "70f6aa30d6211f3a2c7e9fc45479f50c",
     "semantic_hash": "70f6aa30d6211f3a2c7e9fc45479f50c"
   },
-  "/home/rushat/second-brain/.codex/skills/graphify/references/update.md": {
+  ".codex/skills/graphify/references/update.md": {
     "mtime": 1780889915.6475666,
     "ast_hash": "0dad167a95bdb389f02fecffb60b1bc8",
     "semantic_hash": "0dad167a95bdb389f02fecffb60b1bc8"
   },
-  "/home/rushat/second-brain/AGENTS.md": {
+  "AGENTS.md": {
     "mtime": 1780890998.5656128,
     "ast_hash": "62c05a2bf20bf036a0b2633478663e64",
     "semantic_hash": "62c05a2bf20bf036a0b2633478663e64"
   },
-  "/home/rushat/second-brain/dev/chatnotes.md": {
-    "mtime": 1780640753.8600774,
-    "ast_hash": "d0524d48c21be9d76d288444574705a8",
-    "semantic_hash": "d0524d48c21be9d76d288444574705a8"
+  "dev/chatnotes.md": {
+    "mtime": 1780897475.8914654,
+    "ast_hash": "70435bc98324475c255134ae6013e099",
+    "semantic_hash": ""
   },
-  "/home/rushat/second-brain/index.html": {
+  "index.html": {
     "mtime": 1780636601.5721562,
     "ast_hash": "b29f40fc3014b442228b5a323e2bd656",
     "semantic_hash": "b29f40fc3014b442228b5a323e2bd656"
   },
-  "/home/rushat/second-brain/mockups/second-brain-live-demo/index.html": {
-    "mtime": 1780728158.8526762,
-    "ast_hash": "b0e04665a131655dcecf3c85f1435457",
-    "semantic_hash": "b0e04665a131655dcecf3c85f1435457"
-  },
-  "/home/rushat/second-brain/tests/onboarding/README.md": {
+  "tests/onboarding/README.md": {
     "mtime": 1780726924.2861843,
     "ast_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b",
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
-  "/home/rushat/second-brain/mockups/second-brain-live-demo/assets/vault-constellation.svg": {
-    "mtime": 1780728158.853382,
-    "ast_hash": "65180b6326b52afb501ae29c17ed36d0",
-    "semantic_hash": "65180b6326b52afb501ae29c17ed36d0"
+  "src/main/services/GraphifyController.ts": {
+    "mtime": 1780948926.6979854,
+    "ast_hash": "b8c45f9170a110a8c6273dd1b8232c55",
+    "semantic_hash": ""
+  },
+  "src/renderer/stores/useJobTrackerStore.ts": {
+    "mtime": 1780896528.8959005,
+    "ast_hash": "06cb54b62b26660dc1b857282eb92ff7",
+    "semantic_hash": ""
+  },
+  "src/main/services/GraphifyBoardService.ts": {
+    "mtime": 1780947800.440011,
+    "ast_hash": "0492b6603f77661bc0f38f6cbd7785ba",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/BoardRenderer.tsx": {
+    "mtime": 1780949090.0444133,
+    "ast_hash": "00030d29a1bc5189651a06c37fcadc70",
+    "semantic_hash": ""
+  },
+  "src/renderer/stores/useBoardStore.ts": {
+    "mtime": 1780898816.059959,
+    "ast_hash": "ae808597eb858541c69cbb122006c78e",
+    "semantic_hash": ""
+  },
+  "src/shared/types/board.ts": {
+    "mtime": 1780898730.4056098,
+    "ast_hash": "a0cf97d3c1a6467f3fa95767fb185141",
+    "semantic_hash": ""
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, BriefcaseBusiness, CheckCircle2, Download, Loader2, RefreshCcw } from "lucide-react";
 import type { JobApplicationStatus, JobIngestionStatus, JobTrackerRecord } from "../../shared/ipc";
+import { useJobTrackerStore } from "../stores/useJobTrackerStore";
 
 type JobTrackerTableProps = {
   refreshKey: number;
@@ -78,14 +79,14 @@ function progressClass(stage: JobIngestionStatus["stage"]): string {
 }
 
 export function JobTrackerTable({ refreshKey }: JobTrackerTableProps): JSX.Element {
-  const [jobs, setJobs] = useState<JobTrackerRecord[]>([]);
   const [resumeDrafts, setResumeDrafts] = useState<Record<string, string>>({});
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [exportState, setExportState] = useState<ExportState>("idle");
-  const [status, setStatus] = useState<JobIngestionStatus>({
-    stage: "idle",
-    message: "Drop a job description to extract metadata."
-  });
+  const jobs = useJobTrackerStore((state) => state.jobs);
+  const setJobs = useJobTrackerStore((state) => state.setJobs);
+  const status = useJobTrackerStore((state) => state.status);
+  const setStatus = useJobTrackerStore((state) => state.setStatus);
+  const upsertJob = useJobTrackerStore((state) => state.upsertJob);
 
   useEffect(() => {
     return window.api.jobs.onIngestionStatus((nextStatus) => {
@@ -93,13 +94,10 @@ export function JobTrackerTable({ refreshKey }: JobTrackerTableProps): JSX.Eleme
 
       const savedJob = nextStatus.job;
       if (savedJob) {
-        setJobs((current) => {
-          const withoutExisting = current.filter((job) => job.uuid !== savedJob.uuid);
-          return [savedJob, ...withoutExisting];
-        });
+        upsertJob(savedJob);
       }
     });
-  }, []);
+  }, [setStatus, upsertJob]);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,7 +135,7 @@ export function JobTrackerTable({ refreshKey }: JobTrackerTableProps): JSX.Eleme
   );
 
   function placeUpdatedJob(updated: JobTrackerRecord): void {
-    setJobs((current) => [updated, ...current.filter((job) => job.uuid !== updated.uuid)]);
+    upsertJob(updated);
     setResumeDrafts((current) => {
       const next = { ...current };
       delete next[updated.uuid];
@@ -168,7 +166,7 @@ export function JobTrackerTable({ refreshKey }: JobTrackerTableProps): JSX.Eleme
   async function refreshJobs(): Promise<void> {
     setLoadState("loading");
     try {
-      setJobs(await window.api.jobs.list());
+        setJobs(await window.api.jobs.list());
       setLoadState("ready");
     } catch (error) {
       console.error("Unable to refresh jobs", error);

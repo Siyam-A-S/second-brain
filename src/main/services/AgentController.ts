@@ -12,6 +12,7 @@ import type { JobTrackerService } from "./JobTrackerService";
 import { LocalMcpServer } from "./LocalMcpServer";
 import type { LlmService } from "./LlmService";
 import { agentMethods, agentPrompts } from "./AgentRuntimeConfig";
+import type { GraphifyController } from "./GraphifyController";
 
 type DraftFragment = {
   raw_content: string;
@@ -74,7 +75,8 @@ export class AgentController {
   constructor(
     private readonly localMcpServer: LocalMcpServer,
     private readonly jobTracker: JobTrackerService,
-    private readonly llm: LlmService
+    private readonly llm: LlmService,
+    private readonly graphify?: GraphifyController | undefined
   ) {}
 
   registerIpc(): void {
@@ -84,6 +86,38 @@ export class AgentController {
   }
 
   async processDroppedItems(event: IpcMainInvokeEvent, items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
+    if (this.graphify) {
+      this.sendJobStatus(event, {
+        stage: "extracting",
+        message: "Saving raw files and updating Graphify..."
+      });
+
+      try {
+        const graphify = await this.graphify.ingestDroppedItems(items);
+
+        this.sendJobStatus(event, {
+          stage: "saved",
+          message: `Graphify updated ${graphify.graphNodeCount ?? 0} nodes.`
+        });
+
+        return {
+          prompt: [
+            "Dropped content was saved raw into the local vault and ingested by Graphify.",
+            `Graphify MCP command: ${this.graphify.getMcpServerCommand()}`
+          ].join("\n"),
+          graphify
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Graphify ingestion failed.";
+        this.sendJobStatus(event, {
+          stage: "error",
+          message,
+          error: message
+        });
+        throw error;
+      }
+    }
+
     const rawContent = await this.readDroppedContent(items);
     if (looksLikeJobDescription(rawContent)) {
       return {

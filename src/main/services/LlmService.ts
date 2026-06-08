@@ -4,6 +4,18 @@ import { agentMethods, agentPrompts, type AgentMethodConfig } from "./AgentRunti
 import type { LocalToolSpec } from "./LocalToolRegistry";
 
 export type ExtractedJobMetadata = Pick<JobTrackerRecord, "company" | "role" | "job_posted" | "description_summary">;
+export type GraphifyMcpToolSpec = {
+  name: string;
+  description?: string | undefined;
+  inputSchema?: Record<string, unknown> | undefined;
+};
+export type GraphifyJobDraft = Pick<
+  JobTrackerRecord,
+  "company" | "role" | "job_posted" | "application_date" | "status" | "resume" | "description_summary" | "raw_content"
+> & {
+  source_file?: string | undefined;
+  updated_at?: string | undefined;
+};
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -55,6 +67,34 @@ function normalizeSummary(value: unknown): string {
   const sentences = normalized.split(/(?<=[.!?])\s+/).filter(Boolean);
 
   return sentences.slice(0, 2).join(" ").slice(0, 420);
+}
+
+function normalizeGraphifyJobDraft(value: unknown): GraphifyJobDraft | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const parsed = value as Record<string, unknown>;
+  const company = normalizeLine(parsed.company, "Unknown company");
+  const role = normalizeLine(parsed.role, "Unknown role");
+  const descriptionSummary = normalizeSummary(parsed.description_summary ?? parsed.summary);
+
+  if (company === "Unknown company" && role === "Unknown role") {
+    return null;
+  }
+
+  return {
+    company,
+    role,
+    job_posted: normalizeOptionalDate(parsed.job_posted ?? parsed.date),
+    application_date: normalizeDate(parsed.application_date, new Date().toISOString().slice(0, 10)),
+    status: "Applied",
+    resume: typeof parsed.resume === "string" ? parsed.resume : "",
+    description_summary: descriptionSummary,
+    raw_content: typeof parsed.raw_content === "string" ? parsed.raw_content : "",
+    source_file: typeof parsed.source_file === "string" ? parsed.source_file : undefined,
+    updated_at: typeof parsed.updated_at === "string" ? parsed.updated_at : undefined
+  };
 }
 
 export class LlmService {
@@ -141,6 +181,71 @@ export class LlmService {
       job_posted: normalizeOptionalDate(parsed.job_posted ?? parsed.date),
       description_summary: normalizeSummary(parsed.description_summary)
     };
+  }
+
+  async planGraphifyJobQuery(tools: GraphifyMcpToolSpec[]): Promise<PlannedLocalToolCall> {
+    const parsed = await this.completeJsonObject({
+      method: agentMethods.jobMetadataExtraction,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You are the Second Brain Graphify MCP planner.",
+            "Choose exactly one Graphify MCP tool call that retrieves job descriptions, companies, roles, posting dates, source files, and modified timestamps from graph topology.",
+            "Return exactly one raw JSON object with schema {\"tool\":\"string\",\"input\":{},\"reason\":\"string\"}.",
+            "Use the tool input schema literally. Do not search files manually."
+          ].join(" ")
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            task: "Query Graphify for Job Descriptions and Companies in the generated graph.json topology.",
+            tools
+          })
+        }
+      ]
+    });
+
+    const tool = parsed.tool ?? parsed.name;
+    const input = parsed.input ?? parsed.arguments ?? parsed.parameters;
+
+    if (typeof tool !== "string" || !tool.trim()) {
+      throw new Error("Local AI server did not choose a Graphify MCP tool.");
+    }
+
+    if (!input || typeof input !== "object") {
+      throw new Error(`Local AI server did not return input for Graphify MCP tool "${tool}".`);
+    }
+
+    return {
+      tool: tool.trim(),
+      input,
+      reason: typeof parsed.reason === "string" ? parsed.reason : undefined
+    };
+  }
+
+  async extractJobsFromGraphifyContext(context: string): Promise<GraphifyJobDraft[]> {
+    const parsed = await this.completeJsonObject({
+      method: agentMethods.jobMetadataExtraction,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You extract Job Tracker rows from Graphify MCP output.",
+            "Return exactly one raw JSON object with schema {\"jobs\":[{\"company\":\"string\",\"role\":\"string\",\"job_posted\":\"YYYY-MM-DD or empty string\",\"application_date\":\"YYYY-MM-DD\",\"description_summary\":\"string\",\"source_file\":\"string\",\"updated_at\":\"ISO timestamp or empty string\",\"raw_content\":\"string\"}]}",
+            "Only include rows supported by the graph context. Use source_file and updated_at when the MCP output provides them.",
+            "Do not include markdown, prose, explanations, or code fences."
+          ].join(" ")
+        },
+        {
+          role: "user",
+          content: context
+        }
+      ]
+    });
+    const jobs = Array.isArray(parsed.jobs) ? parsed.jobs : [];
+
+    return jobs.map(normalizeGraphifyJobDraft).filter((job): job is GraphifyJobDraft => Boolean(job));
   }
 
   private async completeText(input: {

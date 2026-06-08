@@ -1,6 +1,15 @@
-import { app, BrowserWindow, ipcMain, screen } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain, screen } from "electron";
 import path from "node:path";
-import { brainChannels, fileChannels, FilesDroppedPayload, jobChannels, WidgetMovePayload, windowChannels } from "../shared/ipc";
+import {
+  boardChannels,
+  brainChannels,
+  clipboardChannels,
+  fileChannels,
+  FilesDroppedPayload,
+  jobChannels,
+  WidgetMovePayload,
+  windowChannels
+} from "../shared/ipc";
 import type {
   ExportBoardPlaintextInput,
   ListBrainNodesInput,
@@ -9,8 +18,11 @@ import type {
   UpdateNodeSignalsInput,
   WriteBrainNodeInput
 } from "../shared/brain";
+import type { BoardRule } from "../shared/types/board";
 import { AgentController } from "./services/AgentController";
 import { EmbeddingService } from "./services/EmbeddingService";
+import { GraphifyBoardService } from "./services/GraphifyBoardService";
+import { GraphifyController } from "./services/GraphifyController";
 import { GraphRagService } from "./services/GraphRagService";
 import { JobTrackerService } from "./services/JobTrackerService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
@@ -20,6 +32,7 @@ import { StorageService } from "./services/StorageService";
 let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
 let mcpServer: LocalMcpServer | null = null;
+let graphifyController: GraphifyController | null = null;
 
 const widgetWindowSize = 96;
 
@@ -164,7 +177,9 @@ function registerIpc(
   embeddings: EmbeddingService,
   graphRag: GraphRagService,
   localMcpServer: LocalMcpServer,
-  jobTracker: JobTrackerService
+  jobTracker: JobTrackerService,
+  graphify: GraphifyController,
+  graphifyBoard: GraphifyBoardService
 ): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
@@ -211,9 +226,15 @@ function registerIpc(
     return nextBounds;
   });
 
-  ipcMain.handle(fileChannels.dropped, (_event, payload: FilesDroppedPayload) => {
-    console.info("Files dropped", payload);
+  ipcMain.handle(fileChannels.dropped, async (_event, payload: FilesDroppedPayload) => {
+    const result = await graphify.ingestFilesDrop(payload);
+    console.info("Files dropped and ingested by Graphify", {
+      writtenFileCount: result.writtenFileCount,
+      graphNodeCount: result.graphNodeCount,
+      graphPath: result.graphPath
+    });
     restoreMainWindow();
+    return result;
   });
 
   ipcMain.handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => storage.writeNode(input));
@@ -229,23 +250,30 @@ function registerIpc(
   ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) => storage.updateNodeSignals(input));
   ipcMain.handle(jobChannels.list, () => jobTracker.listJobs());
   ipcMain.handle(jobChannels.update, (_event, input: UpdateJobTrackerInput) => jobTracker.updateJob(input));
+  ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => graphifyBoard.buildBoardState(rule));
+  ipcMain.handle(boardChannels.getGraphHtml, () => graphify.readGraphHtml());
+  ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
 }
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath("userData");
   const storage = new StorageService(path.join(userDataPath, "vault"));
+  const graphify = new GraphifyController(path.join(userDataPath, "vault", "raw"));
+  const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
+  graphifyController = graphify;
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
   const graphRag = new GraphRagService(storage, embeddings);
   const llm = new LlmService();
-  const jobTracker = new JobTrackerService(storage, llm);
+  const jobTracker = new JobTrackerService(storage, llm, graphify);
 
   mcpServer = new LocalMcpServer({
     graphRag,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const agentController = new AgentController(mcpServer, jobTracker, llm);
+  const agentController = new AgentController(mcpServer, jobTracker, llm, graphify);
 
   await storage.initialize();
+  await graphify.initialize();
 
   try {
     await mcpServer.start();
@@ -253,7 +281,7 @@ app.whenReady().then(async () => {
     console.error("Failed to start local MCP server", error);
   }
 
-  registerIpc(storage, embeddings, graphRag, mcpServer, jobTracker);
+  registerIpc(storage, embeddings, graphRag, mcpServer, jobTracker, graphify, graphifyBoard);
   agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();
@@ -276,4 +304,5 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   void mcpServer?.stop();
+  void graphifyController?.stopMcp();
 });

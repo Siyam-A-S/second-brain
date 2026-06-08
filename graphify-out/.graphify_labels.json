@@ -7,9 +7,8 @@
   "5": "Markdown Storage",
   "6": "Project Dependencies",
   "7": "Browser Fallback",
-  "8": "Agent Drop Routing",
+  "8": "Community 8",
   "9": "Drop UI Components",
-  "10": "LLM Tool Runtime",
   "11": "Embedding Pipeline",
   "12": "Job Persistence",
   "13": "Base TS Config",
@@ -30,5 +29,6 @@
   "28": "Community 28",
   "29": "Community 29",
   "30": "Community 30",
-  "31": "Community 31"
+  "31": "Community 31",
+  "33": "Community 33"
 }

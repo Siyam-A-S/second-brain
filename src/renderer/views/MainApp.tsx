@@ -3,20 +3,20 @@ import type { ProcessDroppedItemsResult } from "../../shared/ipc";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
 import { JobTrackerTable } from "../components/JobTrackerTable";
-import { TopicCanvas } from "../components/TopicCanvas";
+import { BoardRenderer } from "../components/BoardRenderer";
 
 type ActiveView = "jobs" | "board";
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [lastDropResult, setLastDropResult] = useState<ProcessDroppedItemsResult | null>(null);
   const [activeView, setActiveView] = useState<ActiveView>("jobs");
 
   function handleDropProcessed(result: ProcessDroppedItemsResult): void {
-    setLastDropResult(result);
     setRefreshKey((key) => key + 1);
     if (result.job || result.jobError) {
       setActiveView("jobs");
+    } else if (result.graphify) {
+      setActiveView("board");
     }
   }
 
@@ -25,7 +25,7 @@ export function MainApp(): JSX.Element {
       <TitleBar />
       <div className="flex min-h-0 flex-1">
         <Sidebar onDropProcessed={handleDropProcessed} />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex h-11 shrink-0 items-center gap-1 border-b border-slate-900/5 bg-white/20 px-6">
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
@@ -49,7 +49,7 @@ export function MainApp(): JSX.Element {
           {activeView === "jobs" ? (
             <JobTrackerTable refreshKey={refreshKey} />
           ) : (
-            <TopicCanvas lastDropResult={lastDropResult} refreshKey={refreshKey} />
+            <BoardRenderer refreshKey={refreshKey} />
           )}
         </div>
       </div>

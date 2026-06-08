@@ -1,4 +1,5 @@
 import type { BrainNode, JobApplicationStatus, JobTrackerRecord, UpdateJobTrackerInput } from "../../shared/brain";
+import type { GraphifyController } from "./GraphifyController";
 import { LlmService } from "./LlmService";
 import type { StorageService } from "./StorageService";
 
@@ -45,15 +46,23 @@ function normalizeStatus(value: unknown): JobApplicationStatus {
 export class JobTrackerService {
   constructor(
     private readonly storage: StorageService,
-    private readonly llm: LlmService
+    private readonly llm: LlmService,
+    private readonly graphify?: GraphifyController | undefined
   ) {}
 
   async listJobs(): Promise<JobTrackerRecord[]> {
     const nodes = await this.storage.listNodes({ type: "job" });
-    return nodes
+    const storedJobs = nodes
       .map((node) => this.nodeToJobRecord(node))
-      .filter((job): job is JobTrackerRecord => Boolean(job))
-      .sort(this.sortJobs);
+      .filter((job): job is JobTrackerRecord => Boolean(job));
+    const graphifyJobs = await this.listGraphifyJobs();
+    const byUuid = new Map<string, JobTrackerRecord>();
+
+    for (const job of [...storedJobs, ...graphifyJobs]) {
+      byUuid.set(job.uuid, job);
+    }
+
+    return Array.from(byUuid.values()).sort(this.sortJobs);
   }
 
   async ingestJobDescription(rawContent: string, sourceNodeUuid?: string): Promise<JobTrackerRecord> {
@@ -137,6 +146,19 @@ export class JobTrackerService {
     }
 
     return right.application_date.localeCompare(left.application_date);
+  }
+
+  private async listGraphifyJobs(): Promise<JobTrackerRecord[]> {
+    if (!this.graphify) {
+      return [];
+    }
+
+    try {
+      return await this.graphify.extractJobRecords(this.llm);
+    } catch (error) {
+      console.warn("Unable to list jobs from Graphify MCP; falling back to stored job nodes.", error);
+      return [];
+    }
   }
 
   private nodeToStoredJobContent(node: BrainNode): StoredJobContent {

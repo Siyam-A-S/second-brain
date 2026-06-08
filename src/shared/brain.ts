@@ -118,6 +118,18 @@ export type ProcessDroppedItem = {
   type?: string | undefined;
   text?: string | undefined;
   content?: string | undefined;
+  buffer?: ArrayBuffer | number[] | undefined;
+};
+
+export type GraphifyIngestionResult = {
+  completed: boolean;
+  writtenFileCount: number;
+  graphPath: string;
+  reportPath: string;
+  graphNodeCount?: number | undefined;
+  graphEdgeCount?: number | undefined;
+  stdout: string;
+  updatedAt: string;
 };
 
 export type JobTrackerRecord = {
@@ -152,6 +164,7 @@ export type JobIngestionStatus = {
 
 export type ProcessDroppedItemsResult = {
   prompt: string;
+  graphify?: GraphifyIngestionResult | undefined;
   createdNode?: BrainNode | undefined;
   routing?: RoutingDecision | undefined;
   job?: JobTrackerRecord | undefined;

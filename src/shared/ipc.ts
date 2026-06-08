@@ -3,6 +3,7 @@ import type {
   BrainSearchResult,
   BoardChildNode,
   ExportBoardPlaintextInput,
+  GraphifyIngestionResult,
   JobApplicationStatus,
   JobIngestionStatus,
   JobTrackerRecord,
@@ -17,12 +18,14 @@ import type {
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
+import type { BoardRule, OrganizedBoardTopic as GraphBoardTopic } from "./types/board";
 
 export type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
   ExportBoardPlaintextInput,
+  GraphifyIngestionResult,
   JobApplicationStatus,
   JobIngestionStatus,
   JobTrackerRecord,
@@ -37,6 +40,12 @@ export type {
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
+export type {
+  BoardItem,
+  BoardLayoutType,
+  BoardRule,
+  OrganizedBoardTopic as GraphBoardTopic
+} from "./types/board";
 
 export const windowChannels = {
   minimize: "window-minimize",
@@ -69,16 +78,28 @@ export const jobChannels = {
   ingestionStatus: "job-ingestion-status"
 } as const;
 
+export const boardChannels = {
+  getState: "get-board-state",
+  getGraphHtml: "get-graph-html"
+} as const;
+
+export const clipboardChannels = {
+  readText: "clipboard-read-text"
+} as const;
+
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
 export type FileChannel = (typeof fileChannels)[keyof typeof fileChannels];
 export type BrainChannel = (typeof brainChannels)[keyof typeof brainChannels];
 export type JobChannel = (typeof jobChannels)[keyof typeof jobChannels];
+export type BoardChannel = (typeof boardChannels)[keyof typeof boardChannels];
+export type ClipboardChannel = (typeof clipboardChannels)[keyof typeof clipboardChannels];
 
 export type DroppedFile = {
   name: string;
   path: string;
   type: string;
   size: number;
+  buffer?: ArrayBuffer | number[] | undefined;
 };
 
 export type FilesDroppedPayload = {
@@ -99,6 +120,12 @@ export type WidgetMovePayload = {
   y: number;
 };
 
+export type GraphHtmlDocument = {
+  html: string;
+  path: string;
+  updatedAt: string;
+};
+
 export type SecondBrainApi = {
   window: {
     minimize: () => Promise<void>;
@@ -109,7 +136,7 @@ export type SecondBrainApi = {
     moveWidget: (payload: WidgetMovePayload) => Promise<WidgetBounds | null>;
   };
   files: {
-    dropped: (payload: FilesDroppedPayload) => Promise<void>;
+    dropped: (payload: FilesDroppedPayload) => Promise<GraphifyIngestionResult | void>;
   };
   brain: {
     writeNode: (input: WriteBrainNodeInput) => Promise<BrainNode>;
@@ -126,5 +153,12 @@ export type SecondBrainApi = {
     list: () => Promise<JobTrackerRecord[]>;
     update: (input: UpdateJobTrackerInput) => Promise<JobTrackerRecord>;
     onIngestionStatus: (handler: (status: JobIngestionStatus) => void) => () => void;
+  };
+  board: {
+    getState: (rule: BoardRule) => Promise<GraphBoardTopic[]>;
+    getGraphHtml: () => Promise<GraphHtmlDocument>;
+  };
+  clipboard: {
+    readText: () => Promise<string>;
   };
 };

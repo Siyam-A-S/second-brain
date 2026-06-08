@@ -1,4 +1,5 @@
 import type {
+  BoardRule,
   JobIngestionStatus,
   JobTrackerRecord,
   ProcessDroppedItem,
@@ -342,6 +343,29 @@ const browserApiFallback: SecondBrainApi = {
         jobStatusHandlers.delete(handler);
       };
     }
+  },
+  board: {
+    getState: async (rule: BoardRule) => [
+      {
+        id: `browser-${rule}`,
+        title: "Browser Preview",
+        layoutType: rule === "entity" ? "table" : rule === "source" ? "list" : "masonry",
+        items: []
+      }
+    ],
+    getGraphHtml: async () => ({
+      html: [
+        "<!doctype html>",
+        "<html><body style=\"font-family: sans-serif; background: #0f0f1a; color: #e0e0e0; display: grid; place-items: center; height: 100vh; margin: 0;\">",
+        "<p>Graph preview is available in the Electron app.</p>",
+        "</body></html>"
+      ].join(""),
+      path: "/browser-preview/graph.html",
+      updatedAt: new Date().toISOString()
+    })
+  },
+  clipboard: {
+    readText: async () => navigator.clipboard?.readText?.() ?? ""
   }
 };
 

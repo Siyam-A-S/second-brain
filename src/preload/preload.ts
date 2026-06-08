@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
+  BoardRule,
   FilesDroppedPayload,
   ExportBoardPlaintextInput,
   JobIngestionStatus,
@@ -44,6 +45,15 @@ const jobChannels = {
   ingestionStatus: "job-ingestion-status"
 } as const;
 
+const boardChannels = {
+  getState: "get-board-state",
+  getGraphHtml: "get-graph-html"
+} as const;
+
+const clipboardChannels = {
+  readText: "clipboard-read-text"
+} as const;
+
 const api: SecondBrainApi = {
   window: {
     minimize: () => ipcRenderer.invoke(windowChannels.minimize),
@@ -80,6 +90,13 @@ const api: SecondBrainApi = {
         ipcRenderer.removeListener(jobChannels.ingestionStatus, listener);
       };
     }
+  },
+  board: {
+    getState: (rule: BoardRule) => ipcRenderer.invoke(boardChannels.getState, rule),
+    getGraphHtml: () => ipcRenderer.invoke(boardChannels.getGraphHtml)
+  },
+  clipboard: {
+    readText: () => ipcRenderer.invoke(clipboardChannels.readText)
   }
 };
 
