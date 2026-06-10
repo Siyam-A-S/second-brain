@@ -3,13 +3,14 @@ import type {
   BoardRule,
   FilesDroppedPayload,
   ExportBoardPlaintextInput,
-  JobIngestionStatus,
   ListBrainNodesInput,
   ProcessDroppedItem,
   SearchBrainNodesInput,
   SecondBrainApi,
-  UpdateJobTrackerInput,
+  TrackerIngestionStatus,
+  UpdateAiSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateTrackerInput,
   WidgetMovePayload,
   WriteBrainNodeInput
 } from "../shared/ipc";
@@ -39,19 +40,26 @@ const brainChannels = {
   updateNodeSignals: "brain-update-node-signals"
 } as const;
 
-const jobChannels = {
-  list: "jobs-list",
-  update: "jobs-update",
-  ingestionStatus: "job-ingestion-status"
+const trackerChannels = {
+  list: "tracker-list",
+  update: "tracker-update",
+  ingestionStatus: "tracker-ingestion-status"
 } as const;
 
 const boardChannels = {
   getState: "get-board-state",
-  getGraphHtml: "get-graph-html"
+  getGraphHtml: "get-graph-html",
+  removeSource: "remove-board-source",
+  collapseSource: "collapse-board-source"
 } as const;
 
 const clipboardChannels = {
   readText: "clipboard-read-text"
+} as const;
+
+const settingsChannels = {
+  getAi: "settings-get-ai",
+  updateAi: "settings-update-ai"
 } as const;
 
 const api: SecondBrainApi = {
@@ -77,26 +85,33 @@ const api: SecondBrainApi = {
     exportBoardPlaintext: (input?: ExportBoardPlaintextInput) => ipcRenderer.invoke(brainChannels.exportBoardPlaintext, input),
     updateNodeSignals: (input: UpdateNodeSignalsInput) => ipcRenderer.invoke(brainChannels.updateNodeSignals, input)
   },
-  jobs: {
-    list: () => ipcRenderer.invoke(jobChannels.list),
-    update: (input: UpdateJobTrackerInput) => ipcRenderer.invoke(jobChannels.update, input),
-    onIngestionStatus: (handler: (status: JobIngestionStatus) => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, status: JobIngestionStatus): void => {
+  tracker: {
+    list: () => ipcRenderer.invoke(trackerChannels.list),
+    update: (input: UpdateTrackerInput) => ipcRenderer.invoke(trackerChannels.update, input),
+    onIngestionStatus: (handler: (status: TrackerIngestionStatus) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, status: TrackerIngestionStatus): void => {
         handler(status);
       };
 
-      ipcRenderer.on(jobChannels.ingestionStatus, listener);
+      ipcRenderer.on(trackerChannels.ingestionStatus, listener);
       return () => {
-        ipcRenderer.removeListener(jobChannels.ingestionStatus, listener);
+        ipcRenderer.removeListener(trackerChannels.ingestionStatus, listener);
       };
     }
   },
   board: {
     getState: (rule: BoardRule) => ipcRenderer.invoke(boardChannels.getState, rule),
-    getGraphHtml: () => ipcRenderer.invoke(boardChannels.getGraphHtml)
+    getGraphHtml: () => ipcRenderer.invoke(boardChannels.getGraphHtml),
+    removeSource: (sourceFile: string) => ipcRenderer.invoke(boardChannels.removeSource, sourceFile),
+    collapseSource: (sourceFile: string, targetSourceFile: string) =>
+      ipcRenderer.invoke(boardChannels.collapseSource, sourceFile, targetSourceFile)
   },
   clipboard: {
     readText: () => ipcRenderer.invoke(clipboardChannels.readText)
+  },
+  settings: {
+    getAi: () => ipcRenderer.invoke(settingsChannels.getAi),
+    updateAi: (input: UpdateAiSettingsInput) => ipcRenderer.invoke(settingsChannels.updateAi, input)
   }
 };
 

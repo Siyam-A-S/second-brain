@@ -1,18 +1,19 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { exec } from "node:child_process";
 import type { ExecOptions } from "node:child_process";
-import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import type { Dirent } from "node:fs";
+import { copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type {
+  AiSettings,
   FilesDroppedPayload,
   GraphHtmlDocument,
   GraphifyIngestionResult,
-  JobTrackerRecord,
   ProcessDroppedItem
 } from "../../shared/ipc";
-import type { GraphifyJobDraft, GraphifyMcpToolSpec, LlmService, PlannedLocalToolCall } from "./LlmService";
+import type { GraphifyMcpToolSpec } from "./LlmService";
 
 type GraphifyGraph = {
   nodes?: unknown[];
@@ -35,19 +36,7 @@ type GraphifyLocalModelSettings = {
   temperature: number;
   maxTokens: number;
 };
-
-type ToolCallResult = Awaited<ReturnType<Client["callTool"]>>;
-type ToolContentPart =
-  | {
-      type: "text";
-      text: string;
-    }
-  | {
-      type: "resource";
-      resource: {
-        text?: string | undefined;
-      };
-    };
+type AiSettingsProvider = () => Promise<AiSettings>;
 
 const updateTimeoutMs = 10 * 60 * 1_000;
 const maxExecBuffer = 10 * 1024 * 1024;
@@ -55,16 +44,39 @@ const graphifyProviderName = "second-brain-local";
 const defaultLocalModelEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultLocalModelName = "local-model";
 const defaultGraphifyTemperature = 0.6;
-const defaultGraphifyMaxTokens = 4096;
+const defaultGraphifyMaxTokens = 8192;
 const defaultGraphifyRetryTemperature = 0;
-const defaultGraphifyRetryMaxTokens = 3072;
+const defaultGraphifyRetryMaxTokens = 4096;
 const defaultIngestCommand = `graphify extract . --out . --backend ${graphifyProviderName} --max-concurrency 1 --token-budget 2048`;
 const defaultHtmlCommand = "graphify export html --graph graphify-out/graph.json";
-const graphifyQuestion = [
-  "Extract job tracker rows from this local Graphify graph.",
-  "Find Job Descriptions, Companies, Roles, posting dates, source files, and source modified timestamps.",
-  "Prefer evidence from graph topology and source metadata over raw file search."
-].join(" ");
+const collapsibleTextExtensions = new Set([
+  ".c",
+  ".cjs",
+  ".cpp",
+  ".cs",
+  ".css",
+  ".csv",
+  ".go",
+  ".html",
+  ".java",
+  ".js",
+  ".json",
+  ".jsx",
+  ".log",
+  ".md",
+  ".markdown",
+  ".mjs",
+  ".py",
+  ".rb",
+  ".rs",
+  ".sql",
+  ".txt",
+  ".ts",
+  ".tsx",
+  ".xml",
+  ".yaml",
+  ".yml"
+]);
 
 function safeFilePart(value: string): string {
   const parsed = path.parse(value);
@@ -128,37 +140,9 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function readToolText(result: ToolCallResult): string {
-  const content = Array.isArray(result.content) ? (result.content as ToolContentPart[]) : [];
-
-  return content
-    .map((part) => {
-      if (part.type === "text") {
-        return part.text;
-      }
-
-      if (part.type === "resource" && "text" in part.resource) {
-        return part.resource.text;
-      }
-
-      return "";
-    })
-    .filter(Boolean)
-    .join("\n\n")
-    .trim();
-}
-
-function normalizeDate(value: string | undefined, fallback: string): string {
-  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : fallback;
-}
-
-function stableJobUuid(job: GraphifyJobDraft): string {
-  const hash = createHash("sha1")
-    .update([job.company, job.role, job.source_file, job.description_summary].filter(Boolean).join("|"))
-    .digest("hex")
-    .slice(0, 16);
-
-  return `graphify-${hash}`;
+function isCollapsibleTextSource(filePath: string): boolean {
+  const extension = path.extname(filePath).toLowerCase();
+  return collapsibleTextExtensions.has(extension);
 }
 
 export class GraphifyController {
@@ -177,7 +161,19 @@ export class GraphifyController {
   private mcpClient: Client | null = null;
   private mcpTransport: StdioClientTransport | null = null;
 
-  constructor(private readonly rawVaultPath: string) {
+  constructor(
+    private readonly rawVaultPath: string,
+    private readonly settingsProvider: AiSettingsProvider = async () => ({
+      endpoint: process.env.SECOND_BRAIN_LLM_ENDPOINT ?? defaultLocalModelEndpoint,
+      apiKey:
+        process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
+        process.env.SECOND_BRAIN_LLM_API_KEY ??
+        process.env.OPENAI_API_KEY ??
+        "second-brain-local",
+      model: process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL ?? defaultLocalModelName,
+      updatedAt: new Date().toISOString()
+    })
+  ) {
     this.graphOutPath = path.join(rawVaultPath, "graphify-out");
     this.graphPath = path.join(this.graphOutPath, "graph.json");
     this.graphHtmlPath = path.join(this.graphOutPath, "graph.html");
@@ -237,6 +233,56 @@ export class GraphifyController {
     return this.ingestDroppedItems([...fileItems, ...textItems]);
   }
 
+  async removeSource(sourceFile: string): Promise<GraphifyIngestionResult> {
+    await this.initialize();
+    const sourcePath = this.resolveRemovableSourcePath(sourceFile);
+    await rm(sourcePath, { force: true });
+    await this.resetGraphifyOutputs();
+
+    if (!(await this.hasRawSourceFiles())) {
+      return this.writeEmptyGraphResult();
+    }
+
+    return this.queueUpdate(0);
+  }
+
+  async collapseSourceInto(sourceFile: string, targetSourceFile: string): Promise<GraphifyIngestionResult> {
+    await this.initialize();
+
+    const sourcePath = this.resolveRemovableSourcePath(sourceFile);
+    const targetPath = this.resolveRemovableSourcePath(targetSourceFile);
+
+    if (sourcePath === targetPath) {
+      throw new Error("Choose a different source to collapse into.");
+    }
+
+    if (!isCollapsibleTextSource(sourcePath) || !isCollapsibleTextSource(targetPath)) {
+      throw new Error("Source collapse currently supports text-like files only.");
+    }
+
+    const [sourceContent, targetContent] = await Promise.all([
+      readFile(sourcePath, "utf8"),
+      readFile(targetPath, "utf8")
+    ]);
+    const collapsedBlock = [
+      "",
+      "",
+      "---",
+      `Collapsed source: ${path.basename(sourcePath)}`,
+      `Collapsed at: ${new Date().toISOString()}`,
+      "---",
+      "",
+      sourceContent.trim(),
+      ""
+    ].join("\n");
+
+    await writeFile(targetPath, `${targetContent.trimEnd()}${collapsedBlock}`, "utf8");
+    await rm(sourcePath, { force: true });
+    await this.resetGraphifyOutputs();
+
+    return this.queueUpdate(0);
+  }
+
   async ingestDroppedItems(items: ProcessDroppedItem[]): Promise<GraphifyIngestionResult> {
     await this.initialize();
     const writtenFiles = await this.writeRawItems(items);
@@ -257,32 +303,6 @@ export class GraphifyController {
       description: tool.description,
       inputSchema: tool.inputSchema
     }));
-  }
-
-  async extractJobRecords(llm: LlmService): Promise<JobTrackerRecord[]> {
-    const graphExists = await this.fileExists(this.graphPath);
-    if (!graphExists) {
-      return [];
-    }
-
-    const tools = await this.listMcpTools();
-    if (tools.length === 0) {
-      return [];
-    }
-
-    const planned = await this.planGraphifyJobQuery(llm, tools);
-    const toolResult = await (await this.ensureMcpClient()).callTool({
-      name: planned.tool,
-      arguments: planned.input as Record<string, unknown>
-    });
-    const context = readToolText(toolResult);
-
-    if (!context) {
-      return [];
-    }
-
-    const drafts = await llm.extractJobsFromGraphifyContext(context);
-    return Promise.all(drafts.map((draft) => this.toJobRecord(draft)));
   }
 
   async stopMcp(): Promise<void> {
@@ -361,20 +381,21 @@ export class GraphifyController {
 
   private async runGraphifyUpdate(writtenFileCount: number): Promise<GraphifyIngestionResult> {
     const primarySettings = this.getGraphifyLocalModelSettings();
-    await this.ensureGraphifyProviderConfig(primarySettings);
+    const aiSettings = await this.getAiSettings();
+    await this.ensureGraphifyProviderConfig(primarySettings, aiSettings);
 
     const command =
       process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND ??
       process.env.SECOND_BRAIN_GRAPHIFY_UPDATE_COMMAND ??
       defaultIngestCommand;
-    const stdout = await this.runGraphifyCommandWithRetry(command, primarySettings);
+    const stdout = await this.runGraphifyCommandWithRetry(command, primarySettings, aiSettings);
     const graphExists = await this.fileExists(this.graphPath);
 
     if (!graphExists) {
       throw new Error(`Graphify finished but did not create ${this.graphPath}.`);
     }
 
-    const htmlStdout = await this.ensureGraphHtml(primarySettings);
+    const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
     const combinedStdout = [stdout, htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""].filter(Boolean).join("\n\n");
 
     await this.stopMcp();
@@ -392,7 +413,10 @@ export class GraphifyController {
     };
   }
 
-  private async ensureGraphHtml(settings = this.getGraphifyLocalModelSettings()): Promise<string> {
+  private async ensureGraphHtml(
+    settings = this.getGraphifyLocalModelSettings(),
+    aiSettings?: AiSettings
+  ): Promise<string> {
     const graphExists = await this.fileExists(this.graphPath);
 
     if (!graphExists) {
@@ -405,7 +429,12 @@ export class GraphifyController {
     }
 
     const command = process.env.SECOND_BRAIN_GRAPHIFY_HTML_COMMAND ?? defaultHtmlCommand;
-    const stdout = await this.runGraphifyCommand(command, settings, "Graphify HTML export failed");
+    const stdout = await this.runGraphifyCommand(
+      command,
+      settings,
+      "Graphify HTML export failed",
+      aiSettings ?? (await this.getAiSettings())
+    );
 
     if (!(await this.fileExists(this.graphHtmlPath))) {
       throw new Error(
@@ -430,9 +459,13 @@ export class GraphifyController {
     }
   }
 
-  private async runGraphifyCommandWithRetry(command: string, primarySettings: GraphifyLocalModelSettings): Promise<string> {
+  private async runGraphifyCommandWithRetry(
+    command: string,
+    primarySettings: GraphifyLocalModelSettings,
+    aiSettings: AiSettings
+  ): Promise<string> {
     try {
-      return await this.runGraphifyCommand(command, primarySettings, "Graphify ingestion failed");
+      return await this.runGraphifyCommand(command, primarySettings, "Graphify ingestion failed", aiSettings);
     } catch (error) {
       const primaryError = errorMessage(error);
 
@@ -441,10 +474,15 @@ export class GraphifyController {
       }
 
       const retrySettings = this.getStrictRetrySettings(primarySettings);
-      await this.ensureGraphifyProviderConfig(retrySettings);
+      await this.ensureGraphifyProviderConfig(retrySettings, aiSettings);
 
       try {
-        const retryStdout = await this.runGraphifyCommand(command, retrySettings, "Graphify ingestion retry failed");
+        const retryStdout = await this.runGraphifyCommand(
+          command,
+          retrySettings,
+          "Graphify ingestion retry failed",
+          aiSettings
+        );
 
         return [
           "Primary Graphify attempt failed; retried with strict local JSON settings.",
@@ -466,12 +504,17 @@ export class GraphifyController {
     }
   }
 
-  private runGraphifyCommand(command: string, settings: GraphifyLocalModelSettings, failureLabel: string): Promise<string> {
+  private runGraphifyCommand(
+    command: string,
+    settings: GraphifyLocalModelSettings,
+    failureLabel: string,
+    aiSettings: AiSettings
+  ): Promise<string> {
     const options: ExecOptions = {
       cwd: this.rawVaultPath,
       timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS ?? updateTimeoutMs),
       maxBuffer: maxExecBuffer,
-      env: this.buildGraphifyEnvironment(settings),
+      env: this.buildGraphifyEnvironment(settings, aiSettings),
       windowsHide: true
     };
 
@@ -499,13 +542,17 @@ export class GraphifyController {
     });
   }
 
-  private ensureGraphifyProviderConfig(settings = this.getGraphifyLocalModelSettings()): Promise<void> {
+  private async ensureGraphifyProviderConfig(
+    settings = this.getGraphifyLocalModelSettings(),
+    aiSettings?: AiSettings
+  ): Promise<void> {
+    const resolvedAiSettings = aiSettings ?? (await this.getAiSettings());
     const graphifyConfigPath = path.join(this.rawVaultPath, ".graphify");
     const providerPath = path.join(graphifyConfigPath, "providers.json");
     const providerConfig: Record<string, GraphifyProviderConfig> = {
       [graphifyProviderName]: {
-        base_url: normalizeOpenAiBaseUrl(this.getGraphifyLlmEndpoint()),
-        default_model: this.getGraphifyLlmModel(),
+        base_url: normalizeOpenAiBaseUrl(this.getGraphifyLlmEndpoint(resolvedAiSettings)),
+        default_model: this.getGraphifyLlmModel(resolvedAiSettings),
         model_env_key: "SECOND_BRAIN_GRAPHIFY_LLM_MODEL",
         env_key: "SECOND_BRAIN_GRAPHIFY_LLM_API_KEY",
         pricing: {
@@ -517,14 +564,13 @@ export class GraphifyController {
       }
     };
 
-    return mkdir(graphifyConfigPath, { recursive: true }).then(() =>
-      writeFile(providerPath, `${JSON.stringify(providerConfig, null, 2)}\n`, "utf8")
-    );
+    await mkdir(graphifyConfigPath, { recursive: true });
+    await writeFile(providerPath, `${JSON.stringify(providerConfig, null, 2)}\n`, "utf8");
   }
 
-  private buildGraphifyEnvironment(settings = this.getGraphifyLocalModelSettings()): NodeJS.ProcessEnv {
-    const endpoint = this.getGraphifyLlmEndpoint();
-    const model = this.getGraphifyLlmModel();
+  private buildGraphifyEnvironment(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): NodeJS.ProcessEnv {
+    const endpoint = this.getGraphifyLlmEndpoint(aiSettings);
+    const model = this.getGraphifyLlmModel(aiSettings);
     const maxTokens = String(settings.maxTokens);
 
     return {
@@ -533,8 +579,7 @@ export class GraphifyController {
       GRAPHIFY_MAX_OUTPUT_TOKENS: maxTokens,
       SECOND_BRAIN_GRAPHIFY_LLM_API_KEY:
         process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
-        process.env.SECOND_BRAIN_LLM_API_KEY ??
-        process.env.OPENAI_API_KEY ??
+        aiSettings.apiKey ??
         "second-brain-local",
       SECOND_BRAIN_GRAPHIFY_LLM_ENDPOINT: endpoint,
       SECOND_BRAIN_GRAPHIFY_LLM_MODEL: process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ?? model,
@@ -542,21 +587,24 @@ export class GraphifyController {
     };
   }
 
-  private getGraphifyLlmEndpoint(): string {
+  private getGraphifyLlmEndpoint(aiSettings: AiSettings): string {
     return (
       process.env.SECOND_BRAIN_GRAPHIFY_LLM_ENDPOINT ??
-      process.env.SECOND_BRAIN_LLM_ENDPOINT ??
+      aiSettings.endpoint ??
       defaultLocalModelEndpoint
     );
   }
 
-  private getGraphifyLlmModel(): string {
+  private getGraphifyLlmModel(aiSettings: AiSettings): string {
     return (
       process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ??
-      process.env.SECOND_BRAIN_LLM_MODEL ??
-      process.env.OPENAI_MODEL ??
+      aiSettings.model ??
       defaultLocalModelName
     );
+  }
+
+  private async getAiSettings(): Promise<AiSettings> {
+    return this.settingsProvider();
   }
 
   private getGraphifyTemperature(): number {
@@ -605,8 +653,8 @@ export class GraphifyController {
   private enrichGraphifyError(message: string): Error {
     const localModelHint = [
       "Local model guidance:",
-      "- Your llama.cpp server is running with a 4096-token context. A request with max_completion_tokens=4096 cannot also fit Graphify's prompt and source text.",
-      "- The app now retries once with strict JSON settings. If this still fails, restart llama-server with a larger context, for example `-c 8192` or `-c 12288`.",
+      "- The app first tries 8192 completion tokens and retries once with strict JSON settings capped at 4096.",
+      "- If this still fails, restart llama-server with a larger context, for example `-c 8192` or `-c 12288`.",
       "- For Gemma/Gemma-style thinking templates, disable thinking in the server/template if available; hidden thinking can consume completion budget before the JSON closes.",
       "- You can lower the retry cap with `SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS=2048`."
     ].join("\n");
@@ -650,38 +698,6 @@ export class GraphifyController {
     return client;
   }
 
-  private async planGraphifyJobQuery(llm: LlmService, tools: GraphifyMcpToolSpec[]): Promise<PlannedLocalToolCall> {
-    try {
-      return await llm.planGraphifyJobQuery(tools);
-    } catch (error) {
-      console.warn("Local AI could not plan a Graphify MCP tool call; using deterministic query fallback.", error);
-      const queryTool =
-        tools.find((tool) => /query|search|ask/i.test(tool.name)) ??
-        tools.find((tool) => /query|search|ask/i.test(tool.description ?? "")) ??
-        tools[0];
-
-      if (!queryTool) {
-        throw new Error("Graphify MCP did not expose any tools.");
-      }
-
-      return {
-        tool: queryTool.name,
-        input: this.buildFallbackToolInput(queryTool),
-        reason: "Fallback Graphify job query."
-      };
-    }
-  }
-
-  private buildFallbackToolInput(tool: GraphifyMcpToolSpec): Record<string, unknown> {
-    const properties = tool.inputSchema?.properties;
-    const keys = properties && typeof properties === "object" ? Object.keys(properties) : [];
-    const preferredKey = keys.find((key) => /query|question|prompt|text|input/i.test(key)) ?? keys[0] ?? "query";
-
-    return {
-      [preferredKey]: graphifyQuestion
-    };
-  }
-
   private async resolveMcpCommand(): Promise<string> {
     if (process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND) {
       return process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND;
@@ -718,38 +734,88 @@ export class GraphifyController {
     return "python3";
   }
 
-  private async toJobRecord(job: GraphifyJobDraft): Promise<JobTrackerRecord> {
-    const now = new Date().toISOString();
-    const sourcePath = job.source_file ? this.resolveSourcePath(job.source_file) : null;
-    const sourceStat = sourcePath ? await this.safeStat(sourcePath) : null;
-    const updatedAt = job.updated_at ?? sourceStat?.mtime.toISOString() ?? now;
-    const applicationDate = normalizeDate(job.application_date, now.slice(0, 10));
-
-    return {
-      uuid: stableJobUuid(job),
-      company: job.company,
-      role: job.role,
-      job_posted: normalizeDate(job.job_posted, ""),
-      application_date: applicationDate,
-      status: job.status ?? "Applied",
-      resume: job.resume ?? "",
-      description_summary: job.description_summary,
-      raw_content: job.raw_content ?? "",
-      createdAt: sourceStat?.birthtime.toISOString() ?? updatedAt,
-      updatedAt
-    };
-  }
-
   private resolveSourcePath(sourceFile: string): string {
     return path.isAbsolute(sourceFile) ? sourceFile : path.join(this.rawVaultPath, sourceFile);
   }
 
-  private async safeStat(filePath: string): Promise<Awaited<ReturnType<typeof stat>> | null> {
-    try {
-      return await stat(filePath);
-    } catch {
-      return null;
+  private resolveRemovableSourcePath(sourceFile: string): string {
+    const candidate = this.resolveSourcePath(sourceFile);
+    const resolvedRaw = path.resolve(this.rawVaultPath);
+    const resolvedCandidate = path.resolve(candidate);
+    const relative = path.relative(resolvedRaw, resolvedCandidate);
+
+    if (relative.startsWith("..") || path.isAbsolute(relative) || !relative) {
+      throw new Error(`Refusing to remove source outside the raw vault: ${sourceFile}`);
     }
+
+    if (relative.split(path.sep).includes("graphify-out")) {
+      throw new Error(`Refusing to remove generated Graphify artifact: ${sourceFile}`);
+    }
+
+    return resolvedCandidate;
+  }
+
+  private async resetGraphifyOutputs(): Promise<void> {
+    await this.stopMcp();
+    await rm(this.graphOutPath, { recursive: true, force: true });
+  }
+
+  private async hasRawSourceFiles(directory = this.rawVaultPath): Promise<boolean> {
+    let entries: Dirent[];
+
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch {
+      return false;
+    }
+
+    for (const entry of entries) {
+      if (entry.name === "graphify-out" || entry.name === ".graphify") {
+        continue;
+      }
+
+      const entryPath = path.join(directory, entry.name);
+
+      if (entry.isFile()) {
+        return true;
+      }
+
+      if (entry.isDirectory() && (await this.hasRawSourceFiles(entryPath))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async writeEmptyGraphResult(): Promise<GraphifyIngestionResult> {
+    const updatedAt = new Date().toISOString();
+    await mkdir(this.graphOutPath, { recursive: true });
+    await Promise.all([
+      writeFile(this.graphPath, `${JSON.stringify({ nodes: [], links: [] }, null, 2)}\n`, "utf8"),
+      writeFile(this.reportPath, "# Graphify Report\n\nNo raw sources are currently stored.\n", "utf8"),
+      writeFile(
+        this.graphHtmlPath,
+        [
+          "<!doctype html>",
+          "<html><body style=\"margin:0;display:grid;place-items:center;height:100vh;background:#0f172a;color:#e2e8f0;font-family:sans-serif;\">",
+          "<p>No raw sources are currently stored.</p>",
+          "</body></html>"
+        ].join(""),
+        "utf8"
+      )
+    ]);
+
+    return {
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: this.graphPath,
+      reportPath: this.reportPath,
+      graphNodeCount: 0,
+      graphEdgeCount: 0,
+      stdout: "Removed final source and wrote an empty Graphify graph.",
+      updatedAt
+    };
   }
 
   private async fileExists(filePath: string): Promise<boolean> {

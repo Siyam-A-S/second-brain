@@ -3,8 +3,10 @@
   "1": "Electron Shell",
   "2": "Packaging Config",
   "3": "Demo Mockup Logic",
+  "4": "Job Table UI",
   "5": "Markdown Storage",
   "6": "Project Dependencies",
+  "7": "Browser Fallback",
   "8": "Community 8",
   "9": "Drop UI Components",
   "10": "Community 10",
@@ -34,5 +36,6 @@
   "34": "Community 34",
   "35": "Community 35",
   "36": "Community 36",
-  "37": "Community 37"
+  "37": "Community 37",
+  "38": "Community 38"
 }

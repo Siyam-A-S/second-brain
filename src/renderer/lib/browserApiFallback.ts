@@ -1,33 +1,22 @@
 import type {
   BoardRule,
-  JobIngestionStatus,
-  JobTrackerRecord,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   SecondBrainApi,
-  UpdateJobTrackerInput
+  TrackerIngestionStatus,
+  TrackerRecord,
+  UpdateAiSettingsInput,
+  UpdateTrackerInput
 } from "../../shared/ipc";
-import { parseLocalModelJsonObject } from "../../shared/jobJson";
 
-type ExtractedJobMetadata = Pick<JobTrackerRecord, "company" | "role" | "job_posted" | "description_summary">;
-
-type ChatCompletionResponse = {
-  choices?: Array<{
-    message?: {
-      content?: string | null | undefined;
-      reasoning_content?: string | null | undefined;
-    };
-  }>;
+const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
+const browserTrackers: TrackerRecord[] = [];
+let browserAiSettings = {
+  endpoint: "http://localhost:8080/v1/chat/completions",
+  apiKey: "local-dev-placeholder",
+  model: "local-model",
+  updatedAt: new Date().toISOString()
 };
-
-const localEndpoint = import.meta.env.VITE_LOCAL_LLM_ENDPOINT ?? "/local-llm/v1/chat/completions";
-const timeoutMs = 10_000;
-const jobStatusHandlers = new Set<(status: JobIngestionStatus) => void>();
-const browserJobs: JobTrackerRecord[] = [];
-
-function todayString(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -37,48 +26,47 @@ function normalizeLine(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? compact(value) : fallback;
 }
 
-function normalizeDate(value: unknown, fallback: string): string {
-  if (typeof value !== "string") {
-    return fallback;
-  }
-
-  const trimmed = value.trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : fallback;
+function looksTrackable(content: string): boolean {
+  return (
+    /\b(today|tomorrow|next\s+week|deadline|due|meeting|appointment|follow[- ]?up|remind|schedule|expires)\b/i.test(content) &&
+    (/\b\d{4}-\d{2}-\d{2}\b/.test(content) ||
+      /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/.test(content) ||
+      /\b\d{1,2}(:\d{2})?\s*(am|pm)\b/i.test(content) ||
+      /\b(today|tomorrow|next\s+week)\b/i.test(content))
+  );
 }
 
-function normalizeOptionalDate(value: unknown): string {
-  return normalizeDate(value, "");
-}
-
-function normalizeSummary(value: unknown): string {
-  const normalized = normalizeLine(value, "Responsibilities and requirements were parsed from the dropped job description.");
-  const sentences = normalized.split(/(?<=[.!?])\s+/).filter(Boolean);
-  return sentences.slice(0, 2).join(" ").slice(0, 420);
-}
-
-function looksLikeJobDescription(content: string): boolean {
-  const lower = content.toLowerCase();
-  const signals = [
-    "job description",
-    "responsibilities",
-    "requirements",
-    "qualifications",
-    "apply",
-    "salary",
-    "benefits",
-    "full-time",
-    "internship",
-    "about the role",
-    "we are hiring"
-  ];
-
-  return signals.filter((signal) => lower.includes(signal)).length >= 2;
-}
-
-function emitJobStatus(status: JobIngestionStatus): void {
-  for (const handler of jobStatusHandlers) {
+function emitTrackerStatus(status: TrackerIngestionStatus): void {
+  for (const handler of trackerStatusHandlers) {
     handler(status);
   }
+}
+
+function extractFallbackDate(content: string): string {
+  const iso = content.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0];
+  if (iso) {
+    return iso;
+  }
+
+  if (/\btomorrow\b/i.test(content)) {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0, 10);
+  }
+
+  if (/\btoday\b/i.test(content)) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return "";
+}
+
+function extractFallbackTime(content: string): string {
+  return content.match(/\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/i)?.[0] ?? content.match(/\b\d{1,2}\s*(?:am|pm)\b/i)?.[0] ?? "";
+}
+
+function extractFallbackUrl(content: string): string {
+  return content.match(/https?:\/\/\S+/i)?.[0] ?? "";
 }
 
 function readDroppedContent(items: ProcessDroppedItem[]): string {
@@ -87,79 +75,6 @@ function readDroppedContent(items: ProcessDroppedItem[]): string {
     .filter(Boolean)
     .join("\n\n---\n\n")
     .trim();
-}
-
-async function extractJobMetadata(rawContent: string, date = new Date()): Promise<ExtractedJobMetadata> {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(localEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: [
-              "You extract job application metadata for Second Brain.",
-              "Return exactly one raw minified JSON object.",
-              "Do not include markdown, prose, explanations, or code fences.",
-              "Use this schema: {\"company\":\"string\",\"role\":\"string\",\"job_posted\":\"YYYY-MM-DD or empty string\",\"description_summary\":\"string\"}.",
-              "In role string, append Job ID/ Role number if available",
-              "The job_posted field is the original posting date found in the dropped content. Use an empty string if no posting date appears.",
-              "The description_summary must be one JSON string containing keyword-heavy jargons of tech stack required for this role.",
-              "Do not put raw line breaks inside string values."
-            ].join(" ")
-          },
-          {
-            role: "user",
-            content: rawContent
-          }
-        ],
-        temperature: 0,
-        max_tokens: 4098,
-        stream: false
-      }),
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      throw new Error(`Local AI server responded with ${response.status}.`);
-    }
-
-    const payload = (await response.json()) as ChatCompletionResponse;
-    const message = payload.choices?.[0]?.message;
-    const content = message?.content?.trim() || message?.reasoning_content?.trim();
-
-    if (!content) {
-      throw new Error("Local AI server returned an empty response.");
-    }
-
-    const parsed = parseLocalModelJsonObject(content);
-
-    return {
-      company: normalizeLine(parsed.company, "Unknown company"),
-      role: normalizeLine(parsed.role, "Unknown role"),
-      job_posted: normalizeOptionalDate(parsed.job_posted ?? parsed.date),
-      description_summary: normalizeSummary(parsed.description_summary)
-    };
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`Local AI server timed out after 10 seconds. ${detail}`);
-    }
-
-    if (detail.includes("valid JSON")) {
-      throw new Error(detail);
-    }
-
-    throw new Error(`Local AI server is unavailable. ${detail}`);
-  } finally {
-    window.clearTimeout(timeout);
-  }
 }
 
 async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
@@ -197,42 +112,46 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
     return baseResult;
   }
 
-  if (!looksLikeJobDescription(rawContent)) {
+  if (!looksTrackable(rawContent)) {
     return baseResult;
   }
 
-  emitJobStatus({
+  emitTrackerStatus({
     stage: "extracting",
-    message: "Calling local AI server at localhost:8080..."
+    message: "Checking dropped content for trackable dates..."
   });
 
   try {
-    const metadata = await extractJobMetadata(rawContent);
-    const job: JobTrackerRecord = {
-      uuid: `browser-job-${crypto.randomUUID()}`,
-      ...metadata,
-      application_date: todayString(),
-      status: "Applied",
-      resume: "",
+    const tracker: TrackerRecord = {
+      uuid: `browser-tracker-${crypto.randomUUID()}`,
+      title: compact(rawContent.split(/\r?\n/).find(Boolean) ?? "Track item").slice(0, 80),
+      date: extractFallbackDate(rawContent),
+      time: extractFallbackTime(rawContent),
+      link: extractFallbackUrl(rawContent),
+      context: compact(rawContent).slice(0, 420),
+      source: "Browser preview",
+      status: "Tracking",
       raw_content: rawContent,
       createdAt: now,
       updatedAt: new Date().toISOString()
     };
 
-    browserJobs.unshift(job);
-    emitJobStatus({
+    browserTrackers.unshift(tracker);
+    emitTrackerStatus({
       stage: "saved",
-      message: `Saved ${job.role} at ${job.company}`,
-      job
+      message: `Tracking ${tracker.title}`,
+      tracker,
+      trackers: [tracker]
     });
 
     return {
       prompt: baseResult.prompt,
-      job
+      tracker,
+      trackers: [tracker]
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Local job extraction failed.";
-    emitJobStatus({
+    const message = error instanceof Error ? error.message : "Tracker extraction failed.";
+    emitTrackerStatus({
       stage: "error",
       message,
       error: message
@@ -240,7 +159,7 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
 
     return {
       prompt: baseResult.prompt,
-      jobError: message
+      trackerError: message
     };
   }
 }
@@ -316,31 +235,31 @@ const browserApiFallback: SecondBrainApi = {
       context_hints: input.context_hints ?? []
     })
   },
-  jobs: {
-    list: async () => browserJobs,
-    update: async (input: UpdateJobTrackerInput) => {
-      const jobIndex = browserJobs.findIndex((job) => job.uuid === input.uuid);
+  tracker: {
+    list: async () => browserTrackers,
+    update: async (input: UpdateTrackerInput) => {
+      const trackerIndex = browserTrackers.findIndex((tracker) => tracker.uuid === input.uuid);
 
-      if (jobIndex < 0) {
-        throw new Error(`Browser preview cannot find job "${input.uuid}".`);
+      if (trackerIndex < 0) {
+        throw new Error(`Browser preview cannot find tracker "${input.uuid}".`);
       }
 
-      const current = browserJobs[jobIndex] as JobTrackerRecord;
+      const current = browserTrackers[trackerIndex] as TrackerRecord;
       const updated = {
         ...current,
         status: input.status ?? current.status,
-        resume: input.resume ?? current.resume,
+        context: input.context ?? current.context,
         updatedAt: new Date().toISOString()
       };
 
-      browserJobs.splice(jobIndex, 1);
-      browserJobs.unshift(updated);
+      browserTrackers.splice(trackerIndex, 1);
+      browserTrackers.unshift(updated);
       return updated;
     },
     onIngestionStatus: (handler) => {
-      jobStatusHandlers.add(handler);
+      trackerStatusHandlers.add(handler);
       return () => {
-        jobStatusHandlers.delete(handler);
+        trackerStatusHandlers.delete(handler);
       };
     }
   },
@@ -362,10 +281,38 @@ const browserApiFallback: SecondBrainApi = {
       ].join(""),
       path: "/browser-preview/graph.html",
       updatedAt: new Date().toISOString()
+    }),
+    removeSource: async () => ({
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: "/browser-preview/graph.json",
+      reportPath: "/browser-preview/GRAPH_REPORT.md",
+      stdout: "Browser preview source removal is a no-op.",
+      updatedAt: new Date().toISOString()
+    }),
+    collapseSource: async () => ({
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: "/browser-preview/graph.json",
+      reportPath: "/browser-preview/GRAPH_REPORT.md",
+      stdout: "Browser preview source collapse is a no-op.",
+      updatedAt: new Date().toISOString()
     })
   },
   clipboard: {
     readText: async () => navigator.clipboard?.readText?.() ?? ""
+  },
+  settings: {
+    getAi: async () => browserAiSettings,
+    updateAi: async (input: UpdateAiSettingsInput) => {
+      browserAiSettings = {
+        endpoint: input.endpoint ?? browserAiSettings.endpoint,
+        apiKey: input.apiKey ?? browserAiSettings.apiKey,
+        model: input.model ?? browserAiSettings.model,
+        updatedAt: new Date().toISOString()
+      };
+      return browserAiSettings;
+    }
   }
 };
 

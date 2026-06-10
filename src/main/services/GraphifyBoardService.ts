@@ -18,7 +18,6 @@ type GraphifyNode = Record<string, unknown> & {
   company?: unknown;
   role?: unknown;
   date?: unknown;
-  job_posted?: unknown;
   created_at?: unknown;
   modified_at?: unknown;
   updated_at?: unknown;
@@ -51,14 +50,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
-}
-
-function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.map(asString).filter(Boolean);
 }
 
 function normalizeId(value: unknown, fallback: string): string {
@@ -174,24 +165,6 @@ function buildDegreeMap(links: GraphifyLink[]): Map<string, number> {
   return degree;
 }
 
-function isJobEntity(node: GraphifyNode): boolean {
-  const tags = asStringArray(node.tags).map((tag) => tag.toLowerCase());
-  const values = Object.values(node)
-    .map((value) => (typeof value === "string" ? value.toLowerCase() : ""))
-    .join(" ");
-  const type = normalizeType(node).toLowerCase();
-  const hasCompanyRole = Boolean(asString(node.company)) && Boolean(asString(node.role));
-  const hasDate = Boolean(asString(node.date) || asString(node.job_posted));
-
-  return (
-    hasCompanyRole ||
-    (hasDate && /company|role|job/.test(values)) ||
-    tags.some((tag) => tag.includes("job")) ||
-    type.includes("job") ||
-    /job description|responsibilities|requirements|qualifications|apply|salary|company|role/.test(values)
-  );
-}
-
 export class GraphifyBoardService {
   constructor(
     private readonly graphPath: string,
@@ -259,26 +232,22 @@ export class GraphifyBoardService {
           ...item,
           rawData: {
             ...item.rawData,
-            relationCount: degree,
-            isJobEntity: isJobEntity(node)
+            relationCount: degree
           }
         },
-        isJob: isJobEntity(node),
         degree
       }))
       .sort(
         (left, right) =>
-          Number(right.isJob) - Number(left.isJob) ||
           right.item.modifiedAt.localeCompare(left.item.modifiedAt) ||
           right.degree - left.degree ||
           left.item.title.localeCompare(right.item.title)
       );
-    const jobCount = rows.filter((row) => row.isJob).length;
 
     return [
       {
         id: "entities-table",
-        title: jobCount > 0 ? `Graph Entities (${jobCount} job match${jobCount === 1 ? "" : "es"})` : "Graph Entities",
+        title: "Graph Entities",
         layoutType: "table",
         items: rows.map((row) => row.item)
       }

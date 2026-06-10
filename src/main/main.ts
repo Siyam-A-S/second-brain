@@ -6,7 +6,8 @@ import {
   clipboardChannels,
   fileChannels,
   FilesDroppedPayload,
-  jobChannels,
+  settingsChannels,
+  trackerChannels,
   WidgetMovePayload,
   windowChannels
 } from "../shared/ipc";
@@ -14,20 +15,22 @@ import type {
   ExportBoardPlaintextInput,
   ListBrainNodesInput,
   SearchBrainNodesInput,
-  UpdateJobTrackerInput,
+  UpdateAiSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateTrackerInput,
   WriteBrainNodeInput
 } from "../shared/brain";
 import type { BoardRule } from "../shared/types/board";
 import { AgentController } from "./services/AgentController";
+import { AiSettingsService } from "./services/AiSettingsService";
 import { EmbeddingService } from "./services/EmbeddingService";
 import { GraphifyBoardService } from "./services/GraphifyBoardService";
 import { GraphifyController } from "./services/GraphifyController";
 import { GraphRagService } from "./services/GraphRagService";
-import { JobTrackerService } from "./services/JobTrackerService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
 import { LlmService } from "./services/LlmService";
 import { StorageService } from "./services/StorageService";
+import { TrackerService } from "./services/TrackerService";
 
 let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
@@ -58,8 +61,8 @@ function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1360,
     height: 860,
-    minWidth: 1024,
-    minHeight: 680,
+    minWidth: 420,
+    minHeight: 360,
     frame: false,
     show: false,
     backgroundColor: "#FFFAF0",
@@ -177,9 +180,10 @@ function registerIpc(
   embeddings: EmbeddingService,
   graphRag: GraphRagService,
   localMcpServer: LocalMcpServer,
-  jobTracker: JobTrackerService,
+  tracker: TrackerService,
   graphify: GraphifyController,
-  graphifyBoard: GraphifyBoardService
+  graphifyBoard: GraphifyBoardService,
+  aiSettings: AiSettingsService
 ): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
@@ -248,30 +252,38 @@ function registerIpc(
   ipcMain.handle(brainChannels.organizedBoard, () => graphRag.getOrganizedBoard());
   ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) => graphRag.exportBoardPlaintext(input));
   ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) => storage.updateNodeSignals(input));
-  ipcMain.handle(jobChannels.list, () => jobTracker.listJobs());
-  ipcMain.handle(jobChannels.update, (_event, input: UpdateJobTrackerInput) => jobTracker.updateJob(input));
+  ipcMain.handle(trackerChannels.list, () => tracker.listTrackers());
+  ipcMain.handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => tracker.updateTracker(input));
   ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => graphifyBoard.buildBoardState(rule));
   ipcMain.handle(boardChannels.getGraphHtml, () => graphify.readGraphHtml());
+  ipcMain.handle(boardChannels.removeSource, (_event, sourceFile: string) => graphify.removeSource(sourceFile));
+  ipcMain.handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
+    graphify.collapseSourceInto(sourceFile, targetSourceFile)
+  );
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
+  ipcMain.handle(settingsChannels.getAi, () => aiSettings.getSettings());
+  ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
 }
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath("userData");
+  const aiSettings = new AiSettingsService(userDataPath);
   const storage = new StorageService(path.join(userDataPath, "vault"));
-  const graphify = new GraphifyController(path.join(userDataPath, "vault", "raw"));
+  const graphify = new GraphifyController(path.join(userDataPath, "vault", "raw"), () => aiSettings.getSettings());
   const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
   graphifyController = graphify;
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
   const graphRag = new GraphRagService(storage, embeddings);
-  const llm = new LlmService();
-  const jobTracker = new JobTrackerService(storage, llm, graphify);
+  const llm = new LlmService(() => aiSettings.getSettings());
+  const tracker = new TrackerService(storage, llm);
 
   mcpServer = new LocalMcpServer({
     graphRag,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const agentController = new AgentController(mcpServer, jobTracker, llm, graphify);
+  const agentController = new AgentController(mcpServer, tracker, llm, graphify);
 
+  await aiSettings.initialize();
   await storage.initialize();
   await graphify.initialize();
 
@@ -281,7 +293,7 @@ app.whenReady().then(async () => {
     console.error("Failed to start local MCP server", error);
   }
 
-  registerIpc(storage, embeddings, graphRag, mcpServer, jobTracker, graphify, graphifyBoard);
+  registerIpc(storage, embeddings, graphRag, mcpServer, tracker, graphify, graphifyBoard, aiSettings);
   agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();

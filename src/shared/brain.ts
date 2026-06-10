@@ -132,33 +132,50 @@ export type GraphifyIngestionResult = {
   updatedAt: string;
 };
 
-export type JobTrackerRecord = {
+export type AiSettings = {
+  endpoint: string;
+  apiKey: string;
+  model: string;
+  updatedAt: string;
+};
+
+export type UpdateAiSettingsInput = {
+  endpoint?: string | undefined;
+  apiKey?: string | undefined;
+  model?: string | undefined;
+};
+
+export type TrackerStatus = "Tracking" | "Done" | "Dismissed";
+
+export type TrackerRecord = {
   uuid: string;
-  company: string;
-  role: string;
-  job_posted: string;
-  application_date: string;
-  status: JobApplicationStatus;
-  resume: string;
-  description_summary: string;
+  title: string;
+  date: string;
+  time: string;
+  endTime?: string | undefined;
+  timezone?: string | undefined;
+  location?: string | undefined;
+  link?: string | undefined;
+  context: string;
   source_node_uuid?: string | undefined;
+  source?: string | undefined;
+  status: TrackerStatus;
   raw_content: string;
   createdAt: string;
   updatedAt: string;
 };
 
-export type JobApplicationStatus = "Applied" | "Interview" | "Offer" | "Rejected" | "Withdrawn";
-
-export type UpdateJobTrackerInput = {
+export type UpdateTrackerInput = {
   uuid: string;
-  status?: JobApplicationStatus | undefined;
-  resume?: string | undefined;
+  status?: TrackerStatus | undefined;
+  context?: string | undefined;
 };
 
-export type JobIngestionStatus = {
-  stage: "idle" | "extracting" | "saved" | "error";
+export type TrackerIngestionStatus = {
+  stage: "idle" | "extracting" | "saved" | "skipped" | "error";
   message: string;
-  job?: JobTrackerRecord | undefined;
+  tracker?: TrackerRecord | undefined;
+  trackers?: TrackerRecord[] | undefined;
   error?: string | undefined;
 };
 
@@ -167,8 +184,10 @@ export type ProcessDroppedItemsResult = {
   graphify?: GraphifyIngestionResult | undefined;
   createdNode?: BrainNode | undefined;
   routing?: RoutingDecision | undefined;
-  job?: JobTrackerRecord | undefined;
-  jobError?: string | undefined;
+  tracker?: TrackerRecord | undefined;
+  trackers?: TrackerRecord[] | undefined;
+  trackerSkipped?: boolean | undefined;
+  trackerError?: string | undefined;
 };
 
 export type McpServerStatus = {

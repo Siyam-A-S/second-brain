@@ -3,16 +3,16 @@ import path from "node:path";
 import { BrowserWindow, ipcMain, type IpcMainInvokeEvent } from "electron";
 import type {
   IngestAndRouteFragmentResult,
-  JobIngestionStatus,
   ProcessDroppedItem,
-  ProcessDroppedItemsResult
+  ProcessDroppedItemsResult,
+  TrackerIngestionStatus
 } from "../../shared/brain";
-import { brainChannels, jobChannels } from "../../shared/ipc";
-import type { JobTrackerService } from "./JobTrackerService";
+import { brainChannels, trackerChannels } from "../../shared/ipc";
 import { LocalMcpServer } from "./LocalMcpServer";
 import type { LlmService } from "./LlmService";
 import { agentMethods, agentPrompts } from "./AgentRuntimeConfig";
 import type { GraphifyController } from "./GraphifyController";
+import type { TrackerService } from "./TrackerService";
 
 type DraftFragment = {
   raw_content: string;
@@ -52,29 +52,58 @@ function inferContextHints(items: ProcessDroppedItem[]): string[] {
   ).slice(0, 8);
 }
 
-function looksLikeJobDescription(content: string): boolean {
+function looksTrackable(content: string): boolean {
   const lower = content.toLowerCase();
-  const signals = [
-    "job description",
-    "responsibilities",
-    "requirements",
-    "qualifications",
-    "apply",
-    "salary",
-    "benefits",
-    "full-time",
-    "internship",
-    "about the role",
-    "we are hiring"
+  const dateSignals = [
+    /\b(?:today|tomorrow|tonight|next\s+(?:week|month|monday|tuesday|wednesday|thursday|friday|saturday|sunday))\b/i,
+    /\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,\s*\d{4})?\b/i,
+    /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/,
+    /\b\d{4}-\d{2}-\d{2}\b/,
+    /\b(?:mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i
   ];
+  const timeSignals = [/\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/i, /\b\d{1,2}\s*(?:am|pm)\b/i];
+  const intentSignals = [
+    "event name",
+    "event date",
+    "event date and time",
+    "link to join",
+    "join event",
+    "hackathon",
+    "webinar",
+    "conference",
+    "workshop",
+    "deadline",
+    "due",
+    "meeting",
+    "appointment",
+    "schedule",
+    "scheduled",
+    "call",
+    "follow up",
+    "follow-up",
+    "remind",
+    "renew",
+    "expires",
+    "interview",
+    "event",
+    "submit",
+    "review by"
+  ];
+  const temporalSignalCount =
+    dateSignals.reduce((count, signal) => count + (signal.test(content) ? 1 : 0), 0) +
+    timeSignals.reduce((count, signal) => count + (signal.test(content) ? 1 : 0), 0);
+  const hasTemporalSignal = temporalSignalCount > 0;
+  const hasIntentSignal = intentSignals.some((signal) => lower.includes(signal));
+  const hasEventFields = /event\s+(?:name|date|time)|link\s+to\s+join|more\s+about\s+the\s+event/i.test(content);
+  const looksLikeDatedList = temporalSignalCount >= 2 && /[\n;]/.test(content);
 
-  return signals.filter((signal) => lower.includes(signal)).length >= 2;
+  return hasTemporalSignal && (hasIntentSignal || hasEventFields || looksLikeDatedList);
 }
 
 export class AgentController {
   constructor(
     private readonly localMcpServer: LocalMcpServer,
-    private readonly jobTracker: JobTrackerService,
+    private readonly tracker: TrackerService,
     private readonly llm: LlmService,
     private readonly graphify?: GraphifyController | undefined
   ) {}
@@ -86,18 +115,26 @@ export class AgentController {
   }
 
   async processDroppedItems(event: IpcMainInvokeEvent, items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
+    const rawContent = await this.readDroppedContent(items);
+    const sourceName = inferTitle(items, rawContent);
+
     if (this.graphify) {
-      this.sendJobStatus(event, {
+      this.sendTrackerStatus(event, {
         stage: "extracting",
         message: "Saving raw files and updating Graphify..."
       });
 
       try {
-        const graphify = await this.graphify.ingestDroppedItems(items);
+        const [graphify, trackerResult] = await Promise.all([
+          this.graphify.ingestDroppedItems(items),
+          this.tryIngestTracker(event, rawContent, sourceName)
+        ]);
 
-        this.sendJobStatus(event, {
+        this.sendTrackerStatus(event, {
           stage: "saved",
-          message: `Graphify updated ${graphify.graphNodeCount ?? 0} nodes.`
+          message: trackerResult.trackers?.length
+            ? `Graphify updated ${graphify.graphNodeCount ?? 0} nodes and added ${trackerResult.trackers.length} tracker item${trackerResult.trackers.length === 1 ? "" : "s"}.`
+            : `Graphify updated ${graphify.graphNodeCount ?? 0} nodes.`
         });
 
         return {
@@ -105,11 +142,12 @@ export class AgentController {
             "Dropped content was saved raw into the local vault and ingested by Graphify.",
             `Graphify MCP command: ${this.graphify.getMcpServerCommand()}`
           ].join("\n"),
-          graphify
+          graphify,
+          ...trackerResult
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Graphify ingestion failed.";
-        this.sendJobStatus(event, {
+        this.sendTrackerStatus(event, {
           stage: "error",
           message,
           error: message
@@ -118,28 +156,24 @@ export class AgentController {
       }
     }
 
-    const rawContent = await this.readDroppedContent(items);
-    if (looksLikeJobDescription(rawContent)) {
-      return {
-        prompt: this.buildJobDescriptionPrompt(rawContent),
-        ...(await this.tryIngestJobDescription(event, rawContent))
-      };
-    }
-
     const draft = {
       raw_content: rawContent,
-      inferred_title: inferTitle(items, rawContent),
+      inferred_title: sourceName,
       generated_summary: summarize(rawContent),
       importance: 0.65,
       context_hints: inferContextHints(items)
     };
     const prompt = this.buildDroppedItemsPrompt(rawContent, draft);
-    const ingestResult = await this.callDroppedContentTool(prompt, draft);
+    const [ingestResult, trackerResult] = await Promise.all([
+      this.callDroppedContentTool(prompt, draft),
+      this.tryIngestTracker(event, rawContent, sourceName)
+    ]);
 
     return {
       prompt,
       createdNode: ingestResult.node,
-      routing: ingestResult.routing
+      routing: ingestResult.routing,
+      ...trackerResult
     };
   }
 
@@ -180,17 +214,6 @@ export class AgentController {
     ].join("\n");
   }
 
-  private buildJobDescriptionPrompt(rawContent: string): string {
-    return [
-      "You are the Second Brain job ingestion agent.",
-      "Extract the dropped job description into the local Jobs table only.",
-      "Do not create a graph topic, subtopic, or fragment for this job application.",
-      "",
-      "Dropped content:",
-      rawContent
-    ].join("\n");
-  }
-
   private async callDroppedContentTool(prompt: string, draft: DraftFragment): Promise<IngestAndRouteFragmentResult> {
     const method = agentMethods.droppedContentToolRouting;
     const tools = this.localMcpServer.listToolSpecs(method.enabledTools);
@@ -220,41 +243,56 @@ export class AgentController {
     }
   }
 
-  private sendJobStatus(event: IpcMainInvokeEvent, status: JobIngestionStatus): void {
-    event.sender.send(jobChannels.ingestionStatus, status);
+  private sendTrackerStatus(event: IpcMainInvokeEvent, status: TrackerIngestionStatus): void {
+    event.sender.send(trackerChannels.ingestionStatus, status);
     for (const window of BrowserWindow?.getAllWindows?.() ?? []) {
       if (!window.isDestroyed() && window.webContents !== event.sender) {
-        window.webContents.send(jobChannels.ingestionStatus, status);
+        window.webContents.send(trackerChannels.ingestionStatus, status);
       }
     }
   }
 
-  private async tryIngestJobDescription(
+  private async tryIngestTracker(
     event: IpcMainInvokeEvent,
     rawContent: string,
+    source: string,
     sourceNodeUuid?: string
-  ): Promise<Pick<ProcessDroppedItemsResult, "job" | "jobError">> {
-    this.sendJobStatus(event, {
+  ): Promise<Pick<ProcessDroppedItemsResult, "tracker" | "trackers" | "trackerError" | "trackerSkipped">> {
+    if (!rawContent.trim() || !looksTrackable(rawContent)) {
+      return { trackerSkipped: true };
+    }
+
+    this.sendTrackerStatus(event, {
       stage: "extracting",
-      message: "Extracting job details locally..."
+      message: "Checking dropped content for trackable dates..."
     });
 
     try {
-      const job = await this.jobTracker.ingestJobDescription(rawContent, sourceNodeUuid);
-      this.sendJobStatus(event, {
+      const trackers = await this.tracker.ingestTrackableContent(rawContent, source, sourceNodeUuid);
+
+      if (trackers.length === 0) {
+        this.sendTrackerStatus(event, {
+          stage: "skipped",
+          message: "No explicit date or time to track."
+        });
+        return { trackerSkipped: true };
+      }
+
+      this.sendTrackerStatus(event, {
         stage: "saved",
-        message: `Saved ${job.role} at ${job.company}`,
-        job
+        message: `Tracking ${trackers.length} item${trackers.length === 1 ? "" : "s"}`,
+        tracker: trackers[0],
+        trackers
       });
-      return { job };
+      return { tracker: trackers[0], trackers };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Local job extraction failed.";
-      this.sendJobStatus(event, {
+      const message = error instanceof Error ? error.message : "Tracker extraction failed.";
+      this.sendTrackerStatus(event, {
         stage: "error",
         message,
         error: message
       });
-      return { jobError: message };
+      return { trackerError: message };
     }
   }
 }

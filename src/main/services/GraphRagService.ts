@@ -81,7 +81,7 @@ function deriveTopicTitle(input: IngestAndRouteFragmentInput): string {
 }
 
 function isBoardNode(node: BrainNode): boolean {
-  return node.type !== "job";
+  return node.type !== "tracker";
 }
 
 type CandidateScore = {

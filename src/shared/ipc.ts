@@ -2,19 +2,21 @@ import type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AiSettings,
   ExportBoardPlaintextInput,
   GraphifyIngestionResult,
-  JobApplicationStatus,
-  JobIngestionStatus,
-  JobTrackerRecord,
-  UpdateJobTrackerInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   ListBrainNodesInput,
   McpServerStatus,
   SearchBrainNodesInput,
+  TrackerIngestionStatus,
+  TrackerRecord,
+  TrackerStatus,
+  UpdateAiSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateTrackerInput,
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
@@ -24,19 +26,21 @@ export type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AiSettings,
   ExportBoardPlaintextInput,
   GraphifyIngestionResult,
-  JobApplicationStatus,
-  JobIngestionStatus,
-  JobTrackerRecord,
-  UpdateJobTrackerInput,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   ListBrainNodesInput,
   McpServerStatus,
   SearchBrainNodesInput,
+  TrackerIngestionStatus,
+  TrackerRecord,
+  TrackerStatus,
+  UpdateAiSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateTrackerInput,
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
@@ -72,27 +76,35 @@ export const brainChannels = {
   updateNodeSignals: "brain-update-node-signals"
 } as const;
 
-export const jobChannels = {
-  list: "jobs-list",
-  update: "jobs-update",
-  ingestionStatus: "job-ingestion-status"
+export const trackerChannels = {
+  list: "tracker-list",
+  update: "tracker-update",
+  ingestionStatus: "tracker-ingestion-status"
 } as const;
 
 export const boardChannels = {
   getState: "get-board-state",
-  getGraphHtml: "get-graph-html"
+  getGraphHtml: "get-graph-html",
+  removeSource: "remove-board-source",
+  collapseSource: "collapse-board-source"
 } as const;
 
 export const clipboardChannels = {
   readText: "clipboard-read-text"
 } as const;
 
+export const settingsChannels = {
+  getAi: "settings-get-ai",
+  updateAi: "settings-update-ai"
+} as const;
+
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
 export type FileChannel = (typeof fileChannels)[keyof typeof fileChannels];
 export type BrainChannel = (typeof brainChannels)[keyof typeof brainChannels];
-export type JobChannel = (typeof jobChannels)[keyof typeof jobChannels];
+export type TrackerChannel = (typeof trackerChannels)[keyof typeof trackerChannels];
 export type BoardChannel = (typeof boardChannels)[keyof typeof boardChannels];
 export type ClipboardChannel = (typeof clipboardChannels)[keyof typeof clipboardChannels];
+export type SettingsChannel = (typeof settingsChannels)[keyof typeof settingsChannels];
 
 export type DroppedFile = {
   name: string;
@@ -149,16 +161,22 @@ export type SecondBrainApi = {
     exportBoardPlaintext: (input?: ExportBoardPlaintextInput) => Promise<string>;
     updateNodeSignals: (input: UpdateNodeSignalsInput) => Promise<BrainNode>;
   };
-  jobs: {
-    list: () => Promise<JobTrackerRecord[]>;
-    update: (input: UpdateJobTrackerInput) => Promise<JobTrackerRecord>;
-    onIngestionStatus: (handler: (status: JobIngestionStatus) => void) => () => void;
+  tracker: {
+    list: () => Promise<TrackerRecord[]>;
+    update: (input: UpdateTrackerInput) => Promise<TrackerRecord>;
+    onIngestionStatus: (handler: (status: TrackerIngestionStatus) => void) => () => void;
   };
   board: {
     getState: (rule: BoardRule) => Promise<GraphBoardTopic[]>;
     getGraphHtml: () => Promise<GraphHtmlDocument>;
+    removeSource: (sourceFile: string) => Promise<GraphifyIngestionResult>;
+    collapseSource: (sourceFile: string, targetSourceFile: string) => Promise<GraphifyIngestionResult>;
   };
   clipboard: {
     readText: () => Promise<string>;
+  };
+  settings: {
+    getAi: () => Promise<AiSettings>;
+    updateAi: (input: UpdateAiSettingsInput) => Promise<AiSettings>;
   };
 };

@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, BriefcaseBusiness, FileText, LayoutGrid, List, Loader2, Network, RefreshCcw, Table2 } from "lucide-react";
+import {
+  AlertCircle,
+  FileText,
+  GitMerge,
+  LayoutGrid,
+  List,
+  Loader2,
+  Network,
+  RefreshCcw,
+  Table2,
+  Trash2
+} from "lucide-react";
 import type { BoardItem, BoardRule, GraphBoardTopic, GraphHtmlDocument } from "../../shared/ipc";
 import { useBoardStore } from "../stores/useBoardStore";
 
@@ -82,7 +93,7 @@ function EntityTable({ topic }: { topic: GraphBoardTopic }): JSX.Element {
     <section className="space-y-4">
       <header>
         <h2 className="text-xl font-semibold text-slate-950">{topic.title}</h2>
-        <p className="mt-1 text-sm text-slate-500">Graphify nodes sorted by job match, source activity, and relation count.</p>
+        <p className="mt-1 text-sm text-slate-500">Graphify nodes sorted by source activity and relation count.</p>
       </header>
       <div className="max-h-[calc(100vh-12rem)] overflow-auto rounded-lg border border-slate-200 bg-white/60 shadow-sm">
         <table className="w-full min-w-[980px] border-collapse text-left text-sm">
@@ -116,7 +127,7 @@ function EntityTable({ topic }: { topic: GraphBoardTopic }): JSX.Element {
                   <div className="max-h-24 overflow-y-auto break-words pr-1">{item.sourceFile}</div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">
-                  {rawString(item, "job_posted") || rawString(item, "date") || formatDate(item.modifiedAt)}
+                  {rawString(item, "date") || formatDate(item.modifiedAt)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-4 text-slate-600">{rawNumber(item, "relationCount") ?? 0}</td>
                 <td className="min-w-96 max-w-xl px-4 py-4 leading-6 text-slate-700">
@@ -131,18 +142,76 @@ function EntityTable({ topic }: { topic: GraphBoardTopic }): JSX.Element {
   );
 }
 
-function SourceList({ topic }: { topic: GraphBoardTopic }): JSX.Element {
+function SourceList({
+  topic,
+  sourceOptions,
+  onCollapseSource,
+  onRemoveSource
+}: {
+  topic: GraphBoardTopic;
+  sourceOptions: string[];
+  onCollapseSource: (sourceFile: string, targetSourceFile: string) => Promise<void>;
+  onRemoveSource: (sourceFile: string) => Promise<void>;
+}): JSX.Element {
+  const sourceFile = topic.items[0]?.sourceFile ?? "";
+  const collapseOptions = sourceOptions.filter((option) => option && option !== sourceFile);
+  const [targetSourceFile, setTargetSourceFile] = useState(collapseOptions[0] ?? "");
+
+  useEffect(() => {
+    if (targetSourceFile && collapseOptions.includes(targetSourceFile)) {
+      return;
+    }
+
+    setTargetSourceFile(collapseOptions[0] ?? "");
+  }, [collapseOptions, targetSourceFile]);
+
   return (
     <section className="flex max-h-[30rem] flex-col rounded-lg border border-slate-200 bg-white/55 p-5 shadow-sm">
       <header className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold text-slate-950">{topic.title}</h2>
-          <p className="mt-1 truncate text-sm text-slate-500">{topic.items[0]?.sourceFile ?? "Unknown source"}</p>
+          <p className="mt-1 truncate text-sm text-slate-500">{sourceFile || "Unknown source"}</p>
         </div>
-        <span className="shrink-0 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-xs text-slate-500">
-          {topic.items.length}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-xs text-slate-500">
+            {topic.items.length}
+          </span>
+          <button
+            className="grid h-8 w-8 place-items-center rounded-md border border-rose-200 bg-white/70 text-rose-600 transition hover:bg-rose-50"
+            disabled={!sourceFile}
+            title="Remove source"
+            type="button"
+            onClick={() => void onRemoveSource(sourceFile)}
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </header>
+      <div className="mt-4 flex items-center gap-2">
+        <select
+          className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+          disabled={!sourceFile || collapseOptions.length === 0}
+          title="Collapse this source into another source"
+          value={targetSourceFile}
+          onChange={(event) => setTargetSourceFile(event.target.value)}
+        >
+          {collapseOptions.length === 0 ? <option value="">No target source</option> : null}
+          {collapseOptions.map((option) => (
+            <option key={option} value={option}>
+              {displaySource(option)}
+            </option>
+          ))}
+        </select>
+        <button
+          className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/70 text-slate-600 transition hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!sourceFile || !targetSourceFile}
+          title="Collapse source into selected source"
+          type="button"
+          onClick={() => void onCollapseSource(sourceFile, targetSourceFile)}
+        >
+          <GitMerge size={15} />
+        </button>
+      </div>
       <ul className="mt-4 min-h-0 divide-y divide-slate-200/80 overflow-y-auto pr-1">
         {topic.items.map((item) => (
           <li key={item.id} className="py-3">
@@ -160,12 +229,29 @@ function SourceList({ topic }: { topic: GraphBoardTopic }): JSX.Element {
   );
 }
 
-function TopicView({ topic }: { topic: GraphBoardTopic }): JSX.Element {
+function TopicView({
+  topic,
+  sourceOptions,
+  onCollapseSource,
+  onRemoveSource
+}: {
+  topic: GraphBoardTopic;
+  sourceOptions: string[];
+  onCollapseSource: (sourceFile: string, targetSourceFile: string) => Promise<void>;
+  onRemoveSource: (sourceFile: string) => Promise<void>;
+}): JSX.Element {
   switch (topic.layoutType) {
     case "table":
       return <EntityTable topic={topic} />;
     case "list":
-      return <SourceList topic={topic} />;
+      return (
+        <SourceList
+          topic={topic}
+          sourceOptions={sourceOptions}
+          onCollapseSource={onCollapseSource}
+          onRemoveSource={onRemoveSource}
+        />
+      );
     case "masonry":
     default:
       return <MasonryGrid topic={topic} />;
@@ -227,6 +313,7 @@ export function BoardRenderer({ refreshKey }: BoardRendererProps): JSX.Element {
   const [graphDocument, setGraphDocument] = useState<GraphHtmlDocument | null>(null);
   const [graphLoadState, setGraphLoadState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [graphError, setGraphError] = useState<string | null>(null);
+  const [sourceActionError, setSourceActionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === "graph") {
@@ -238,6 +325,13 @@ export function BoardRenderer({ refreshKey }: BoardRendererProps): JSX.Element {
   }, [activeTab, loadBoard, refreshKey]);
 
   const visibleTopics = useMemo(() => topics.filter((topic) => topic.items.length > 0), [topics]);
+  const sourceOptions = useMemo(
+    () =>
+      visibleTopics
+        .map((topic) => topic.items[0]?.sourceFile ?? "")
+        .filter((sourceFile, index, all) => sourceFile && all.indexOf(sourceFile) === index),
+    [visibleTopics]
+  );
 
   async function loadGraphHtml(): Promise<void> {
     setGraphLoadState("loading");
@@ -266,6 +360,46 @@ export function BoardRenderer({ refreshKey }: BoardRendererProps): JSX.Element {
     }
 
     await loadBoard(activeTab);
+  }
+
+  async function removeSource(sourceFile: string): Promise<void> {
+    if (!sourceFile) {
+      return;
+    }
+
+    setSourceActionError(null);
+
+    try {
+      await window.api.board.removeSource(sourceFile);
+      await loadBoard(activeTab === "graph" ? "source" : activeTab);
+      if (activeTab === "graph") {
+        await loadGraphHtml();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to remove source.";
+      console.error("Unable to remove source", error);
+      setSourceActionError(message);
+    }
+  }
+
+  async function collapseSource(sourceFile: string, targetSourceFile: string): Promise<void> {
+    if (!sourceFile || !targetSourceFile) {
+      return;
+    }
+
+    setSourceActionError(null);
+
+    try {
+      await window.api.board.collapseSource(sourceFile, targetSourceFile);
+      await loadBoard(activeTab === "graph" ? "source" : activeTab);
+      if (activeTab === "graph") {
+        await loadGraphHtml();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to collapse source.";
+      console.error("Unable to collapse source", error);
+      setSourceActionError(message);
+    }
   }
 
   return (
@@ -319,17 +453,23 @@ export function BoardRenderer({ refreshKey }: BoardRendererProps): JSX.Element {
           </div>
         ) : null}
 
+        {activeTab === "source" && sourceActionError ? (
+          <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            {sourceActionError}
+          </div>
+        ) : null}
+
         {activeTab !== "graph" && loadState === "ready" && visibleTopics.length === 0 ? (
           <div className="grid h-full place-items-center">
             <div className="max-w-md text-center">
-              {rule === "entity" ? (
-                <BriefcaseBusiness className="mx-auto text-slate-400" size={32} />
+              {activeTab === "entity" ? (
+                <Table2 className="mx-auto text-slate-400" size={32} />
               ) : (
                 <FileText className="mx-auto text-slate-400" size={32} />
               )}
               <h2 className="mt-4 text-xl font-semibold text-slate-950">No Graphify items yet</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
-                {rule === "entity"
+                {activeTab === "entity"
                   ? "The entity table shows graph nodes after Graphify writes graph.json."
                   : "Drop supported files to build the local graph."}
               </p>
@@ -338,9 +478,15 @@ export function BoardRenderer({ refreshKey }: BoardRendererProps): JSX.Element {
         ) : null}
 
         {activeTab !== "graph" && loadState === "ready" && visibleTopics.length > 0 ? (
-          <div className={rule === "source" ? "grid grid-cols-1 gap-4 xl:grid-cols-2" : "space-y-8"}>
+          <div className={activeTab === "source" ? "grid grid-cols-1 gap-4 xl:grid-cols-2" : "space-y-8"}>
             {visibleTopics.map((topic) => (
-              <TopicView key={topic.id} topic={topic} />
+              <TopicView
+                key={topic.id}
+                topic={topic}
+                sourceOptions={sourceOptions}
+                onCollapseSource={collapseSource}
+                onRemoveSource={removeSource}
+              />
             ))}
           </div>
         ) : null}

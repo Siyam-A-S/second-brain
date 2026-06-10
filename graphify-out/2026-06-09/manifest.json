@@ -15,8 +15,8 @@
     "semantic_hash": "96fcb033aeff2d5ba9440863afa2b578"
   },
   "src/main/main.ts": {
-    "mtime": 1781062716.78572,
-    "ast_hash": "304b3d986401ca75c6e7949f08c62ff2",
+    "mtime": 1781058907.8161848,
+    "ast_hash": "16501d75197c974dfc70c511f3f5bb74",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "src/main/services/AgentRuntimeConfig.ts": {
-    "mtime": 1781062645.666114,
-    "ast_hash": "abba6705d5c1562d8cc167022cc731b3",
+    "mtime": 1781058805.583943,
+    "ast_hash": "e0a9742494233cc2da442cc8a53664ef",
     "semantic_hash": ""
   },
   "src/main/services/EmbeddingService.ts": {
@@ -35,13 +35,13 @@
     "semantic_hash": "8516a40e2cb22536c7d76f9224c5b762"
   },
   "src/main/services/GraphRagService.ts": {
-    "mtime": 1781062750.8180056,
-    "ast_hash": "1246d76ae1cdc753e3d28ef4b0ff6047",
+    "mtime": 1781056139.3992891,
+    "ast_hash": "13424f3d6e80da2f0164cea618cea795",
     "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1781062668.5473106,
-    "ast_hash": "d7437813cb1955834c823bbb6e2808a1",
+    "mtime": 1781058800.9409318,
+    "ast_hash": "3675d948a3b22d0e079a34ff5520ea7d",
     "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1781062599.3257117,
-    "ast_hash": "dd606e4369fe897dd70ab24a0558b68d",
+    "mtime": 1781055910.9289165,
+    "ast_hash": "9dfc1cd136ccd5a53a9c387805df6c8d",
     "semantic_hash": ""
   },
   "src/renderer/components/ClipboardList.tsx": {
@@ -90,8 +90,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1781062712.0466802,
-    "ast_hash": "7a94ffa124735c5442a22400abec18d6",
+    "mtime": 1781058930.2402372,
+    "ast_hash": "ed64d68c7e9b4a11e02039b11d26dd6a",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -120,14 +120,19 @@
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1781062580.477546,
-    "ast_hash": "79d44d31a76e4921375d2b2c615b4d54",
+    "mtime": 1781058760.2398345,
+    "ast_hash": "e4d2eeb9244641155803152d7e5e661d",
     "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1781062589.310624,
-    "ast_hash": "79428358fb70e06b71d0ee0d3e13d8df",
+    "mtime": 1781055894.6288865,
+    "ast_hash": "5a0219ecb378b07f3e4c3cf17e4e2ae9",
     "semantic_hash": ""
+  },
+  "src/shared/jobJson.ts": {
+    "mtime": 1780803633.2573915,
+    "ast_hash": "656cec11ac11dac8b9189b3ab5836af9",
+    "semantic_hash": "656cec11ac11dac8b9189b3ab5836af9"
   },
   "src/vite-env.d.ts": {
     "mtime": 1780636744.1017172,
@@ -235,18 +240,18 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1781062804.4204497,
-    "ast_hash": "713d7b72d3ca2fd43251fce7387b816b",
+    "mtime": 1781058920.4142141,
+    "ast_hash": "62095317d0374455586237b4060951fc",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
-    "mtime": 1781062739.503911,
-    "ast_hash": "03063152cccd7ea1647b0d608740d3b3",
+    "mtime": 1781056133.08428,
+    "ast_hash": "0f4d7330b906de949e02b5ac23eda4bc",
     "semantic_hash": ""
   },
   "src/renderer/components/BoardRenderer.tsx": {
-    "mtime": 1781062836.539713,
-    "ast_hash": "55e4c693a9292927d458c72caa2939f6",
+    "mtime": 1781056117.041256,
+    "ast_hash": "a1fa394398d01e8b5d62b56198698811",
     "semantic_hash": ""
   },
   "src/renderer/stores/useBoardStore.ts": {
@@ -277,11 +282,6 @@
   "src/renderer/stores/useTrackerStore.ts": {
     "mtime": 1781058950.1572838,
     "ast_hash": "1496b0a8476ad6be714665ec317bbc2d",
-    "semantic_hash": ""
-  },
-  "src/shared/jsonObject.ts": {
-    "mtime": 1781062686.7474658,
-    "ast_hash": "ea1e1e134cd4107c896eb3780a0dc391",
     "semantic_hash": ""
   }
 }

@@ -1,6 +1,30 @@
 export type ParsedJsonObject = Record<string, unknown>;
 
-const expectedJobKeys = ["company", "role", "job_posted", "application_date", "date", "description_summary"] as const;
+const expectedJsonKeys = [
+  "tool",
+  "input",
+  "reason",
+  "items",
+  "trackable",
+  "title",
+  "name",
+  "event_name",
+  "meeting_name",
+  "date",
+  "time",
+  "start_time",
+  "endTime",
+  "end_time",
+  "timezone",
+  "location",
+  "place",
+  "link",
+  "join_link",
+  "url",
+  "context",
+  "description",
+  "summary"
+] as const;
 
 function stripCodeFence(value: string): string {
   return value
@@ -81,7 +105,7 @@ function repairLooseJson(value: string): string {
 function parseExpectedFields(value: string): ParsedJsonObject | null {
   const result: ParsedJsonObject = {};
 
-  for (const key of expectedJobKeys) {
+  for (const key of expectedJsonKeys) {
     const quotedPattern = new RegExp(`[\"']?${key}[\"']?\\s*:\\s*([\"'])([\\s\\S]*?)\\1`, "i");
     const unquotedPattern = new RegExp(`[\"']?${key}[\"']?\\s*:\\s*([^,}\\n]+)`, "i");
     const quoted = quotedPattern.exec(value);
