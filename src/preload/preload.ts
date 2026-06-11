@@ -54,7 +54,10 @@ const boardChannels = {
 } as const;
 
 const clipboardChannels = {
-  readText: "clipboard-read-text"
+  readText: "clipboard-read-text",
+  writeText: "clipboard-write-text",
+  listSmartClips: "smart-clips-list",
+  useSmartClip: "smart-clips-use"
 } as const;
 
 const settingsChannels = {
@@ -107,7 +110,10 @@ const api: SecondBrainApi = {
       ipcRenderer.invoke(boardChannels.collapseSource, sourceFile, targetSourceFile)
   },
   clipboard: {
-    readText: () => ipcRenderer.invoke(clipboardChannels.readText)
+    readText: () => ipcRenderer.invoke(clipboardChannels.readText),
+    writeText: (text: string) => ipcRenderer.invoke(clipboardChannels.writeText, text),
+    listSmartClips: () => ipcRenderer.invoke(clipboardChannels.listSmartClips),
+    useSmartClip: (id: string) => ipcRenderer.invoke(clipboardChannels.useSmartClip, id)
   },
   settings: {
     getAi: () => ipcRenderer.invoke(settingsChannels.getAi),

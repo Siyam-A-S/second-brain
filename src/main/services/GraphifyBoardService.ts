@@ -9,6 +9,8 @@ type GraphifyNode = Record<string, unknown> & {
   node_type?: unknown;
   file_type?: unknown;
   summary?: unknown;
+  contextual_definition?: unknown;
+  flashcard_definition?: unknown;
   description?: unknown;
   source_file?: unknown;
   sourceFile?: unknown;
@@ -77,6 +79,8 @@ function normalizeType(node: GraphifyNode): string {
 
 function summarizeNode(node: GraphifyNode): string {
   return (
+    asString(node.contextual_definition) ||
+    asString(node.flashcard_definition) ||
     asString(node.summary) ||
     asString(node.description) ||
     asString(node.source_location) ||

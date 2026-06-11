@@ -29,6 +29,7 @@ import { GraphifyController } from "./services/GraphifyController";
 import { GraphRagService } from "./services/GraphRagService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
 import { LlmService } from "./services/LlmService";
+import { SmartClipService } from "./services/SmartClipService";
 import { StorageService } from "./services/StorageService";
 import { TrackerService } from "./services/TrackerService";
 
@@ -183,7 +184,8 @@ function registerIpc(
   tracker: TrackerService,
   graphify: GraphifyController,
   graphifyBoard: GraphifyBoardService,
-  aiSettings: AiSettingsService
+  aiSettings: AiSettingsService,
+  smartClips: SmartClipService
 ): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
@@ -231,7 +233,27 @@ function registerIpc(
   });
 
   ipcMain.handle(fileChannels.dropped, async (_event, payload: FilesDroppedPayload) => {
-    const result = await graphify.ingestFilesDrop(payload);
+    const processItems = [
+      ...payload.files.map((file) => ({
+        name: file.name,
+        path: file.path,
+        type: file.type,
+        buffer: file.buffer
+      })),
+      ...(payload.text
+        ? [
+            {
+              name: "dropped-text.txt",
+              type: "text/plain",
+              text: payload.text
+            }
+          ]
+        : [])
+    ];
+    const [result] = await Promise.all([
+      graphify.ingestFilesDrop(payload),
+      smartClips.ingestDroppedItems(processItems, payload.text ?? "")
+    ]);
     console.info("Files dropped and ingested by Graphify", {
       writtenFileCount: result.writtenFileCount,
       graphNodeCount: result.graphNodeCount,
@@ -261,6 +283,15 @@ function registerIpc(
     graphify.collapseSourceInto(sourceFile, targetSourceFile)
   );
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
+  ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
+    clipboard.writeText(text);
+  });
+  ipcMain.handle(clipboardChannels.listSmartClips, () => smartClips.listClips());
+  ipcMain.handle(clipboardChannels.useSmartClip, async (_event, id: string) => {
+    const clip = await smartClips.recordUse(id);
+    clipboard.writeText(clip.value);
+    return clip;
+  });
   ipcMain.handle(settingsChannels.getAi, () => aiSettings.getSettings());
   ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
 }
@@ -275,15 +306,17 @@ app.whenReady().then(async () => {
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
   const graphRag = new GraphRagService(storage, embeddings);
   const llm = new LlmService(() => aiSettings.getSettings());
+  const smartClips = new SmartClipService(userDataPath);
   const tracker = new TrackerService(storage, llm);
 
   mcpServer = new LocalMcpServer({
     graphRag,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const agentController = new AgentController(mcpServer, tracker, llm, graphify);
+  const agentController = new AgentController(mcpServer, tracker, llm, smartClips, graphify);
 
   await aiSettings.initialize();
+  await smartClips.initialize();
   await storage.initialize();
   await graphify.initialize();
 
@@ -293,7 +326,7 @@ app.whenReady().then(async () => {
     console.error("Failed to start local MCP server", error);
   }
 
-  registerIpc(storage, embeddings, graphRag, mcpServer, tracker, graphify, graphifyBoard, aiSettings);
+  registerIpc(storage, embeddings, graphRag, mcpServer, tracker, graphify, graphifyBoard, aiSettings, smartClips);
   agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();

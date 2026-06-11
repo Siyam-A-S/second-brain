@@ -179,6 +179,18 @@ export type TrackerIngestionStatus = {
   error?: string | undefined;
 };
 
+export type SmartClipKind = "bash" | "path" | "text";
+
+export type SmartClip = {
+  id: string;
+  title: string;
+  value: string;
+  kind: SmartClipKind;
+  frequency: number;
+  createdAt: string;
+  lastUsedAt: string;
+};
+
 export type ProcessDroppedItemsResult = {
   prompt: string;
   graphify?: GraphifyIngestionResult | undefined;
@@ -188,6 +200,7 @@ export type ProcessDroppedItemsResult = {
   trackers?: TrackerRecord[] | undefined;
   trackerSkipped?: boolean | undefined;
   trackerError?: string | undefined;
+  smartClips?: SmartClip[] | undefined;
 };
 
 export type McpServerStatus = {

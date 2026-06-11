@@ -5,6 +5,7 @@ import type { AiSettings, ProcessDroppedItemsResult } from "../../shared/ipc";
 
 type SidebarProps = {
   onDropProcessed: (result: ProcessDroppedItemsResult) => void;
+  refreshKey: number;
 };
 
 function AiSettingsPanel(): JSX.Element {
@@ -110,14 +111,14 @@ function AiSettingsPanel(): JSX.Element {
   );
 }
 
-export function Sidebar({ onDropProcessed }: SidebarProps): JSX.Element {
+export function Sidebar({ onDropProcessed, refreshKey }: SidebarProps): JSX.Element {
   return (
     <aside className="flex min-w-80 basis-[30%] flex-col gap-5 border-r border-black/5 bg-white/25 p-5">
       <AiSettingsPanel />
       <div className="min-h-0 flex-1">
         <DropTarget onProcessed={onDropProcessed} />
       </div>
-      <ClipboardList />
+      <ClipboardList refreshKey={refreshKey} />
     </aside>
   );
 }

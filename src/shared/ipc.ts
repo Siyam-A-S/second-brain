@@ -11,6 +11,8 @@ import type {
   ListBrainNodesInput,
   McpServerStatus,
   SearchBrainNodesInput,
+  SmartClip,
+  SmartClipKind,
   TrackerIngestionStatus,
   TrackerRecord,
   TrackerStatus,
@@ -35,6 +37,8 @@ export type {
   ListBrainNodesInput,
   McpServerStatus,
   SearchBrainNodesInput,
+  SmartClip,
+  SmartClipKind,
   TrackerIngestionStatus,
   TrackerRecord,
   TrackerStatus,
@@ -90,7 +94,10 @@ export const boardChannels = {
 } as const;
 
 export const clipboardChannels = {
-  readText: "clipboard-read-text"
+  readText: "clipboard-read-text",
+  writeText: "clipboard-write-text",
+  listSmartClips: "smart-clips-list",
+  useSmartClip: "smart-clips-use"
 } as const;
 
 export const settingsChannels = {
@@ -174,6 +181,9 @@ export type SecondBrainApi = {
   };
   clipboard: {
     readText: () => Promise<string>;
+    writeText: (text: string) => Promise<void>;
+    listSmartClips: () => Promise<SmartClip[]>;
+    useSmartClip: (id: string) => Promise<SmartClip>;
   };
   settings: {
     getAi: () => Promise<AiSettings>;

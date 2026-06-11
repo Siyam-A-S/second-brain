@@ -1,68 +1,56 @@
 import { create } from "zustand";
-
-export type ClipboardKind = "code" | "text" | "path";
-
-export type ClipboardItem = {
-  id: string;
-  title: string;
-  value: string;
-  kind: ClipboardKind;
-  frequency: number;
-  lastUsedAt: number;
-};
+import type { SmartClip } from "../../shared/ipc";
 
 type ClipboardState = {
-  items: ClipboardItem[];
-  recordUse: (id: string) => void;
+  items: SmartClip[];
+  isLoading: boolean;
+  error: string | null;
+  load: () => Promise<void>;
+  copy: (id: string) => Promise<void>;
 };
 
-const now = Date.now();
+function sortSmartClips(items: SmartClip[]): SmartClip[] {
+  return [...items].sort(
+    (left, right) =>
+      right.frequency - left.frequency ||
+      Date.parse(right.lastUsedAt) - Date.parse(left.lastUsedAt) ||
+      left.title.localeCompare(right.title)
+  );
+}
 
-export const useClipboardStore = create<ClipboardState>((set, get) => ({
-  items: [
-    {
-      id: "clip-1",
-      title: "Shell cleanup",
-      value: "rm -rf ./foo/*",
-      kind: "code",
-      frequency: 2,
-      lastUsedAt: now - 3_000
-    },
-    {
-      id: "clip-2",
-      title: "Project note",
-      value: "Compare local WASM embedding latency against cached vector lookups.",
-      kind: "text",
-      frequency: 5,
-      lastUsedAt: now - 12_000
-    },
-    {
-      id: "clip-3",
-      title: "Vault path",
-      value: "C:\\Users\\rushat\\Documents\\SecondBrain\\vault",
-      kind: "path",
-      frequency: 1,
-      lastUsedAt: now - 7_000
-    },
-    {
-      id: "clip-4",
-      title: "IPC sketch",
-      value: "files-dropped -> main MCP router -> embedding queue",
-      kind: "text",
-      frequency: 3,
-      lastUsedAt: now - 1_000
+export const useClipboardStore = create<ClipboardState>((set) => ({
+  items: [],
+  isLoading: false,
+  error: null,
+  load: async () => {
+    set({ isLoading: true, error: null });
+
+    try {
+      set({
+        items: sortSmartClips(await window.api.clipboard.listSmartClips()),
+        isLoading: false
+      });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : "Unable to load Smart Clips."
+      });
     }
-  ],
-  recordUse: (id: string) =>
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              frequency: item.frequency + 1,
-              lastUsedAt: Date.now()
-            }
-          : item
-      )
-    }))
+  },
+  copy: async (id: string) => {
+    try {
+      const updated = await window.api.clipboard.useSmartClip(id);
+      set((state) => ({
+        error: null,
+        items: sortSmartClips([
+          updated,
+          ...state.items.filter((item) => item.id !== updated.id)
+        ])
+      }));
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : "Unable to copy Smart Clip."
+      });
+    }
+  }
 }));

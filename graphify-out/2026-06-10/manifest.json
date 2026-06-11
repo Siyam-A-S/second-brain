@@ -15,18 +15,18 @@
     "semantic_hash": "96fcb033aeff2d5ba9440863afa2b578"
   },
   "src/main/main.ts": {
-    "mtime": 1781065473.7970898,
-    "ast_hash": "6d48ce98f28cad4ce947daabf6a99d34",
+    "mtime": 1781062716.78572,
+    "ast_hash": "304b3d986401ca75c6e7949f08c62ff2",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
-    "mtime": 1781065232.852824,
-    "ast_hash": "3acfdcd2c2896d8fd3ce5944a02e8227",
+    "mtime": 1781058836.733017,
+    "ast_hash": "548f27a01b7a62332d9049ece89f171d",
     "semantic_hash": ""
   },
   "src/main/services/AgentRuntimeConfig.ts": {
-    "mtime": 1781065311.1239114,
-    "ast_hash": "c76e6b93a233fb79adba21e520fd4a78",
+    "mtime": 1781062645.666114,
+    "ast_hash": "abba6705d5c1562d8cc167022cc731b3",
     "semantic_hash": ""
   },
   "src/main/services/EmbeddingService.ts": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1781065342.1138737,
-    "ast_hash": "acc645ae28bc84c31af5b7997656c770",
+    "mtime": 1781062668.5473106,
+    "ast_hash": "d7437813cb1955834c823bbb6e2808a1",
     "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
@@ -60,14 +60,14 @@
     "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1781065238.4696,
-    "ast_hash": "ba98dacbd2f0878f72d06459686f33ef",
+    "mtime": 1781062599.3257117,
+    "ast_hash": "dd606e4369fe897dd70ab24a0558b68d",
     "semantic_hash": ""
   },
   "src/renderer/components/ClipboardList.tsx": {
-    "mtime": 1781065276.3261523,
-    "ast_hash": "7a54a2476a289635ab56e6454f4ace36",
-    "semantic_hash": ""
+    "mtime": 1780638087.4118874,
+    "ast_hash": "3ea1016f1ba072bd25e57844379a52b2",
+    "semantic_hash": "3ea1016f1ba072bd25e57844379a52b2"
   },
   "src/renderer/components/DropTarget.tsx": {
     "mtime": 1781058872.0551004,
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/Sidebar.tsx": {
-    "mtime": 1781065282.9479098,
-    "ast_hash": "5b20826ddad36ed09206d20a6b51f319",
+    "mtime": 1781056091.0252166,
+    "ast_hash": "570ee6d7d00484ef5d7fd4e988b1b598",
     "semantic_hash": ""
   },
   "src/renderer/components/TitleBar.tsx": {
@@ -90,8 +90,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1781065296.6994157,
-    "ast_hash": "1bfba1c8e6c89a834434b110dc75d817",
+    "mtime": 1781062712.0466802,
+    "ast_hash": "7a94ffa124735c5442a22400abec18d6",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -105,9 +105,9 @@
     "semantic_hash": "55447f0383a8f3eb598401c87c1ea144"
   },
   "src/renderer/stores/useClipboardStore.ts": {
-    "mtime": 1781065257.6768525,
-    "ast_hash": "f584b608b8505d7c9657ef05ac89a95c",
-    "semantic_hash": ""
+    "mtime": 1780638132.8245006,
+    "ast_hash": "2a2467e18a6330b2d54fc441a973efb0",
+    "semantic_hash": "2a2467e18a6330b2d54fc441a973efb0"
   },
   "src/renderer/views/FloatingWidget.tsx": {
     "mtime": 1781058973.116383,
@@ -115,18 +115,18 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1781065287.300752,
-    "ast_hash": "6897a9ca40fd6ccce9520edb820ea29e",
+    "mtime": 1781058913.4081979,
+    "ast_hash": "e741a1d33e6ce956a90274fac5058063",
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1781065176.2282214,
-    "ast_hash": "d49d195bfadfd83b0f298439108001a3",
+    "mtime": 1781062580.477546,
+    "ast_hash": "79d44d31a76e4921375d2b2c615b4d54",
     "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1781065181.1770012,
-    "ast_hash": "9be321a35d251c3290346552d018f5c9",
+    "mtime": 1781062589.310624,
+    "ast_hash": "79428358fb70e06b71d0ee0d3e13d8df",
     "semantic_hash": ""
   },
   "src/vite-env.d.ts": {
@@ -235,18 +235,18 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1781065383.979566,
-    "ast_hash": "8b5917c73b08d2747bd33f97a726a257",
+    "mtime": 1781062804.4204497,
+    "ast_hash": "713d7b72d3ca2fd43251fce7387b816b",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
-    "mtime": 1781065403.8459814,
-    "ast_hash": "12bd18f79dd8b31b64e7e63aa4f435db",
+    "mtime": 1781062739.503911,
+    "ast_hash": "03063152cccd7ea1647b0d608740d3b3",
     "semantic_hash": ""
   },
   "src/renderer/components/BoardRenderer.tsx": {
-    "mtime": 1781065431.2602098,
-    "ast_hash": "edb2e07b962bfc97045425d98d488ff1",
+    "mtime": 1781062836.539713,
+    "ast_hash": "55e4c693a9292927d458c72caa2939f6",
     "semantic_hash": ""
   },
   "src/renderer/stores/useBoardStore.ts": {
@@ -280,13 +280,8 @@
     "semantic_hash": ""
   },
   "src/shared/jsonObject.ts": {
-    "mtime": 1781065324.024472,
-    "ast_hash": "a46b6c76976e75d4738fc584d8384124",
-    "semantic_hash": ""
-  },
-  "src/main/services/SmartClipService.ts": {
-    "mtime": 1781065478.3829744,
-    "ast_hash": "441881fc5063ce40e304184240398f42",
+    "mtime": 1781062686.7474658,
+    "ast_hash": "ea1e1e134cd4107c896eb3780a0dc391",
     "semantic_hash": ""
   }
 }

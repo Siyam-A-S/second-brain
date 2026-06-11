@@ -14,6 +14,20 @@ export type GraphifyMcpToolSpec = {
   description?: string | undefined;
   inputSchema?: Record<string, unknown> | undefined;
 };
+export type GraphCardDefinitionInput = {
+  id: string;
+  title: string;
+  type: string;
+  summary: string;
+  sourceFile: string;
+  sourceContext: string;
+  community: string;
+  related: string[];
+};
+export type GraphCardDefinition = {
+  id: string;
+  definition: string;
+};
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -68,6 +82,20 @@ function normalizeLine(value: unknown, fallback: string): string {
 
 function normalizeOptionalLine(value: unknown): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
+}
+
+function normalizeDefinition(value: unknown): string {
+  const normalized = normalizeOptionalLine(value);
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized
+    .split(/(?<=[.!?])\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(" ")
+    .slice(0, 360);
 }
 
 function normalizeUrl(value: unknown): string {
@@ -297,6 +325,49 @@ export class LlmService {
     }
 
     return this.dedupeTrackerItems(items);
+  }
+
+  async defineGraphCards(cards: GraphCardDefinitionInput[]): Promise<GraphCardDefinition[]> {
+    if (cards.length === 0) {
+      return [];
+    }
+
+    const parsed = await this.completeJsonObject({
+      method: agentMethods.cardDefinition,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You write flashcard definitions for Second Brain graph cards.",
+            "Return exactly one raw minified JSON object.",
+            "No markdown, prose, explanations, or code fences.",
+            "Schema: {\"definitions\":[{\"id\":\"string\",\"definition\":\"one or two sentences\"}]}",
+            "Each definition must explain what the card means in this user's source context, not a generic dictionary definition.",
+            "Mention the source context only when it helps disambiguate the card.",
+            "Keep each definition under 45 words."
+          ].join(" ")
+        },
+        {
+          role: "user",
+          content: JSON.stringify({ cards })
+        }
+      ]
+    });
+    const rawDefinitions = Array.isArray(parsed.definitions) ? parsed.definitions : [];
+
+    return rawDefinitions
+      .map((value) => {
+        if (!value || typeof value !== "object") {
+          return null;
+        }
+
+        const record = value as Record<string, unknown>;
+        const id = normalizeOptionalLine(record.id);
+        const definition = normalizeDefinition(record.definition);
+
+        return id && definition ? { id, definition } : null;
+      })
+      .filter((value): value is GraphCardDefinition => Boolean(value));
   }
 
   private async completeText(input: {

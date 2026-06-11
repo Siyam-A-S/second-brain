@@ -12,6 +12,7 @@ import { LocalMcpServer } from "./LocalMcpServer";
 import type { LlmService } from "./LlmService";
 import { agentMethods, agentPrompts } from "./AgentRuntimeConfig";
 import type { GraphifyController } from "./GraphifyController";
+import type { SmartClipService } from "./SmartClipService";
 import type { TrackerService } from "./TrackerService";
 
 type DraftFragment = {
@@ -105,6 +106,7 @@ export class AgentController {
     private readonly localMcpServer: LocalMcpServer,
     private readonly tracker: TrackerService,
     private readonly llm: LlmService,
+    private readonly smartClips: SmartClipService,
     private readonly graphify?: GraphifyController | undefined
   ) {}
 
@@ -125,9 +127,10 @@ export class AgentController {
       });
 
       try {
-        const [graphify, trackerResult] = await Promise.all([
+        const [graphify, trackerResult, smartClips] = await Promise.all([
           this.graphify.ingestDroppedItems(items),
-          this.tryIngestTracker(event, rawContent, sourceName)
+          this.tryIngestTracker(event, rawContent, sourceName),
+          this.smartClips.ingestDroppedItems(items, rawContent)
         ]);
 
         this.sendTrackerStatus(event, {
@@ -143,6 +146,7 @@ export class AgentController {
             `Graphify MCP command: ${this.graphify.getMcpServerCommand()}`
           ].join("\n"),
           graphify,
+          smartClips,
           ...trackerResult
         };
       } catch (error) {
@@ -164,15 +168,17 @@ export class AgentController {
       context_hints: inferContextHints(items)
     };
     const prompt = this.buildDroppedItemsPrompt(rawContent, draft);
-    const [ingestResult, trackerResult] = await Promise.all([
+    const [ingestResult, trackerResult, smartClips] = await Promise.all([
       this.callDroppedContentTool(prompt, draft),
-      this.tryIngestTracker(event, rawContent, sourceName)
+      this.tryIngestTracker(event, rawContent, sourceName),
+      this.smartClips.ingestDroppedItems(items, rawContent)
     ]);
 
     return {
       prompt,
       createdNode: ingestResult.node,
       routing: ingestResult.routing,
+      smartClips,
       ...trackerResult
     };
   }

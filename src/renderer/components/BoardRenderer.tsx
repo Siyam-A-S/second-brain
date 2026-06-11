@@ -76,11 +76,7 @@ function MasonryGrid({ topic }: { topic: GraphBoardTopic }): JSX.Element {
                 {item.type}
               </span>
             </div>
-            <div className="mt-3 min-h-0 overflow-y-auto pr-1 text-sm leading-6 text-slate-700">{item.summary}</div>
-            <div className="mt-4 flex items-center justify-between gap-3 text-xs text-slate-500">
-              <span className="truncate">{displaySource(item.sourceFile)}</span>
-              <span className="shrink-0">{formatDate(item.modifiedAt)}</span>
-            </div>
+            <div className="mt-4 min-h-0 overflow-y-auto pr-1 text-sm leading-6 text-slate-700">{item.summary}</div>
           </article>
         ))}
       </div>

@@ -3,6 +3,7 @@ import type {
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   SecondBrainApi,
+  SmartClip,
   TrackerIngestionStatus,
   TrackerRecord,
   UpdateAiSettingsInput,
@@ -11,6 +12,7 @@ import type {
 
 const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
 const browserTrackers: TrackerRecord[] = [];
+const browserSmartClips: SmartClip[] = [];
 let browserAiSettings = {
   endpoint: "http://localhost:8080/v1/chat/completions",
   apiKey: "local-dev-placeholder",
@@ -69,6 +71,45 @@ function extractFallbackUrl(content: string): string {
   return content.match(/https?:\/\/\S+/i)?.[0] ?? "";
 }
 
+function addBrowserSmartClip(value: string, kind: SmartClip["kind"]): SmartClip | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const id = `browser-${kind}-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 48)}`;
+  const existing = browserSmartClips.find((item) => item.id === id);
+
+  if (existing) {
+    existing.frequency += 1;
+    existing.lastUsedAt = now;
+    return existing;
+  }
+
+  const clip: SmartClip = {
+    id,
+    title: kind === "path" ? trimmed.split(/[\\/]/).filter(Boolean).at(-1) ?? trimmed : trimmed.slice(0, 80),
+    value: trimmed,
+    kind,
+    frequency: 1,
+    createdAt: now,
+    lastUsedAt: now
+  };
+
+  browserSmartClips.push(clip);
+  return clip;
+}
+
+function sortSmartClips(items: SmartClip[]): SmartClip[] {
+  return [...items].sort(
+    (left, right) =>
+      right.frequency - left.frequency ||
+      Date.parse(right.lastUsedAt) - Date.parse(left.lastUsedAt) ||
+      left.title.localeCompare(right.title)
+  );
+}
+
 function readDroppedContent(items: ProcessDroppedItem[]): string {
   return items
     .map((item) => item.text ?? item.content ?? item.name ?? item.path ?? "")
@@ -80,6 +121,10 @@ function readDroppedContent(items: ProcessDroppedItem[]): string {
 async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
   const rawContent = readDroppedContent(items);
   const now = new Date().toISOString();
+  const smartClips = [
+    ...items.map((item) => (item.path ? addBrowserSmartClip(item.path, "path") : null)),
+    rawContent ? addBrowserSmartClip(rawContent, "text") : null
+  ].filter((item): item is SmartClip => Boolean(item));
   const createdNode = {
     uuid: `browser-preview-${crypto.randomUUID()}`,
     title: compact(rawContent.split(/\r?\n/).find(Boolean) ?? "Browser Preview Fragment").slice(0, 80),
@@ -98,6 +143,7 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
   };
   const baseResult = {
     prompt: `Browser preview received ${items.length} dropped item(s).`,
+    smartClips,
     createdNode,
     routing: {
       strategy: "new-topic" as const,
@@ -300,7 +346,28 @@ const browserApiFallback: SecondBrainApi = {
     })
   },
   clipboard: {
-    readText: async () => navigator.clipboard?.readText?.() ?? ""
+    readText: async () => navigator.clipboard?.readText?.() ?? "",
+    writeText: async (text: string) => {
+      await navigator.clipboard?.writeText?.(text);
+    },
+    listSmartClips: async () => sortSmartClips(browserSmartClips),
+    useSmartClip: async (id: string) => {
+      const index = browserSmartClips.findIndex((item) => item.id === id);
+      if (index < 0) {
+        throw new Error(`Browser preview cannot find Smart Clip "${id}".`);
+      }
+
+      const current = browserSmartClips[index] as SmartClip;
+      const updated = {
+        ...current,
+        frequency: current.frequency + 1,
+        lastUsedAt: new Date().toISOString()
+      };
+
+      browserSmartClips.splice(index, 1, updated);
+      await navigator.clipboard?.writeText?.(updated.value);
+      return updated;
+    }
   },
   settings: {
     getAi: async () => browserAiSettings,

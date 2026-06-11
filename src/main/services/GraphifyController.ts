@@ -13,12 +13,32 @@ import type {
   GraphifyIngestionResult,
   ProcessDroppedItem
 } from "../../shared/ipc";
-import type { GraphifyMcpToolSpec } from "./LlmService";
+import { LlmService } from "./LlmService";
+import type { GraphCardDefinitionInput, GraphifyMcpToolSpec } from "./LlmService";
 
 type GraphifyGraph = {
   nodes?: unknown[];
   links?: unknown[];
   edges?: unknown[];
+};
+type GraphifyNodeRecord = Record<string, unknown> & {
+  id?: unknown;
+  label?: unknown;
+  title?: unknown;
+  type?: unknown;
+  node_type?: unknown;
+  file_type?: unknown;
+  summary?: unknown;
+  description?: unknown;
+  source_file?: unknown;
+  sourceFile?: unknown;
+  source_location?: unknown;
+  community?: unknown;
+  contextual_definition?: unknown;
+};
+type GraphifyLinkRecord = {
+  source?: unknown;
+  target?: unknown;
 };
 type GraphifyProviderConfig = {
   base_url: string;
@@ -120,6 +140,16 @@ function parseArgs(value: string): string[] {
     .filter(Boolean);
 }
 
+function chunkArray<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
 function normalizeOpenAiBaseUrl(endpoint: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
 
@@ -140,9 +170,38 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function isCollapsibleTextSource(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
   return collapsibleTextExtensions.has(extension);
+}
+
+function linkEndpointId(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  const record = asRecord(value);
+  return record ? asString(record.id) : "";
+}
+
+function normalizeGraphNodes(value: unknown): GraphifyNodeRecord[] {
+  return Array.isArray(value)
+    ? value.map(asRecord).filter((node): node is GraphifyNodeRecord => Boolean(node))
+    : [];
+}
+
+function normalizeGraphLinks(value: unknown): GraphifyLinkRecord[] {
+  return Array.isArray(value)
+    ? value.map(asRecord).filter((link): link is GraphifyLinkRecord => Boolean(link))
+    : [];
 }
 
 export class GraphifyController {
@@ -160,6 +219,7 @@ export class GraphifyController {
   });
   private mcpClient: Client | null = null;
   private mcpTransport: StdioClientTransport | null = null;
+  private readonly llm: LlmService;
 
   constructor(
     private readonly rawVaultPath: string,
@@ -178,6 +238,7 @@ export class GraphifyController {
     this.graphPath = path.join(this.graphOutPath, "graph.json");
     this.graphHtmlPath = path.join(this.graphOutPath, "graph.html");
     this.reportPath = path.join(this.graphOutPath, "GRAPH_REPORT.md");
+    this.llm = new LlmService(settingsProvider);
   }
 
   getRawVaultPath(): string {
@@ -395,8 +456,15 @@ export class GraphifyController {
       throw new Error(`Graphify finished but did not create ${this.graphPath}.`);
     }
 
+    const definitionStdout = await this.enrichGraphCardDefinitions();
     const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
-    const combinedStdout = [stdout, htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""].filter(Boolean).join("\n\n");
+    const combinedStdout = [
+      stdout,
+      definitionStdout,
+      htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     await this.stopMcp();
 
@@ -448,6 +516,111 @@ export class GraphifyController {
     }
 
     return stdout;
+  }
+
+  private async enrichGraphCardDefinitions(): Promise<string> {
+    if (process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0") {
+      return "";
+    }
+
+    const graph = asRecord(JSON.parse(await readFile(this.graphPath, "utf8")));
+    if (!graph) {
+      return "";
+    }
+
+    const nodes = normalizeGraphNodes(graph.nodes);
+    if (nodes.length === 0) {
+      return "";
+    }
+
+    const nodeLabels = new Map(
+      nodes.map((node, index) => {
+        const id = asString(node.id) || `graph-node-${index}`;
+        return [id, asString(node.label) || asString(node.title) || id] as const;
+      })
+    );
+    const related = this.buildRelatedNodeMap(normalizeGraphLinks(graph.links ?? graph.edges), nodeLabels);
+    const cards = nodes
+      .map((node, index) => this.toDefinitionInput(node, index, related))
+      .filter((card): card is GraphCardDefinitionInput => Boolean(card));
+    const batchSize = Math.max(1, numberFromEnv(process.env.SECOND_BRAIN_CARD_DEFINITION_BATCH_SIZE, 8, 1));
+    let updatedCount = 0;
+    let failedBatchCount = 0;
+
+    for (const batch of chunkArray(cards, batchSize)) {
+      try {
+        const definitions = await this.llm.defineGraphCards(batch);
+        const definitionById = new Map(definitions.map((definition) => [definition.id, definition.definition]));
+
+        for (const node of nodes) {
+          const id = asString(node.id);
+          const definition = id ? definitionById.get(id) : undefined;
+
+          if (definition) {
+            node.contextual_definition = definition;
+            updatedCount += 1;
+          }
+        }
+      } catch (error) {
+        failedBatchCount += 1;
+        console.warn("Graph card definition batch failed; leaving Graphify summaries in place.", error);
+      }
+    }
+
+    graph.nodes = nodes;
+    await writeFile(this.graphPath, `${JSON.stringify(graph, null, 2)}\n`, "utf8");
+
+    return [
+      `Graphify card definitions: ${updatedCount}/${cards.length} cards enriched.`,
+      failedBatchCount > 0 ? `${failedBatchCount} definition batch${failedBatchCount === 1 ? "" : "es"} failed.` : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  private buildRelatedNodeMap(
+    links: GraphifyLinkRecord[],
+    labels: Map<string, string>
+  ): Map<string, string[]> {
+    const related = new Map<string, string[]>();
+
+    for (const link of links) {
+      const source = linkEndpointId(link.source);
+      const target = linkEndpointId(link.target);
+
+      if (!source || !target) {
+        continue;
+      }
+
+      related.set(source, [...(related.get(source) ?? []), labels.get(target) ?? target]);
+      related.set(target, [...(related.get(target) ?? []), labels.get(source) ?? source]);
+    }
+
+    return related;
+  }
+
+  private toDefinitionInput(
+    node: GraphifyNodeRecord,
+    index: number,
+    related: Map<string, string[]>
+  ): GraphCardDefinitionInput | null {
+    const id = asString(node.id) || `graph-node-${index}`;
+    const title = asString(node.label) || asString(node.title) || id;
+
+    if (!title) {
+      return null;
+    }
+
+    return {
+      id,
+      title,
+      type: asString(node.type) || asString(node.node_type) || asString(node.file_type) || "entity",
+      summary: asString(node.summary) || asString(node.description) || asString(node.source_location) || title,
+      sourceFile: asString(node.source_file) || asString(node.sourceFile),
+      sourceContext: asString(node.source_location) || asString(node.description) || asString(node.summary),
+      community: asString(node.community) || "unclustered",
+      related: Array.from(new Set(related.get(id) ?? [])).slice(0, 6)
+    };
   }
 
   private async shouldExportGraphHtml(): Promise<boolean> {

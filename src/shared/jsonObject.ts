@@ -23,7 +23,10 @@ const expectedJsonKeys = [
   "url",
   "context",
   "description",
-  "summary"
+  "summary",
+  "definitions",
+  "id",
+  "definition"
 ] as const;
 
 function stripCodeFence(value: string): string {

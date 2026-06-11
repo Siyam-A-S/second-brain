@@ -28,7 +28,7 @@ export function MainApp(): JSX.Element {
         <DropTarget onProcessed={handleDropProcessed} />
       </div>
       <div className="hidden min-h-0 flex-1 min-[760px]:flex">
-        <Sidebar onDropProcessed={handleDropProcessed} />
+        <Sidebar refreshKey={refreshKey} onDropProcessed={handleDropProcessed} />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex h-11 shrink-0 items-center gap-1 border-b border-slate-900/5 bg-white/20 px-6">
             <button

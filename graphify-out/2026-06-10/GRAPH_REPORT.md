@@ -1,16 +1,16 @@
-# Graph Report - second-brain  (2026-06-10)
+# Graph Report - second-brain  (2026-06-09)
 
 ## Corpus Check
-- 57 files · ~31,518 words
+- 56 files · ~29,506 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 665 nodes · 1249 edges · 39 communities (32 shown, 7 thin omitted)
+- 626 nodes · 1154 edges · 36 communities (29 shown, 7 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `125bcff9`
+- Built from commit: `affe65f3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,10 +19,8 @@
 - [[_COMMUNITY_Electron Shell|Electron Shell]]
 - [[_COMMUNITY_Packaging Config|Packaging Config]]
 - [[_COMMUNITY_Demo Mockup Logic|Demo Mockup Logic]]
-- [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Markdown Storage|Markdown Storage]]
 - [[_COMMUNITY_Project Dependencies|Project Dependencies]]
-- [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Drop UI Components|Drop UI Components]]
 - [[_COMMUNITY_Community 10|Community 10]]
@@ -52,19 +50,18 @@
 - [[_COMMUNITY_Community 35|Community 35]]
 - [[_COMMUNITY_Community 36|Community 36]]
 - [[_COMMUNITY_Community 37|Community 37]]
-- [[_COMMUNITY_Community 38|Community 38]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `GraphifyController` - 52 edges
+1. `GraphifyController` - 48 edges
 2. `StorageService` - 22 edges
 3. `BrainNode` - 21 edges
-4. `LlmService` - 18 edges
-5. `AiSettings` - 18 edges
-6. `ProcessDroppedItem` - 16 edges
-7. `GraphRagService` - 15 edges
-8. `scripts` - 13 edges
-9. `LocalMcpServer` - 13 edges
-10. `SmartClipService` - 13 edges
+4. `AiSettings` - 18 edges
+5. `LlmService` - 16 edges
+6. `GraphRagService` - 15 edges
+7. `scripts` - 13 edges
+8. `LocalMcpServer` - 13 edges
+9. `ProcessDroppedItem` - 13 edges
+10. `GraphifyIngestionResult` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Drop Lane` --semantically_similar_to--> `Onboarding Drop Tests`  [INFERRED] [semantically similar]
@@ -73,10 +70,10 @@
   dev/chatnotes.md → mockups/second-brain-live-demo/index.html
 - `Project Graphify Instructions` --references--> `Query Flow`  [EXTRACTED]
   AGENTS.md → .codex/skills/graphify/references/query.md
-- `GraphifyController` --references--> `LlmService`  [EXTRACTED]
-  src/main/services/GraphifyController.ts → src/main/services/LlmService.ts
 - `Window` --references--> `SecondBrainApi`  [EXTRACTED]
   src/vite-env.d.ts → src/shared/ipc.ts
+- `MCP Server` --conceptually_related_to--> `Query Flow`  [INFERRED]
+  .codex/skills/graphify/references/exports.md → .codex/skills/graphify/references/query.md
 
 ## Import Cycles
 - None detected.
@@ -86,11 +83,11 @@
 - **Second Brain Ingest And Onboarding Surface** — second_brain_live_demo_index_drop_lane, second_brain_live_demo_index_board_canvas, onboarding_readme_onboarding_drop_tests [INFERRED 0.75]
 - **Vault Constellation Graph Motif** — assets_vault_constellation_constellation_network, assets_vault_constellation_knowledge_nodes, assets_vault_constellation_graph_connections [EXTRACTED 1.00]
 
-## Communities (39 total, 7 thin omitted)
+## Communities (36 total, 7 thin omitted)
 
 ### Community 0 - "GraphRAG Services"
-Cohesion: 0.06
-Nodes (26): AiSettingsProvider, asRecord(), asString(), bufferFromDroppedValue(), chunkArray(), collapsibleTextExtensions, errorMessage(), GraphifyController (+18 more)
+Cohesion: 0.08
+Nodes (17): AiSettingsProvider, bufferFromDroppedValue(), collapsibleTextExtensions, errorMessage(), GraphifyController, GraphifyGraph, GraphifyLocalModelSettings, GraphifyProviderConfig (+9 more)
 
 ### Community 1 - "Electron Shell"
 Cohesion: 0.12
@@ -104,41 +101,33 @@ Nodes (37): appId, asar, directories, buildResources, output, files, linux, targ
 Cohesion: 0.25
 Nodes (7): graphify reference: extra exports and benchmark, Step 6b - Wiki (only if --wiki flag), Step 7 - Neo4j export (only if --neo4j or --neo4j-push flag), Step 7b - SVG export (only if --svg flag), Step 7c - GraphML export (only if --graphml flag), Step 7d - MCP server (only if --mcp flag), Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-### Community 4 - "Community 4"
-Cohesion: 0.13
-Nodes (20): addBrowserSmartClip(), browserAiSettings, browserApiFallback, browserSmartClips, browserTrackers, compact(), emitTrackerStatus(), extractFallbackDate() (+12 more)
-
 ### Community 5 - "Markdown Storage"
-Cohesion: 0.07
-Nodes (30): CandidateScore, deriveTopicTitle(), GraphRagService, validationBoost(), exportBoardPlaintextSchema, fetchFileSegmentsSchema, ingestAndRouteFragmentSchema, searchBoardTopologySchema (+22 more)
+Cohesion: 0.05
+Nodes (38): CachedEmbedding, EmbeddingService, fingerprintNode(), searchableText(), TransformersModule, CandidateScore, deriveTopicTitle(), GraphRagService (+30 more)
 
 ### Community 6 - "Project Dependencies"
 Cohesion: 0.07
 Nodes (26): author, dependencies, gray-matter, @modelcontextprotocol/sdk, uuid, @xenova/transformers, zod, description (+18 more)
 
-### Community 7 - "Community 7"
-Cohesion: 0.17
-Nodes (7): CachedEmbedding, EmbeddingService, fingerprintNode(), searchableText(), TransformersModule, BrainSearchResult, SearchBrainNodesInput
-
 ### Community 8 - "Community 8"
-Cohesion: 0.09
-Nodes (21): ClipboardList(), ClipboardListProps, icons, DropTarget(), DropTargetProps, DropTone, toneColors, Sidebar() (+13 more)
+Cohesion: 0.06
+Nodes (41): ClipboardList(), icons, DropTarget(), DropTargetProps, DropTone, toneColors, Sidebar(), SidebarProps (+33 more)
 
 ### Community 9 - "Drop UI Components"
 Cohesion: 0.50
 Nodes (3): For SSH/headless:, Use:, Verification:
 
 ### Community 10 - "Community 10"
-Cohesion: 0.11
-Nodes (22): ExportState, LoadState, progressClass(), progressWidth(), statusOptions, TrackerTable(), TrackerTableProps, normalizeDate() (+14 more)
+Cohesion: 0.10
+Nodes (23): ExportState, LoadState, progressClass(), progressWidth(), statusOptions, TrackerTable(), TrackerTableProps, normalizeDate() (+15 more)
 
 ### Community 11 - "Embedding Pipeline"
 Cohesion: 0.16
 Nodes (13): createMainWindow(), createWidgetWindow(), isDev, loadRenderer(), preloadEntry, rendererEntry, restoreMainWindow(), showWidget() (+5 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.10
-Nodes (24): AgentController, DraftFragment, inferContextHints(), inferTitle(), looksTrackable(), summarize(), compact(), extractBashCommands() (+16 more)
+Cohesion: 0.09
+Nodes (17): AgentController, DraftFragment, inferContextHints(), inferTitle(), looksTrackable(), summarize(), LocalMcpServer, LocalMcpServerOptions (+9 more)
 
 ### Community 13 - "Base TS Config"
 Cohesion: 0.18
@@ -185,8 +174,8 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 32 - "Community 32"
-Cohesion: 0.08
-Nodes (31): AgentMethodConfig, agentPrompts, AiSettingsProvider, ChatCompletionResponse, ChatMessage, compactText(), ExtractedTrackerMetadata, GraphCardDefinition (+23 more)
+Cohesion: 0.09
+Nodes (29): AgentMethodConfig, agentPrompts, AiSettingsProvider, ChatCompletionResponse, ChatMessage, compactText(), ExtractedTrackerMetadata, hasTrackerDateSignal() (+21 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.12
@@ -208,28 +197,24 @@ Nodes (8): createDropPayload(), ElectronFile, DroppedFile, FilesDroppedPayload, 
 Cohesion: 0.18
 Nodes (10): api, boardChannels, brainChannels, clipboardChannels, fileChannels, settingsChannels, trackerChannels, windowChannels (+2 more)
 
-### Community 38 - "Community 38"
-Cohesion: 0.17
-Nodes (8): LocalMcpServer, LocalMcpServerOptions, readJsonBody(), createGraphRagToolRegistry(), filterLocalToolSpecs(), LocalToolDefinition, LocalToolSpec, McpServerStatus
-
 ## Knowledge Gaps
-- **227 isolated node(s):** `PreToolUse`, `appId`, `productName`, `output`, `buildResources` (+222 more)
+- **223 isolated node(s):** `PreToolUse`, `appId`, `productName`, `output`, `buildResources` (+218 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GraphifyController` connect `GraphRAG Services` to `Community 32`, `Embedding Pipeline`, `Community 12`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
-- **Why does `LlmService` connect `Community 32` to `GraphRAG Services`, `Community 10`, `Embedding Pipeline`, `Community 12`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Why does `GraphifyController` connect `GraphRAG Services` to `Embedding Pipeline`, `Community 12`?**
+  _High betweenness centrality (0.061) - this node is a cross-community bridge._
 - **Why does `AiSettings` connect `GraphRAG Services` to `Community 32`, `Community 34`, `Community 35`, `Markdown Storage`, `Community 8`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `StorageService` connect `Markdown Storage` to `Community 32`, `Community 10`, `Embedding Pipeline`?**
   _High betweenness centrality (0.021) - this node is a cross-community bridge._
 - **What connects `PreToolUse`, `appId`, `productName` to the rest of the system?**
-  _227 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _223 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `GraphRAG Services` be split into smaller, more focused modules?**
-  _Cohesion score 0.06354642313546423 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07759562841530054 - nodes in this community are weakly interconnected._
 - **Should `Electron Shell` be split into smaller, more focused modules?**
   _Cohesion score 0.125 - nodes in this community are weakly interconnected._
 - **Should `Packaging Config` be split into smaller, more focused modules?**

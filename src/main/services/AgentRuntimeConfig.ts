@@ -19,6 +19,10 @@ export const agentPrompts = {
 } as const;
 
 export const agentMethods = {
+  cardDefinition: {
+    temperature: 0.2,
+    maxTokens: 8192
+  },
   trackerExtraction: {
     temperature: 0,
     maxTokens: 8192
