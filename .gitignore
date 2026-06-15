@@ -4,3 +4,4 @@ release
 *.tsbuildinfo
 .env
 .DS_Store
+.codex
