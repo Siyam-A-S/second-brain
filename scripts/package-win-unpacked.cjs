@@ -19,6 +19,7 @@ rmSync(unpackedDir, { recursive: true, force: true });
 
 const buildResult = spawnSync(electronBuilderBin, ["--win", "--dir"], {
   cwd: rootDir,
+  shell: process.platform === "win32",
   stdio: "inherit"
 });
 
