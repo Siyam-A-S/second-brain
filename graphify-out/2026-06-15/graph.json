@@ -912,7 +912,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_constructor",
-      "community": 5,
+      "community": 12,
       "norm_label": ".constructor()"
     },
     {
@@ -992,7 +992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentruntimeconfig",
-      "community": 5,
+      "community": 32,
       "norm_label": "agentruntimeconfig.ts"
     },
     {
@@ -1012,7 +1012,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_agentruntimeconfig_agentprompts",
-      "community": 5,
+      "community": 32,
       "norm_label": "agentprompts"
     },
     {
@@ -1132,7 +1132,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_embeddingservice",
-      "community": 8,
+      "community": 7,
       "norm_label": "embeddingservice.ts"
     },
     {
@@ -1142,7 +1142,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_embeddingservice_transformersmodule",
-      "community": 8,
+      "community": 7,
       "norm_label": "transformersmodule"
     },
     {
@@ -1152,7 +1152,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_embeddingservice_cachedembedding",
-      "community": 8,
+      "community": 7,
       "norm_label": "cachedembedding"
     },
     {
@@ -1162,7 +1162,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_embeddingservice_dynamicimport",
-      "community": 8,
+      "community": 7,
       "norm_label": "dynamicimport()"
     },
     {
@@ -1172,7 +1172,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "services_embeddingservice_dotproduct",
-      "community": 8,
+      "community": 7,
       "norm_label": "dotproduct()"
     },
     {
@@ -1182,7 +1182,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "services_embeddingservice_searchabletext",
-      "community": 8,
+      "community": 7,
       "norm_label": "searchabletext()"
     },
     {
@@ -1192,7 +1192,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_embeddingservice_fingerprintnode",
-      "community": 8,
+      "community": 7,
       "norm_label": "fingerprintnode()"
     },
     {
@@ -1202,7 +1202,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice",
-      "community": 8,
+      "community": 7,
       "norm_label": "embeddingservice"
     },
     {
@@ -1212,7 +1212,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_constructor",
-      "community": 8,
+      "community": 7,
       "norm_label": ".constructor()"
     },
     {
@@ -1222,7 +1222,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_generateembedding",
-      "community": 8,
+      "community": 7,
       "norm_label": ".generateembedding()"
     },
     {
@@ -1232,7 +1232,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embed",
-      "community": 8,
+      "community": 7,
       "norm_label": ".embed()"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_search",
-      "community": 11,
+      "community": 7,
       "norm_label": ".search()"
     },
     {
@@ -1252,7 +1252,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embeddingfornode",
-      "community": 8,
+      "community": 7,
       "norm_label": ".embeddingfornode()"
     },
     {
@@ -1262,7 +1262,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_getextractor",
-      "community": 8,
+      "community": 7,
       "norm_label": ".getextractor()"
     },
     {
@@ -1272,7 +1272,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_loadextractor",
-      "community": 8,
+      "community": 7,
       "norm_label": ".loadextractor()"
     },
     {
@@ -1382,7 +1382,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_constructor",
-      "community": 8,
+      "community": 5,
       "norm_label": ".constructor()"
     },
     {
@@ -4552,7 +4552,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_droppayload",
-      "community": 4,
+      "community": 11,
       "norm_label": "droppayload.ts"
     },
     {
@@ -4562,7 +4562,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "lib_droppayload_electronfile",
-      "community": 4,
+      "community": 11,
       "norm_label": "electronfile"
     },
     {
@@ -4572,7 +4572,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "lib_droppayload_usableelectronpath",
-      "community": 4,
+      "community": 11,
       "norm_label": "usableelectronpath()"
     },
     {
@@ -4582,7 +4582,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "lib_droppayload_createdroppayload",
-      "community": 4,
+      "community": 11,
       "norm_label": "createdroppayload()"
     },
     {
@@ -4742,7 +4742,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "views_floatingwidget",
-      "community": 4,
+      "community": 11,
       "norm_label": "floatingwidget.tsx"
     },
     {
@@ -4752,7 +4752,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "views_floatingwidget_droptone",
-      "community": 4,
+      "community": 11,
       "norm_label": "droptone"
     },
     {
@@ -4762,7 +4762,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "views_floatingwidget_dragstate",
-      "community": 4,
+      "community": 11,
       "norm_label": "dragstate"
     },
     {
@@ -4772,7 +4772,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "views_floatingwidget_tonecolors",
-      "community": 4,
+      "community": 11,
       "norm_label": "tonecolors"
     },
     {
@@ -4782,7 +4782,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "views_floatingwidget_inferdroptone",
-      "community": 4,
+      "community": 11,
       "norm_label": "inferdroptone()"
     },
     {
@@ -4792,7 +4792,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "views_floatingwidget_toprocessitems",
-      "community": 4,
+      "community": 11,
       "norm_label": "toprocessitems()"
     },
     {
@@ -4842,7 +4842,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain",
-      "community": 11,
+      "community": 12,
       "norm_label": "brain.ts"
     },
     {
@@ -4862,7 +4862,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "shared_brain_uservalidationstate",
-      "community": 11,
+      "community": 36,
       "norm_label": "uservalidationstate"
     },
     {
@@ -4912,7 +4912,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "shared_brain_brainsearchresult",
-      "community": 11,
+      "community": 7,
       "norm_label": "brainsearchresult"
     },
     {
@@ -4982,7 +4982,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "shared_brain_boardchildnode",
-      "community": 11,
+      "community": 5,
       "norm_label": "boardchildnode"
     },
     {
@@ -4992,7 +4992,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "shared_brain_organizedboardtopic",
-      "community": 11,
+      "community": 36,
       "norm_label": "organizedboardtopic"
     },
     {
@@ -5062,7 +5062,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "shared_brain_trackerstatus",
-      "community": 11,
+      "community": 10,
       "norm_label": "trackerstatus"
     },
     {
@@ -5092,7 +5092,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "shared_brain_trackeringestionstatus",
-      "community": 11,
+      "community": 12,
       "norm_label": "trackeringestionstatus"
     },
     {
@@ -5102,7 +5102,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "shared_brain_smartclipkind",
-      "community": 11,
+      "community": 12,
       "norm_label": "smartclipkind"
     },
     {
@@ -5292,7 +5292,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "shared_ipc_droppedfile",
-      "community": 4,
+      "community": 11,
       "norm_label": "droppedfile"
     },
     {
@@ -5332,7 +5332,7 @@
       "source_location": "L142",
       "_origin": "ast",
       "id": "shared_ipc_graphhtmldocument",
-      "community": 33,
+      "community": 0,
       "norm_label": "graphhtmldocument"
     },
     {
@@ -6564,66 +6564,6 @@
       "id": "agents_graphify",
       "community": 30,
       "norm_label": "graphify"
-    },
-    {
-      "label": "README.md",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "readme",
-      "community": 34,
-      "norm_label": "readme.md"
-    },
-    {
-      "label": "Second Brain",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "readme_second_brain",
-      "community": 34,
-      "norm_label": "second brain"
-    },
-    {
-      "label": "Install",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L11",
-      "_origin": "ast",
-      "id": "readme_install",
-      "community": 34,
-      "norm_label": "install"
-    },
-    {
-      "label": "Connect AI",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L32",
-      "_origin": "ast",
-      "id": "readme_connect_ai",
-      "community": 34,
-      "norm_label": "connect ai"
-    },
-    {
-      "label": "Environment Variables",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L52",
-      "_origin": "ast",
-      "id": "readme_environment_variables",
-      "community": 34,
-      "norm_label": "environment variables"
-    },
-    {
-      "label": "Develop",
-      "file_type": "document",
-      "source_file": "README.md",
-      "source_location": "L79",
-      "_origin": "ast",
-      "id": "readme_develop",
-      "community": 34,
-      "norm_label": "develop"
     },
     {
       "label": "chatnotes.md",
@@ -12004,9 +11944,9 @@
       "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L616",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions"
+      "target": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -12537,9 +12477,9 @@
       "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L491",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_rungraphifyupdate",
-      "target": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions"
+      "target": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -12625,9 +12565,9 @@
       "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L626",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions",
-      "target": "services_graphifycontroller_graphifycontroller_enrichgraphcarddefinitions"
+      "target": "services_graphifycontroller_graphifycontroller_enrichgraphcarddefinitions",
+      "confidence_score": 1.0
     },
     {
       "relation": "references",
@@ -20138,56 +20078,6 @@
       "confidence_score": 1.0,
       "source": "agents",
       "target": "agents_graphify"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "source": "readme",
-      "target": "readme_second_brain",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L32",
-      "weight": 1.0,
-      "source": "readme_second_brain",
-      "target": "readme_connect_ai",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L79",
-      "weight": 1.0,
-      "source": "readme_second_brain",
-      "target": "readme_develop",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L52",
-      "weight": 1.0,
-      "source": "readme_second_brain",
-      "target": "readme_environment_variables",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "README.md",
-      "source_location": "L11",
-      "weight": 1.0,
-      "source": "readme_second_brain",
-      "target": "readme_install",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",

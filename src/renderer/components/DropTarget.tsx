@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, UploadCloud, XCircle } from "lucide-react";
-import type { ProcessDroppedItem, ProcessDroppedItemsResult } from "../../shared/ipc";
+import type { FilesDroppedPayload, ProcessDroppedItem, ProcessDroppedItemsResult } from "../../shared/ipc";
 import { createDropPayload } from "../lib/dropPayload";
 
 type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
@@ -49,11 +49,12 @@ function inferDropTone(dataTransfer: DataTransfer): DropTone {
   return "unknown";
 }
 
-function toProcessItems(payload: ReturnType<typeof createDropPayload>): ProcessDroppedItem[] {
+function toProcessItems(payload: FilesDroppedPayload): ProcessDroppedItem[] {
   const fileItems = payload.files.map((file) => ({
     name: file.name,
     path: file.path,
-    type: file.type
+    type: file.type,
+    buffer: file.buffer
   }));
   const textItem = payload.text
     ? [
@@ -238,9 +239,21 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
         event.preventDefault();
         dragDepth.current = 0;
 
-        const payload = createDropPayload("main-drop-zone", event.dataTransfer);
-        const items = toProcessItems(payload);
-        processItems(items, "Reading and routing locally...");
+        const dataTransfer = event.dataTransfer;
+        setIsProcessing(true);
+        setStatusText("Reading dropped files locally...");
+        void createDropPayload("main-drop-zone", dataTransfer)
+          .then((payload) => {
+            const items = toProcessItems(payload);
+            processItems(items, "Reading and routing locally...");
+          })
+          .catch((error) => {
+            const message = errorMessage(error);
+            setStatusText(message.split(/\r?\n/).find(Boolean) ?? "Unable to read dropped files.");
+            setErrorDetails(message);
+            setTone("error");
+            setIsProcessing(false);
+          });
       }}
     >
       {isProcessing ? (

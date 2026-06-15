@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { motion } from "framer-motion";
 import { createDropPayload } from "../lib/dropPayload";
-import type { ProcessDroppedItem, WidgetMovePayload } from "../../shared/ipc";
+import type { FilesDroppedPayload, ProcessDroppedItem, WidgetMovePayload } from "../../shared/ipc";
 
 type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
 
@@ -56,11 +56,12 @@ function inferDropTone(dataTransfer: DataTransfer): DropTone {
   return "unknown";
 }
 
-function toProcessItems(payload: ReturnType<typeof createDropPayload>): ProcessDroppedItem[] {
+function toProcessItems(payload: FilesDroppedPayload): ProcessDroppedItem[] {
   const fileItems = payload.files.map((file) => ({
     name: file.name,
     path: file.path,
-    type: file.type
+    type: file.type,
+    buffer: file.buffer
   }));
   const textItem = payload.text
     ? [
@@ -258,9 +259,19 @@ export function FloatingWidget(): JSX.Element {
         event.stopPropagation();
         setIsDropActive(false);
 
-        const payload = createDropPayload("floating-widget", event.dataTransfer);
-        const items = toProcessItems(payload);
-        enqueueDrop(items);
+        const dataTransfer = event.dataTransfer;
+        setIsIngesting(true);
+        void createDropPayload("floating-widget", dataTransfer)
+          .then((payload) => {
+            const items = toProcessItems(payload);
+            enqueueDrop(items);
+          })
+          .catch((error) => {
+            console.error("Failed to read floating widget drop", error);
+            setTone("error");
+            setIsIngesting(false);
+            window.setTimeout(() => setTone("idle"), 1_500);
+          });
       }}
       onPointerCancel={handlePointerCancel}
       onPointerDown={(event) => void handlePointerDown(event)}

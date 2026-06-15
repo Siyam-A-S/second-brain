@@ -115,7 +115,7 @@ export type SettingsChannel = (typeof settingsChannels)[keyof typeof settingsCha
 
 export type DroppedFile = {
   name: string;
-  path: string;
+  path?: string | undefined;
   type: string;
   size: number;
   buffer?: ArrayBuffer | number[] | undefined;

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { exec } from "node:child_process";
-import type { ExecOptions } from "node:child_process";
+import { exec, execFile } from "node:child_process";
+import type { ExecFileOptions, ExecOptions } from "node:child_process";
 import type { Dirent } from "node:fs";
 import { copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -57,6 +57,12 @@ type GraphifyLocalModelSettings = {
   maxTokens: number;
 };
 type AiSettingsProvider = () => Promise<AiSettings>;
+type GraphifyInvocation = {
+  label: string;
+  command: string;
+  args: string[];
+  shell?: boolean | undefined;
+};
 
 const updateTimeoutMs = 10 * 60 * 1_000;
 const maxExecBuffer = 10 * 1024 * 1024;
@@ -170,6 +176,18 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function quoteCommandPart(value: string): string {
+  return /\s/.test(value) ? `"${value.replace(/"/g, "\\\"")}"` : value;
+}
+
+function formatInvocation(invocation: GraphifyInvocation): string {
+  return [invocation.command, ...invocation.args].map(quoteCommandPart).join(" ");
+}
+
+function isCmdShim(filePath: string): boolean {
+  return /\.cmd$/i.test(filePath) || /\.bat$/i.test(filePath);
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
@@ -220,6 +238,8 @@ export class GraphifyController {
   private mcpClient: Client | null = null;
   private mcpTransport: StdioClientTransport | null = null;
   private readonly llm: LlmService;
+  private cardDefinitionUpdate: Promise<void> | null = null;
+  private cardDefinitionQueued = false;
 
   constructor(
     private readonly rawVaultPath: string,
@@ -456,11 +476,10 @@ export class GraphifyController {
       throw new Error(`Graphify finished but did not create ${this.graphPath}.`);
     }
 
-    const definitionStdout = await this.enrichGraphCardDefinitions();
     const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
     const combinedStdout = [
       stdout,
-      definitionStdout,
+      process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
       htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""
     ]
       .filter(Boolean)
@@ -469,6 +488,7 @@ export class GraphifyController {
     await this.stopMcp();
 
     const counts = await this.readGraphCounts();
+    this.scheduleGraphCardDefinitions();
 
     return {
       completed: looksComplete(combinedStdout) || graphExists,
@@ -523,6 +543,7 @@ export class GraphifyController {
       return "";
     }
 
+    const graphVersion = (await stat(this.graphPath)).mtimeMs;
     const graph = asRecord(JSON.parse(await readFile(this.graphPath, "utf8")));
     if (!graph) {
       return "";
@@ -541,13 +562,20 @@ export class GraphifyController {
     );
     const related = this.buildRelatedNodeMap(normalizeGraphLinks(graph.links ?? graph.edges), nodeLabels);
     const cards = nodes
+      .filter((node) => !asString(node.contextual_definition))
       .map((node, index) => this.toDefinitionInput(node, index, related))
       .filter((card): card is GraphCardDefinitionInput => Boolean(card));
+    const maxCardsPerPass = Math.max(1, numberFromEnv(process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS, 24, 1));
+    const cardsForThisPass = cards.slice(0, maxCardsPerPass);
     const batchSize = Math.max(1, numberFromEnv(process.env.SECOND_BRAIN_CARD_DEFINITION_BATCH_SIZE, 8, 1));
     let updatedCount = 0;
     let failedBatchCount = 0;
 
-    for (const batch of chunkArray(cards, batchSize)) {
+    if (cards.length === 0) {
+      return "Graphify card definitions are already current.";
+    }
+
+    for (const batch of chunkArray(cardsForThisPass, batchSize)) {
       try {
         const definitions = await this.llm.defineGraphCards(batch);
         const definitionById = new Map(definitions.map((definition) => [definition.id, definition.definition]));
@@ -568,14 +596,50 @@ export class GraphifyController {
     }
 
     graph.nodes = nodes;
+
+    if ((await stat(this.graphPath)).mtimeMs !== graphVersion) {
+      this.cardDefinitionQueued = true;
+      return "Graphify card definitions skipped because a newer graph was written.";
+    }
+
     await writeFile(this.graphPath, `${JSON.stringify(graph, null, 2)}\n`, "utf8");
 
     return [
-      `Graphify card definitions: ${updatedCount}/${cards.length} cards enriched.`,
+      `Graphify card definitions: ${updatedCount}/${cardsForThisPass.length} cards enriched this pass.`,
+      cards.length > cardsForThisPass.length ? `${cards.length - cardsForThisPass.length} cards remain for later passes.` : "",
       failedBatchCount > 0 ? `${failedBatchCount} definition batch${failedBatchCount === 1 ? "" : "es"} failed.` : ""
     ]
       .filter(Boolean)
       .join(" ");
+  }
+
+  private scheduleGraphCardDefinitions(): void {
+    if (process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0") {
+      return;
+    }
+
+    if (this.cardDefinitionUpdate) {
+      this.cardDefinitionQueued = true;
+      return;
+    }
+
+    this.cardDefinitionUpdate = this.enrichGraphCardDefinitions()
+      .then((message) => {
+        if (message) {
+          console.info(message);
+        }
+      })
+      .catch((error) => {
+        console.warn("Graphify card definition background pass failed; Board will use Graphify summaries.", error);
+      })
+      .finally(() => {
+        this.cardDefinitionUpdate = null;
+
+        if (this.cardDefinitionQueued) {
+          this.cardDefinitionQueued = false;
+          this.scheduleGraphCardDefinitions();
+        }
+      });
   }
 
   private buildRelatedNodeMap(
@@ -683,6 +747,11 @@ export class GraphifyController {
     failureLabel: string,
     aiSettings: AiSettings
   ): Promise<string> {
+    if (command === defaultIngestCommand || command === defaultHtmlCommand) {
+      const graphifyArgs = parseArgs(command).slice(1);
+      return this.runGraphifyCli(graphifyArgs, settings, failureLabel, aiSettings);
+    }
+
     const options: ExecOptions = {
       cwd: this.rawVaultPath,
       timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS ?? updateTimeoutMs),
@@ -700,6 +769,180 @@ export class GraphifyController {
             new Error(
               [
                 `${failureLabel} while running: ${command}`,
+                error.message,
+                combined ? `Graphify output:\n${combined}` : ""
+              ]
+                .filter(Boolean)
+                .join("\n\n")
+            )
+          );
+          return;
+        }
+
+        resolve(combined);
+      });
+    });
+  }
+
+  private async runGraphifyCli(
+    graphifyArgs: string[],
+    settings: GraphifyLocalModelSettings,
+    failureLabel: string,
+    aiSettings: AiSettings
+  ): Promise<string> {
+    const invocations = await this.getGraphifyInvocations(graphifyArgs);
+    const failures: string[] = [];
+
+    for (const invocation of invocations) {
+      try {
+        return await this.runGraphifyInvocation(invocation, settings, aiSettings);
+      } catch (error) {
+        failures.push(`${invocation.label}: ${errorMessage(error)}`);
+      }
+    }
+
+    throw new Error(
+      [
+        `${failureLabel} while running Graphify.`,
+        "Tried:",
+        ...failures.map((failure) => `- ${failure}`)
+      ].join("\n")
+    );
+  }
+
+  private async getGraphifyInvocations(graphifyArgs: string[]): Promise<GraphifyInvocation[]> {
+    const invocations: GraphifyInvocation[] = [];
+    const configured = process.env.SECOND_BRAIN_GRAPHIFY_BIN?.trim();
+
+    if (configured) {
+      invocations.push({
+        label: "SECOND_BRAIN_GRAPHIFY_BIN",
+        command: configured,
+        args: graphifyArgs,
+        shell: isCmdShim(configured)
+      });
+    }
+
+    const bundled = await this.findBundledGraphifyCommand();
+    if (bundled) {
+      invocations.push({
+        label: "bundled Graphify runtime",
+        command: bundled,
+        args: graphifyArgs,
+        shell: isCmdShim(bundled)
+      });
+    }
+
+    const uvInstalled = await this.findUvToolGraphifyCommand();
+    if (uvInstalled) {
+      invocations.push({
+        label: "uv installed graphifyy",
+        command: uvInstalled,
+        args: graphifyArgs,
+        shell: isCmdShim(uvInstalled)
+      });
+    }
+
+    invocations.push(
+      {
+        label: "uv tool graphifyy",
+        command: "uv",
+        args: ["tool", "run", "--from", "graphifyy[pdf,office,openai,mcp]", "graphify", ...graphifyArgs]
+      },
+      {
+        label: "Windows py module",
+        command: "py",
+        args: ["-m", "graphify", ...graphifyArgs]
+      },
+      {
+        label: "python module",
+        command: process.platform === "win32" ? "python" : "python3",
+        args: ["-m", "graphify", ...graphifyArgs]
+      },
+      {
+        label: "PATH graphify",
+        command: "graphify",
+        args: graphifyArgs
+      }
+    );
+
+    return invocations;
+  }
+
+  private async findUvToolGraphifyCommand(): Promise<string | null> {
+    let uvToolDir = "";
+
+    try {
+      uvToolDir = await new Promise<string>((resolve, reject) => {
+        execFile("uv", ["tool", "dir"], { windowsHide: true }, (error, stdout) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve(stdout.trim().split(/\r?\n/)[0] ?? "");
+        });
+      });
+    } catch {
+      return null;
+    }
+
+    const candidates = [
+      path.join(uvToolDir, "graphifyy", "Scripts", "graphify.exe"),
+      path.join(uvToolDir, "graphifyy", "Scripts", "graphify.cmd"),
+      path.join(uvToolDir, "graphifyy", "bin", "graphify")
+    ];
+
+    for (const candidate of candidates) {
+      if (await this.fileExists(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private async findBundledGraphifyCommand(): Promise<string | null> {
+    const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+    const candidates = [
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "bin", "graphify.cmd") : "",
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "bin", "graphify.exe") : "",
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "bin", "graphify") : "",
+      path.join(process.cwd(), "resources", "graphify-runtime", "bin", process.platform === "win32" ? "graphify.cmd" : "graphify")
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (await this.fileExists(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private runGraphifyInvocation(
+    invocation: GraphifyInvocation,
+    settings: GraphifyLocalModelSettings,
+    aiSettings: AiSettings
+  ): Promise<string> {
+    const options: ExecFileOptions = {
+      cwd: this.rawVaultPath,
+      timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS ?? updateTimeoutMs),
+      maxBuffer: maxExecBuffer,
+      env: this.buildGraphifyEnvironment(settings, aiSettings),
+      windowsHide: true,
+      shell: invocation.shell
+    };
+
+    return new Promise<string>((resolve, reject) => {
+      execFile(invocation.command, invocation.args, options, (error, commandStdout, commandStderr) => {
+        const combined = [commandStdout, commandStderr].filter(Boolean).join("\n").trim();
+
+        if (error) {
+          reject(
+            new Error(
+              [
+                `Command: ${formatInvocation(invocation)}`,
                 error.message,
                 combined ? `Graphify output:\n${combined}` : ""
               ]
@@ -824,6 +1067,14 @@ export class GraphifyController {
   }
 
   private enrichGraphifyError(message: string): Error {
+    const runtimeHint = /access is denied|eacces|permission denied|spawn .* denied/i.test(message)
+      ? [
+          "Graphify runtime guidance:",
+          "- The app now tries a bundled runtime, the direct uv tool executable, `uv tool run --from graphifyy[pdf,office,openai,mcp] graphify`, Python module fallbacks, then PATH.",
+          "- For beta machines, install the document-capable tool with `uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\"`.",
+          "- If Graphify is installed somewhere custom, set `SECOND_BRAIN_GRAPHIFY_BIN` to the full graphify executable path."
+        ].join("\n")
+      : "";
     const localModelHint = [
       "Local model guidance:",
       "- The app first tries 8192 completion tokens and retries once with strict JSON settings capped at 4096.",
@@ -832,7 +1083,7 @@ export class GraphifyController {
       "- You can lower the retry cap with `SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS=2048`."
     ].join("\n");
 
-    return new Error([message, localModelHint].filter(Boolean).join("\n\n"));
+    return new Error([message, runtimeHint, localModelHint].filter(Boolean).join("\n\n"));
   }
 
   private async ensureMcpClient(): Promise<Client> {
