@@ -1,8 +1,8 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { exec, execFile } from "node:child_process";
 import type { ExecFileOptions, ExecOptions } from "node:child_process";
 import type { Dirent } from "node:fs";
-import { copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -64,6 +64,7 @@ type GraphifyInvocation = {
   shell?: boolean | undefined;
 };
 
+const graphifyToolPackage = "graphifyy[pdf,office,openai,mcp]";
 const updateTimeoutMs = 10 * 60 * 1_000;
 const maxExecBuffer = 10 * 1024 * 1024;
 const graphifyProviderName = "second-brain-local";
@@ -75,6 +76,8 @@ const defaultGraphifyRetryTemperature = 0;
 const defaultGraphifyRetryMaxTokens = 4096;
 const defaultIngestCommand = `graphify extract . --out . --backend ${graphifyProviderName} --max-concurrency 1 --token-budget 2048`;
 const defaultHtmlCommand = "graphify export html --graph graphify-out/graph.json";
+const sourceCommentDirectoryName = "source-comments";
+const spreadsheetComponentDirectoryName = "spreadsheet-components";
 const collapsibleTextExtensions = new Set([
   ".c",
   ".cjs",
@@ -113,6 +116,28 @@ function safeFilePart(value: string): string {
   const ext = parsed.ext.replace(/[^a-zA-Z0-9.]/g, "").slice(0, 16);
 
   return `${base || "dropped-file"}${ext}`;
+}
+
+function sourceCommentFileName(sourceFile: string): string {
+  const hash = createHash("sha1").update(sourceFile).digest("hex").slice(0, 12);
+  const base = path
+    .basename(sourceFile || "source")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 70);
+
+  return `${base || "source"}-${hash}.md`;
+}
+
+function spreadsheetComponentFileName(sourceFile: string): string {
+  const hash = createHash("sha1").update(sourceFile).digest("hex").slice(0, 12);
+  const base = path
+    .basename(sourceFile, path.extname(sourceFile))
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 70);
+
+  return `${base || "spreadsheet"}-${hash}.components.md`;
 }
 
 function bufferFromDroppedValue(value: unknown): Buffer | null {
@@ -199,6 +224,142 @@ function asString(value: unknown): string {
 function isCollapsibleTextSource(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
   return collapsibleTextExtensions.has(extension);
+}
+
+function isSpreadsheetSource(filePath: string): boolean {
+  return path.extname(filePath).toLowerCase() === ".xlsx";
+}
+
+function spreadsheetComponentScript(): string {
+  return [
+    "import json, re, sys",
+    "from pathlib import Path",
+    "from graphify.detect import xlsx_extract_structure",
+    "",
+    "def _node_id(*parts):",
+    "    raw = '_'.join(str(part) for part in parts if str(part).strip())",
+    "    return re.sub(r'[^a-z0-9_]+', '_', raw.lower()).strip('_') or 'spreadsheet_component'",
+    "",
+    "def _component_node(node_id, label, kind, relative_source, location):",
+    "    return {",
+    "        'id': node_id,",
+    "        'label': label,",
+    "        'type': kind,",
+    "        'node_type': kind,",
+    "        'file_type': 'document',",
+    "        'source_file': relative_source,",
+    "        'source_location': location,",
+    "    }",
+    "",
+    "def _component_edge(source_id, target_id, relation='contains'):",
+    "    return {",
+    "        'source': source_id,",
+    "        'target': target_id,",
+    "        'relation': relation,",
+    "        'confidence': 'EXTRACTED',",
+    "        'weight': 1.0,",
+    "    }",
+    "",
+    "def _add_node(nodes, seen_nodes, node_id, label, kind, relative_source, location):",
+    "    if node_id not in seen_nodes:",
+    "        nodes.append(_component_node(node_id, label, kind, relative_source, location))",
+    "        seen_nodes.add(node_id)",
+    "    return node_id",
+    "",
+    "def _add_edge(edges, seen_edges, source_id, target_id, relation='contains'):",
+    "    key = (source_id, target_id, relation)",
+    "    if source_id and target_id and key not in seen_edges:",
+    "        edges.append(_component_edge(source_id, target_id, relation))",
+    "        seen_edges.add(key)",
+    "",
+    "source = Path(sys.argv[1])",
+    "output = Path(sys.argv[2])",
+    "relative_source = sys.argv[3]",
+    "structure = xlsx_extract_structure(source)",
+    "nodes = structure.get('nodes') or []",
+    "edges = structure.get('edges') or []",
+    "seen_nodes = {str(node.get('id')) for node in nodes if node.get('id')}",
+    "seen_edges = {(str(edge.get('source')), str(edge.get('target')), str(edge.get('relation') or 'contains')) for edge in edges if edge.get('source') and edge.get('target')}",
+    "stem = _node_id(source.stem)",
+    "file_id = str(nodes[0].get('id')) if nodes and nodes[0].get('id') else _node_id(stem, 'file')",
+    "_add_node(nodes, seen_nodes, file_id, source.name, 'spreadsheet_file', relative_source, relative_source)",
+    "try:",
+    "    import openpyxl",
+    "    from openpyxl.utils import range_boundaries",
+    "    workbook = openpyxl.load_workbook(str(source), read_only=False, data_only=True)",
+    "    try:",
+    "        for sheet_name in workbook.sheetnames:",
+    "            worksheet = workbook[sheet_name]",
+    "            sheet_id = _node_id(stem, sheet_name, 'sheet')",
+    "            _add_node(nodes, seen_nodes, sheet_id, f'{sheet_name} (sheet)', 'spreadsheet_sheet', relative_source, f'{relative_source}#{sheet_name}')",
+    "            _add_edge(edges, seen_edges, file_id, sheet_id)",
+    "            table_ranges = []",
+    "            tables = getattr(worksheet, 'tables', {})",
+    "            table_values = tables.values() if hasattr(tables, 'values') else []",
+    "            for table in table_values:",
+    "                table_name = getattr(table, 'displayName', None) or getattr(table, 'name', None) or 'Table'",
+    "                table_ref = getattr(table, 'ref', '') or ''",
+    "                table_id = _node_id(stem, sheet_name, table_name, 'table')",
+    "                _add_node(nodes, seen_nodes, table_id, f'{table_name} (table)', 'spreadsheet_table', relative_source, f'{relative_source}#{sheet_name}!{table_ref}')",
+    "                _add_edge(edges, seen_edges, sheet_id, table_id)",
+    "                if table_ref:",
+    "                    table_ranges.append(table_ref)",
+    "                    min_col, min_row, max_col, _max_row = range_boundaries(table_ref)",
+    "                    for cell in worksheet[min_row][min_col - 1:max_col]:",
+    "                        value = str(cell.value).strip() if cell.value is not None else ''",
+    "                        if value:",
+    "                            column_id = _node_id(stem, sheet_name, table_name, value, 'column')",
+    "                            _add_node(nodes, seen_nodes, column_id, f'{value} (column)', 'spreadsheet_column', relative_source, f'{relative_source}#{sheet_name}!{cell.coordinate}')",
+    "                            _add_edge(edges, seen_edges, table_id, column_id)",
+    "            header_row = None",
+    "            for row in worksheet.iter_rows(min_row=1, max_row=min(25, worksheet.max_row), values_only=False):",
+    "                values = [str(cell.value).strip() for cell in row if cell.value is not None and str(cell.value).strip()]",
+    "                if values:",
+    "                    header_row = row",
+    "                    break",
+    "            if header_row:",
+    "                for cell in header_row:",
+    "                    value = str(cell.value).strip() if cell.value is not None else ''",
+    "                    if value:",
+    "                        column_id = _node_id(stem, sheet_name, value, 'column')",
+    "                        _add_node(nodes, seen_nodes, column_id, f'{value} (column)', 'spreadsheet_column', relative_source, f'{relative_source}#{sheet_name}!{cell.coordinate}')",
+    "                        _add_edge(edges, seen_edges, sheet_id, column_id)",
+    "    finally:",
+    "        workbook.close()",
+    "except Exception as exc:",
+    "    print(f'[second-brain] spreadsheet component augmentation warning for {relative_source}: {exc}', file=sys.stderr)",
+    "structure = {'nodes': nodes, 'edges': edges}",
+    "if len(nodes) <= 1:",
+    "    raise SystemExit('Graphify xlsx_extract_structure produced no spreadsheet components. Install graphifyy[office] and verify the workbook is readable.')",
+    "labels = {node.get('id'): node.get('label') or node.get('id') for node in nodes}",
+    "lines = [",
+    "    f'# Spreadsheet Components: {source.name}',",
+    "    '',",
+    "    f'Source workbook: {relative_source}',",
+    "    '',",
+    "    'This generated file lets Graphify treat workbook sheets, named tables, and column headers as separate graph components.',",
+    "    '',",
+    "    '## Component Nodes',",
+    "    '',",
+    "    '| Component | Graphify ID | Kind |',",
+    "    '| --- | --- | --- |',",
+    "]",
+    "for node in nodes:",
+    "    label = str(node.get('label') or node.get('id') or '').replace('|', '\\\\|')",
+    "    node_id = str(node.get('id') or '').replace('|', '\\\\|')",
+    "    kind = str(node.get('file_type') or 'document').replace('|', '\\\\|')",
+    "    lines.append(f'| {label} | `{node_id}` | {kind} |')",
+    "lines.extend(['', '## Component Relationships', '', '| Parent | Relation | Child |', '| --- | --- | --- |'])",
+    "for edge in edges:",
+    "    source_label = str(labels.get(edge.get('source'), edge.get('source') or '')).replace('|', '\\\\|')",
+    "    target_label = str(labels.get(edge.get('target'), edge.get('target') or '')).replace('|', '\\\\|')",
+    "    relation = str(edge.get('relation') or 'related').replace('|', '\\\\|')",
+    "    lines.append(f'| {source_label} | {relation} | {target_label} |')",
+    "lines.extend(['', '## Raw Graphify Structure', '', '```json', json.dumps(structure, ensure_ascii=False, indent=2), '```', ''])",
+    "output.parent.mkdir(parents=True, exist_ok=True)",
+    "output.write_text('\\n'.join(lines), encoding='utf-8')",
+    "print(f'[second-brain] spreadsheet components: {relative_source} -> {output.name} ({len(nodes)} nodes, {len(edges)} edges)')"
+  ].join("\n");
 }
 
 function linkEndpointId(value: unknown): string {
@@ -318,6 +479,7 @@ export class GraphifyController {
     await this.initialize();
     const sourcePath = this.resolveRemovableSourcePath(sourceFile);
     await rm(sourcePath, { force: true });
+    await this.removeSourceComment(sourceFile);
     await this.resetGraphifyOutputs();
 
     if (!(await this.hasRawSourceFiles())) {
@@ -358,9 +520,73 @@ export class GraphifyController {
     ].join("\n");
 
     await writeFile(targetPath, `${targetContent.trimEnd()}${collapsedBlock}`, "utf8");
+    await this.mergeSourceComment(sourceFile, targetSourceFile);
     await rm(sourcePath, { force: true });
     await this.resetGraphifyOutputs();
 
+    return this.queueUpdate(0);
+  }
+
+  async renameSource(sourceFile: string, newName: string): Promise<GraphifyIngestionResult> {
+    await this.initialize();
+    const sourcePath = this.resolveRemovableSourcePath(sourceFile);
+    const trimmedName = newName.trim();
+
+    if (!trimmedName) {
+      throw new Error("Enter a source name.");
+    }
+
+    const parsedCurrent = path.parse(sourcePath);
+    const parsedNext = path.parse(trimmedName);
+    const nextFileName = safeFilePart(parsedNext.ext ? parsedNext.base : `${parsedNext.name || trimmedName}${parsedCurrent.ext}`);
+    const nextPath = path.join(parsedCurrent.dir, nextFileName);
+
+    if (sourcePath === nextPath) {
+      throw new Error("Enter a different source name.");
+    }
+
+    try {
+      await stat(nextPath);
+      throw new Error(`A source named ${nextFileName} already exists.`);
+    } catch (error) {
+      if (!(error && typeof error === "object" && "code" in error && error.code === "ENOENT")) {
+        throw error;
+      }
+    }
+
+    await rename(sourcePath, nextPath);
+    await this.renameSourceComment(sourceFile, path.relative(this.rawVaultPath, nextPath));
+    await this.resetGraphifyOutputs();
+
+    return this.queueUpdate(0);
+  }
+
+  async commentSource(sourceFile: string, comment: string): Promise<GraphifyIngestionResult> {
+    await this.initialize();
+    const sourcePath = this.resolveRemovableSourcePath(sourceFile);
+    const trimmed = comment.trim();
+
+    if (!trimmed) {
+      await this.removeSourceComment(sourceFile);
+    } else {
+      const commentPath = this.resolveSourceCommentPath(sourceFile);
+      await mkdir(path.dirname(commentPath), { recursive: true });
+      await writeFile(
+        commentPath,
+        [
+          `# Source context: ${path.basename(sourcePath)}`,
+          "",
+          `Source file: ${path.relative(this.rawVaultPath, sourcePath)}`,
+          `Updated: ${new Date().toISOString()}`,
+          "",
+          trimmed,
+          ""
+        ].join("\n"),
+        "utf8"
+      );
+    }
+
+    await this.resetGraphifyOutputs();
     return this.queueUpdate(0);
   }
 
@@ -436,6 +662,92 @@ export class GraphifyController {
     return written;
   }
 
+  private async prepareSpreadsheetComponents(): Promise<string> {
+    if (process.env.SECOND_BRAIN_XLSX_COMPONENTS === "0") {
+      await this.resetSpreadsheetComponentSidecars();
+      return "Spreadsheet component sidecars disabled by SECOND_BRAIN_XLSX_COMPONENTS=0.";
+    }
+
+    await this.resetSpreadsheetComponentSidecars();
+    const sources = await this.listSpreadsheetSources();
+
+    if (sources.length === 0) {
+      return "";
+    }
+
+    const output: string[] = [];
+    for (const sourcePath of sources) {
+      output.push(await this.prepareSpreadsheetComponent(sourcePath));
+    }
+
+    return output.filter(Boolean).join("\n");
+  }
+
+  private async prepareSpreadsheetComponent(sourcePath: string): Promise<string> {
+    const relativeSource = path.relative(this.rawVaultPath, sourcePath).split(path.sep).join(path.posix.sep);
+    const outputPath = path.join(
+      this.rawVaultPath,
+      spreadsheetComponentDirectoryName,
+      spreadsheetComponentFileName(relativeSource)
+    );
+    const script = spreadsheetComponentScript();
+    const invocations = await this.getGraphifyPythonInvocations(["-c", script, sourcePath, outputPath, relativeSource]);
+    const failures: string[] = [];
+
+    for (const invocation of invocations) {
+      try {
+        return await this.runGraphifyUtilityInvocation(invocation);
+      } catch (error) {
+        failures.push(`${invocation.label}: ${errorMessage(error)}`);
+      }
+    }
+
+    return [
+      `[second-brain] unable to generate spreadsheet components for ${relativeSource}.`,
+      "Install Graphify with office support: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\".",
+      "Tried:",
+      ...failures.map((failure) => `- ${failure}`)
+    ].join("\n");
+  }
+
+  private async listSpreadsheetSources(directory = this.rawVaultPath): Promise<string[]> {
+    let entries: Dirent[];
+
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch {
+      return [];
+    }
+
+    const files: string[] = [];
+    for (const entry of entries) {
+      if (
+        entry.name === "graphify-out" ||
+        entry.name === ".graphify" ||
+        entry.name === sourceCommentDirectoryName ||
+        entry.name === spreadsheetComponentDirectoryName
+      ) {
+        continue;
+      }
+
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...(await this.listSpreadsheetSources(entryPath)));
+        continue;
+      }
+
+      if (entry.isFile() && isSpreadsheetSource(entryPath)) {
+        files.push(entryPath);
+      }
+    }
+
+    return files.sort((left, right) => left.localeCompare(right));
+  }
+
+  private async resetSpreadsheetComponentSidecars(): Promise<void> {
+    await rm(path.join(this.rawVaultPath, spreadsheetComponentDirectoryName), { recursive: true, force: true });
+  }
+
   private createRawDestination(item: ProcessDroppedItem, index: number): string {
     const fallbackName = item.text || item.content ? "dropped-text.txt" : `dropped-file-${index + 1}`;
     const safeName = safeFilePart(item.name ?? (item.path ? path.basename(item.path) : fallbackName));
@@ -464,6 +776,7 @@ export class GraphifyController {
     const primarySettings = this.getGraphifyLocalModelSettings();
     const aiSettings = await this.getAiSettings();
     await this.ensureGraphifyProviderConfig(primarySettings, aiSettings);
+    const spreadsheetStdout = await this.prepareSpreadsheetComponents();
 
     const command =
       process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND ??
@@ -478,6 +791,7 @@ export class GraphifyController {
 
     const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
     const combinedStdout = [
+      spreadsheetStdout,
       stdout,
       process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
       htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""
@@ -847,7 +1161,7 @@ export class GraphifyController {
       {
         label: "uv tool graphifyy",
         command: "uv",
-        args: ["tool", "run", "--from", "graphifyy[pdf,office,openai,mcp]", "graphify", ...graphifyArgs]
+        args: ["tool", "run", "--from", graphifyToolPackage, "graphify", ...graphifyArgs]
       },
       {
         label: "Windows py module",
@@ -863,6 +1177,50 @@ export class GraphifyController {
         label: "PATH graphify",
         command: "graphify",
         args: graphifyArgs
+      }
+    );
+
+    return invocations;
+  }
+
+  private async getGraphifyPythonInvocations(pythonArgs: string[]): Promise<GraphifyInvocation[]> {
+    const invocations: GraphifyInvocation[] = [];
+    const configured = process.env.SECOND_BRAIN_GRAPHIFY_PYTHON?.trim();
+
+    if (configured) {
+      invocations.push({
+        label: "SECOND_BRAIN_GRAPHIFY_PYTHON",
+        command: configured,
+        args: pythonArgs,
+        shell: isCmdShim(configured)
+      });
+    }
+
+    const bundledPython = await this.findBundledGraphifyPythonCommand();
+    if (bundledPython) {
+      invocations.push({
+        label: "bundled Graphify Python runtime",
+        command: bundledPython,
+        args: pythonArgs,
+        shell: isCmdShim(bundledPython)
+      });
+    }
+
+    invocations.push(
+      {
+        label: "uv tool graphifyy python",
+        command: "uv",
+        args: ["tool", "run", "--from", graphifyToolPackage, "python", ...pythonArgs]
+      },
+      {
+        label: "Windows py",
+        command: "py",
+        args: pythonArgs
+      },
+      {
+        label: "python module runtime",
+        command: process.platform === "win32" ? "python" : "python3",
+        args: pythonArgs
       }
     );
 
@@ -920,6 +1278,23 @@ export class GraphifyController {
     return null;
   }
 
+  private async findBundledGraphifyPythonCommand(): Promise<string | null> {
+    const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+    const candidates = [
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python.exe") : "",
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python") : "",
+      path.join(process.cwd(), "resources", "graphify-runtime", "python", process.platform === "win32" ? "python.exe" : "python")
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (await this.fileExists(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
   private runGraphifyInvocation(
     invocation: GraphifyInvocation,
     settings: GraphifyLocalModelSettings,
@@ -945,6 +1320,40 @@ export class GraphifyController {
                 `Command: ${formatInvocation(invocation)}`,
                 error.message,
                 combined ? `Graphify output:\n${combined}` : ""
+              ]
+                .filter(Boolean)
+                .join("\n\n")
+            )
+          );
+          return;
+        }
+
+        resolve(combined);
+      });
+    });
+  }
+
+  private runGraphifyUtilityInvocation(invocation: GraphifyInvocation): Promise<string> {
+    const options: ExecFileOptions = {
+      cwd: this.rawVaultPath,
+      timeout: Number(process.env.SECOND_BRAIN_XLSX_COMPONENT_TIMEOUT_MS ?? 120_000),
+      maxBuffer: maxExecBuffer,
+      env: process.env,
+      windowsHide: true,
+      shell: invocation.shell
+    };
+
+    return new Promise<string>((resolve, reject) => {
+      execFile(invocation.command, invocation.args, options, (error, commandStdout, commandStderr) => {
+        const combined = [commandStdout, commandStderr].filter(Boolean).join("\n").trim();
+
+        if (error) {
+          reject(
+            new Error(
+              [
+                `Command: ${formatInvocation(invocation)}`,
+                error.message,
+                combined ? `Output:\n${combined}` : ""
               ]
                 .filter(Boolean)
                 .join("\n\n")
@@ -1172,11 +1581,66 @@ export class GraphifyController {
       throw new Error(`Refusing to remove source outside the raw vault: ${sourceFile}`);
     }
 
-    if (relative.split(path.sep).includes("graphify-out")) {
+    if (relative.split(path.sep).some((part) => part === "graphify-out" || part === spreadsheetComponentDirectoryName)) {
       throw new Error(`Refusing to remove generated Graphify artifact: ${sourceFile}`);
     }
 
     return resolvedCandidate;
+  }
+
+  private resolveSourceCommentPath(sourceFile: string): string {
+    return path.join(this.rawVaultPath, sourceCommentDirectoryName, sourceCommentFileName(sourceFile));
+  }
+
+  private async readSourceComment(sourceFile: string): Promise<string> {
+    try {
+      return await readFile(this.resolveSourceCommentPath(sourceFile), "utf8");
+    } catch {
+      return "";
+    }
+  }
+
+  private async removeSourceComment(sourceFile: string): Promise<void> {
+    await rm(this.resolveSourceCommentPath(sourceFile), { force: true });
+  }
+
+  private async renameSourceComment(sourceFile: string, nextSourceFile: string): Promise<void> {
+    const currentCommentPath = this.resolveSourceCommentPath(sourceFile);
+    const nextCommentPath = this.resolveSourceCommentPath(nextSourceFile);
+
+    try {
+      await mkdir(path.dirname(nextCommentPath), { recursive: true });
+      await rename(currentCommentPath, nextCommentPath);
+    } catch (error) {
+      if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+        return;
+      }
+
+      throw error;
+    }
+  }
+
+  private async mergeSourceComment(sourceFile: string, targetSourceFile: string): Promise<void> {
+    const sourceComment = (await this.readSourceComment(sourceFile)).trim();
+    if (!sourceComment) {
+      return;
+    }
+
+    const targetComment = (await this.readSourceComment(targetSourceFile)).trim();
+    const nextComment = [
+      targetComment,
+      targetComment ? "\n---\n" : "",
+      sourceComment,
+      "",
+      `Merged from: ${sourceFile}`,
+      `Merged at: ${new Date().toISOString()}`
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const targetCommentPath = this.resolveSourceCommentPath(targetSourceFile);
+    await mkdir(path.dirname(targetCommentPath), { recursive: true });
+    await writeFile(targetCommentPath, `${nextComment.trim()}\n`, "utf8");
+    await this.removeSourceComment(sourceFile);
   }
 
   private async resetGraphifyOutputs(): Promise<void> {
@@ -1194,7 +1658,12 @@ export class GraphifyController {
     }
 
     for (const entry of entries) {
-      if (entry.name === "graphify-out" || entry.name === ".graphify") {
+      if (
+        entry.name === "graphify-out" ||
+        entry.name === ".graphify" ||
+        entry.name === sourceCommentDirectoryName ||
+        entry.name === spreadsheetComponentDirectoryName
+      ) {
         continue;
       }
 

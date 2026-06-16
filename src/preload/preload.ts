@@ -9,6 +9,7 @@ import type {
   SecondBrainApi,
   TrackerIngestionStatus,
   UpdateAiSettingsInput,
+  UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
   UpdateTrackerInput,
   WidgetMovePayload,
@@ -50,7 +51,10 @@ const boardChannels = {
   getState: "get-board-state",
   getGraphHtml: "get-graph-html",
   removeSource: "remove-board-source",
-  collapseSource: "collapse-board-source"
+  collapseSource: "collapse-board-source",
+  renameSource: "rename-board-source",
+  commentSource: "comment-board-source",
+  search: "search-board"
 } as const;
 
 const clipboardChannels = {
@@ -62,7 +66,9 @@ const clipboardChannels = {
 
 const settingsChannels = {
   getAi: "settings-get-ai",
-  updateAi: "settings-update-ai"
+  updateAi: "settings-update-ai",
+  getApp: "settings-get-app",
+  updateApp: "settings-update-app"
 } as const;
 
 const api: SecondBrainApi = {
@@ -107,7 +113,12 @@ const api: SecondBrainApi = {
     getGraphHtml: () => ipcRenderer.invoke(boardChannels.getGraphHtml),
     removeSource: (sourceFile: string) => ipcRenderer.invoke(boardChannels.removeSource, sourceFile),
     collapseSource: (sourceFile: string, targetSourceFile: string) =>
-      ipcRenderer.invoke(boardChannels.collapseSource, sourceFile, targetSourceFile)
+      ipcRenderer.invoke(boardChannels.collapseSource, sourceFile, targetSourceFile),
+    renameSource: (sourceFile: string, newName: string) =>
+      ipcRenderer.invoke(boardChannels.renameSource, sourceFile, newName),
+    commentSource: (sourceFile: string, comment: string) =>
+      ipcRenderer.invoke(boardChannels.commentSource, sourceFile, comment),
+    search: (input) => ipcRenderer.invoke(boardChannels.search, input)
   },
   clipboard: {
     readText: () => ipcRenderer.invoke(clipboardChannels.readText),
@@ -117,7 +128,9 @@ const api: SecondBrainApi = {
   },
   settings: {
     getAi: () => ipcRenderer.invoke(settingsChannels.getAi),
-    updateAi: (input: UpdateAiSettingsInput) => ipcRenderer.invoke(settingsChannels.updateAi, input)
+    updateAi: (input: UpdateAiSettingsInput) => ipcRenderer.invoke(settingsChannels.updateAi, input),
+    getApp: () => ipcRenderer.invoke(settingsChannels.getApp),
+    updateApp: (input: UpdateAppSettingsInput) => ipcRenderer.invoke(settingsChannels.updateApp, input)
   }
 };
 

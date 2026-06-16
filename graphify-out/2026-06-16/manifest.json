@@ -235,13 +235,13 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1781650928.0771842,
-    "ast_hash": "845506a3ca2bf484b41f5b74f25d91fb",
+    "mtime": 1781585597.5270736,
+    "ast_hash": "5004a9503c13453ec4c3e4736b619bbf",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
-    "mtime": 1781650837.663823,
-    "ast_hash": "1593eabf07d0966448e925c7f8dd7fd2",
+    "mtime": 1781585561.9327977,
+    "ast_hash": "9f2ab6bb5d7157b6de6f29885756b714",
     "semantic_hash": ""
   },
   "src/renderer/components/BoardRenderer.tsx": {

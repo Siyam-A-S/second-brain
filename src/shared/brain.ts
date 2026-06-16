@@ -145,6 +145,28 @@ export type UpdateAiSettingsInput = {
   model?: string | undefined;
 };
 
+export type GraphifyRuntimeSettings = {
+  graphifyBin: string;
+  maxTokens: number;
+  retryMaxTokens: number;
+  timeoutMs: number;
+  cardDefinitions: boolean;
+  cardDefinitionMaxPerPass: number;
+};
+
+export type AppSettings = {
+  ai: AiSettings;
+  graphify: GraphifyRuntimeSettings;
+  updatedAt: string;
+};
+
+export type UpdateGraphifyRuntimeSettingsInput = Partial<GraphifyRuntimeSettings>;
+
+export type UpdateAppSettingsInput = {
+  ai?: UpdateAiSettingsInput | undefined;
+  graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;
+};
+
 export type TrackerStatus = "Tracking" | "Done" | "Dismissed";
 
 export type TrackerRecord = {

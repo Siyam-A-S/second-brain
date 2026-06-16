@@ -1,5 +1,6 @@
 import type {
   BoardRule,
+  AppSettings,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   SecondBrainApi,
@@ -7,6 +8,7 @@ import type {
   TrackerIngestionStatus,
   TrackerRecord,
   UpdateAiSettingsInput,
+  UpdateAppSettingsInput,
   UpdateTrackerInput
 } from "../../shared/ipc";
 
@@ -17,6 +19,18 @@ let browserAiSettings = {
   endpoint: "http://localhost:8080/v1/chat/completions",
   apiKey: "local-dev-placeholder",
   model: "local-model",
+  updatedAt: new Date().toISOString()
+};
+let browserAppSettings: AppSettings = {
+  ai: browserAiSettings,
+  graphify: {
+    graphifyBin: "",
+    maxTokens: 8192,
+    retryMaxTokens: 4096,
+    timeoutMs: 600_000,
+    cardDefinitions: true,
+    cardDefinitionMaxPerPass: 24
+  },
   updatedAt: new Date().toISOString()
 };
 
@@ -343,7 +357,24 @@ const browserApiFallback: SecondBrainApi = {
       reportPath: "/browser-preview/GRAPH_REPORT.md",
       stdout: "Browser preview source collapse is a no-op.",
       updatedAt: new Date().toISOString()
-    })
+    }),
+    renameSource: async () => ({
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: "/browser-preview/graph.json",
+      reportPath: "/browser-preview/GRAPH_REPORT.md",
+      stdout: "Browser preview source rename is a no-op.",
+      updatedAt: new Date().toISOString()
+    }),
+    commentSource: async () => ({
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: "/browser-preview/graph.json",
+      reportPath: "/browser-preview/GRAPH_REPORT.md",
+      stdout: "Browser preview source comment is a no-op.",
+      updatedAt: new Date().toISOString()
+    }),
+    search: async () => []
   },
   clipboard: {
     readText: async () => navigator.clipboard?.readText?.() ?? "",
@@ -378,7 +409,30 @@ const browserApiFallback: SecondBrainApi = {
         model: input.model ?? browserAiSettings.model,
         updatedAt: new Date().toISOString()
       };
+      browserAppSettings = {
+        ...browserAppSettings,
+        ai: browserAiSettings,
+        updatedAt: new Date().toISOString()
+      };
       return browserAiSettings;
+    },
+    getApp: async () => browserAppSettings,
+    updateApp: async (input: UpdateAppSettingsInput) => {
+      browserAiSettings = {
+        endpoint: input.ai?.endpoint ?? browserAiSettings.endpoint,
+        apiKey: input.ai?.apiKey ?? browserAiSettings.apiKey,
+        model: input.ai?.model ?? browserAiSettings.model,
+        updatedAt: new Date().toISOString()
+      };
+      browserAppSettings = {
+        ai: browserAiSettings,
+        graphify: {
+          ...browserAppSettings.graphify,
+          ...input.graphify
+        },
+        updatedAt: new Date().toISOString()
+      };
+      return browserAppSettings;
     }
   }
 };

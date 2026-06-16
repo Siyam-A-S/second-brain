@@ -3,6 +3,7 @@ import type {
   BrainSearchResult,
   BoardChildNode,
   AiSettings,
+  AppSettings,
   ExportBoardPlaintextInput,
   GraphifyIngestionResult,
   OrganizedBoardTopic,
@@ -17,18 +18,25 @@ import type {
   TrackerRecord,
   TrackerStatus,
   UpdateAiSettingsInput,
+  UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
   UpdateTrackerInput,
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
-import type { BoardRule, OrganizedBoardTopic as GraphBoardTopic } from "./types/board";
+import type {
+  BoardSearchInput,
+  BoardSearchResult,
+  BoardRule,
+  OrganizedBoardTopic as GraphBoardTopic
+} from "./types/board";
 
 export type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
   AiSettings,
+  AppSettings,
   ExportBoardPlaintextInput,
   GraphifyIngestionResult,
   OrganizedBoardTopic,
@@ -43,6 +51,7 @@ export type {
   TrackerRecord,
   TrackerStatus,
   UpdateAiSettingsInput,
+  UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
   UpdateTrackerInput,
   UserValidationState,
@@ -51,6 +60,9 @@ export type {
 export type {
   BoardItem,
   BoardLayoutType,
+  BoardSearchInput,
+  BoardSearchKind,
+  BoardSearchResult,
   BoardRule,
   OrganizedBoardTopic as GraphBoardTopic
 } from "./types/board";
@@ -90,7 +102,10 @@ export const boardChannels = {
   getState: "get-board-state",
   getGraphHtml: "get-graph-html",
   removeSource: "remove-board-source",
-  collapseSource: "collapse-board-source"
+  collapseSource: "collapse-board-source",
+  renameSource: "rename-board-source",
+  commentSource: "comment-board-source",
+  search: "search-board"
 } as const;
 
 export const clipboardChannels = {
@@ -102,7 +117,9 @@ export const clipboardChannels = {
 
 export const settingsChannels = {
   getAi: "settings-get-ai",
-  updateAi: "settings-update-ai"
+  updateAi: "settings-update-ai",
+  getApp: "settings-get-app",
+  updateApp: "settings-update-app"
 } as const;
 
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
@@ -178,6 +195,9 @@ export type SecondBrainApi = {
     getGraphHtml: () => Promise<GraphHtmlDocument>;
     removeSource: (sourceFile: string) => Promise<GraphifyIngestionResult>;
     collapseSource: (sourceFile: string, targetSourceFile: string) => Promise<GraphifyIngestionResult>;
+    renameSource: (sourceFile: string, newName: string) => Promise<GraphifyIngestionResult>;
+    commentSource: (sourceFile: string, comment: string) => Promise<GraphifyIngestionResult>;
+    search: (input: BoardSearchInput) => Promise<BoardSearchResult[]>;
   };
   clipboard: {
     readText: () => Promise<string>;
@@ -188,5 +208,7 @@ export type SecondBrainApi = {
   settings: {
     getAi: () => Promise<AiSettings>;
     updateAi: (input: UpdateAiSettingsInput) => Promise<AiSettings>;
+    getApp: () => Promise<AppSettings>;
+    updateApp: (input: UpdateAppSettingsInput) => Promise<AppSettings>;
   };
 };

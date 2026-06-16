@@ -16,11 +16,12 @@ import type {
   ListBrainNodesInput,
   SearchBrainNodesInput,
   UpdateAiSettingsInput,
+  UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
   UpdateTrackerInput,
   WriteBrainNodeInput
 } from "../shared/brain";
-import type { BoardRule } from "../shared/types/board";
+import type { BoardRule, BoardSearchInput } from "../shared/types/board";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
 import { EmbeddingService } from "./services/EmbeddingService";
@@ -282,6 +283,13 @@ function registerIpc(
   ipcMain.handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
     graphify.collapseSourceInto(sourceFile, targetSourceFile)
   );
+  ipcMain.handle(boardChannels.renameSource, (_event, sourceFile: string, newName: string) =>
+    graphify.renameSource(sourceFile, newName)
+  );
+  ipcMain.handle(boardChannels.commentSource, (_event, sourceFile: string, comment: string) =>
+    graphify.commentSource(sourceFile, comment)
+  );
+  ipcMain.handle(boardChannels.search, (_event, input: BoardSearchInput) => graphifyBoard.search(input));
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
   ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
     clipboard.writeText(text);
@@ -294,6 +302,8 @@ function registerIpc(
   });
   ipcMain.handle(settingsChannels.getAi, () => aiSettings.getSettings());
   ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
+  ipcMain.handle(settingsChannels.getApp, () => aiSettings.getAppSettings());
+  ipcMain.handle(settingsChannels.updateApp, (_event, input: UpdateAppSettingsInput) => aiSettings.updateAppSettings(input));
 }
 
 app.whenReady().then(async () => {

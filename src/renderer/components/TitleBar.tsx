@@ -1,6 +1,10 @@
-import { Maximize2, Minus, X } from "lucide-react";
+import { Maximize2, Minus, Settings, X } from "lucide-react";
 
-export function TitleBar(): JSX.Element {
+type TitleBarProps = {
+  onOpenSettings: () => void;
+};
+
+export function TitleBar({ onOpenSettings }: TitleBarProps): JSX.Element {
   return (
     <header className="drag-region flex h-11 shrink-0 items-center justify-between border-b border-black/5 bg-floral/90 px-3 backdrop-blur">
       <div className="flex items-center gap-3">
@@ -9,6 +13,14 @@ export function TitleBar(): JSX.Element {
       </div>
 
       <div className="no-drag flex items-center gap-1">
+        <button
+          aria-label="Open settings"
+          className="grid h-8 w-8 place-items-center rounded-md text-stone-600 transition hover:bg-black/5 hover:text-ink"
+          type="button"
+          onClick={onOpenSettings}
+        >
+          <Settings size={15} />
+        </button>
         <button
           aria-label="Minimize to floating drop-zone"
           className="grid h-8 w-8 place-items-center rounded-md text-stone-600 transition hover:bg-black/5 hover:text-ink"
