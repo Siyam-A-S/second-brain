@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, CalendarClock, CheckCircle2, Download, Loader2, RefreshCcw } from "lucide-react";
-import type { TrackerIngestionStatus, TrackerRecord, TrackerStatus } from "../../shared/ipc";
+import { AlertCircle, CheckCircle2, Download, Loader2, Plus, RefreshCcw, Trash2 } from "lucide-react";
+import type { TrackerPriority, TrackerRecord, TrackerStatus, UpdateTrackerInput } from "../../shared/ipc";
 import { useTrackerStore } from "../stores/useTrackerStore";
 
 type TrackerTableProps = {
@@ -8,193 +8,147 @@ type TrackerTableProps = {
 };
 
 type LoadState = "loading" | "ready" | "error";
-type ExportState = "idle" | "downloaded" | "error";
 
-const statusOptions: TrackerStatus[] = ["Tracking", "Done", "Dismissed"];
+const statusOptions: TrackerStatus[] = ["backlog", "todo", "in_progress", "blocked", "done"];
+const priorityOptions: TrackerPriority[] = ["low", "medium", "high", "urgent"];
 
-function formatDate(value: string): string {
-  if (!value) {
-    return "Unknown";
-  }
-
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric"
-  }).format(date);
+function titleCase(value: string): string {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
 function csvCell(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
-function trackersToCsv(trackers: TrackerRecord[]): string {
+function ticketsToCsv(tickets: TrackerRecord[]): string {
   const rows = [
-    ["Title", "Date", "Time", "End Time", "Timezone", "Location", "Link", "Status", "Source", "Context"],
-    ...trackers.map((tracker) => [
-      tracker.title,
-      tracker.date,
-      tracker.time,
-      tracker.endTime ?? "",
-      tracker.timezone ?? "",
-      tracker.location ?? "",
-      tracker.link ?? "",
-      tracker.status,
-      tracker.source ?? "",
-      tracker.context
+    ["Title", "Status", "Priority", "Due Date", "Labels", "Sources", "Description"],
+    ...tickets.map((ticket) => [
+      ticket.title,
+      ticket.status,
+      ticket.priority,
+      ticket.dueDate ?? "",
+      ticket.labels.join("; "),
+      ticket.sourceFiles.join("; "),
+      ticket.description
     ])
   ];
 
   return rows.map((row) => row.map(csvCell).join(",")).join("\n");
 }
 
-function progressWidth(stage: TrackerIngestionStatus["stage"]): string {
-  switch (stage) {
-    case "extracting":
-      return "62%";
-    case "saved":
-    case "skipped":
-    case "error":
-      return "100%";
-    case "idle":
-    default:
-      return "0%";
-  }
-}
-
-function progressClass(stage: TrackerIngestionStatus["stage"]): string {
-  switch (stage) {
-    case "error":
-      return "bg-rose-500";
-    case "saved":
-      return "bg-emerald-500";
-    case "skipped":
-      return "bg-slate-400";
-    case "extracting":
-      return "bg-slate-900";
-    case "idle":
-    default:
-      return "bg-slate-300";
-  }
-}
-
 export function TrackerTable({ refreshKey }: TrackerTableProps): JSX.Element {
   const [loadState, setLoadState] = useState<LoadState>("loading");
-  const [exportState, setExportState] = useState<ExportState>("idle");
-  const trackers = useTrackerStore((state) => state.trackers);
+  const [exported, setExported] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
+  const [draftDueDate, setDraftDueDate] = useState("");
+  const [draftPriority, setDraftPriority] = useState<TrackerPriority>("medium");
+  const [error, setError] = useState<string | null>(null);
+  const tickets = useTrackerStore((state) => state.trackers);
   const setTrackers = useTrackerStore((state) => state.setTrackers);
-  const status = useTrackerStore((state) => state.status);
-  const setStatus = useTrackerStore((state) => state.setStatus);
   const upsertTracker = useTrackerStore((state) => state.upsertTracker);
-  const upsertTrackers = useTrackerStore((state) => state.upsertTrackers);
+  const removeTracker = useTrackerStore((state) => state.removeTracker);
 
   useEffect(() => {
-    return window.api.tracker.onIngestionStatus((nextStatus) => {
-      setStatus(nextStatus);
+    void refreshTickets();
+  }, [refreshKey]);
 
-      if (nextStatus.trackers?.length) {
-        upsertTrackers(nextStatus.trackers);
-        return;
-      }
-
-      if (nextStatus.tracker) {
-        upsertTracker(nextStatus.tracker);
-      }
-    });
-  }, [setStatus, upsertTracker, upsertTrackers]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    setLoadState("loading");
-    void window.api.tracker
-      .list()
-      .then((records) => {
-        if (!isMounted) {
-          return;
-        }
-
-        setTrackers(records);
-        setLoadState("ready");
-      })
-      .catch((error) => {
-        console.error("Unable to load tracker", error);
-        if (isMounted) {
-          setLoadState("error");
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [refreshKey, setTrackers]);
-
-  const sortedTrackers = useMemo(
+  const sortedTickets = useMemo(
     () =>
-      [...trackers].sort((left, right) => {
-        const leftWhen = `${left.date || "9999-99-99"} ${left.time || "99:99"}`;
-        const rightWhen = `${right.date || "9999-99-99"} ${right.time || "99:99"}`;
-        const byWhen = leftWhen.localeCompare(rightWhen);
-        return byWhen !== 0 ? byWhen : right.updatedAt.localeCompare(left.updatedAt);
+      [...tickets].sort((left, right) => {
+        const statusOrder = new Map<TrackerStatus, number>([
+          ["blocked", 0],
+          ["in_progress", 1],
+          ["todo", 2],
+          ["backlog", 3],
+          ["done", 4]
+        ]);
+
+        return (
+          (statusOrder.get(left.status) ?? 99) - (statusOrder.get(right.status) ?? 99) ||
+          (left.dueDate ?? "9999-99-99").localeCompare(right.dueDate ?? "9999-99-99") ||
+          right.updatedAt.localeCompare(left.updatedAt)
+        );
       }),
-    [trackers]
+    [tickets]
   );
 
-  async function updateTracker(input: { uuid: string; status?: TrackerStatus; context?: string }): Promise<void> {
-    try {
-      const updated = await window.api.tracker.update(input);
-      upsertTracker(updated);
-      setStatus({
-        stage: "saved",
-        message: `Updated ${updated.title}`,
-        tracker: updated
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to update tracker.";
-      console.error("Unable to update tracker", error);
-      setStatus({
-        stage: "error",
-        message,
-        error: message
-      });
-    }
-  }
-
-  async function refreshTrackers(): Promise<void> {
+  async function refreshTickets(): Promise<void> {
     setLoadState("loading");
+    setError(null);
+
     try {
       setTrackers(await window.api.tracker.list());
       setLoadState("ready");
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to load tracker.";
       console.error("Unable to refresh tracker", error);
       setLoadState("error");
+      setError(message);
+    }
+  }
+
+  async function createTicket(): Promise<void> {
+    if (!draftTitle.trim()) {
+      return;
+    }
+
+    try {
+      const ticket = await window.api.tracker.create({
+        title: draftTitle,
+        description: draftDescription,
+        dueDate: draftDueDate || undefined,
+        priority: draftPriority,
+        status: "todo"
+      });
+      upsertTracker(ticket);
+      setDraftTitle("");
+      setDraftDescription("");
+      setDraftDueDate("");
+      setDraftPriority("medium");
+      setError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to create ticket.";
+      setError(message);
+    }
+  }
+
+  async function updateTicket(input: UpdateTrackerInput): Promise<void> {
+    try {
+      const updated = await window.api.tracker.update(input);
+      upsertTracker(updated);
+      setError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to update ticket.";
+      setError(message);
+    }
+  }
+
+  async function deleteTicket(uuid: string): Promise<void> {
+    try {
+      await window.api.tracker.remove(uuid);
+      removeTracker(uuid);
+      setError(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete ticket.";
+      setError(message);
     }
   }
 
   function exportCsv(): void {
-    try {
-      const csv = trackersToCsv(sortedTrackers);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `second-brain-tracker-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      setExportState("downloaded");
-      window.setTimeout(() => setExportState("idle"), 2_000);
-    } catch (error) {
-      console.error("Unable to export tracker CSV", error);
-      setExportState("error");
-      window.setTimeout(() => setExportState("idle"), 2_000);
-    }
+    const csv = ticketsToCsv(sortedTickets);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `second-brain-tickets-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setExported(true);
+    window.setTimeout(() => setExported(false), 2_000);
   }
 
   return (
@@ -202,57 +156,79 @@ export function TrackerTable({ refreshKey }: TrackerTableProps): JSX.Element {
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-900/5 px-6">
         <div className="min-w-0">
           <h1 className="text-lg font-semibold leading-6 text-slate-950">Tracker</h1>
-          <p className="mt-1 truncate text-xs text-slate-500">{status.message}</p>
+          <p className="mt-1 truncate text-xs text-slate-500">Manual project tickets</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button
             className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/60 text-slate-600 transition hover:bg-white hover:text-slate-950"
-            title={exportState === "downloaded" ? "Downloaded" : "Export CSV"}
+            title={exported ? "Downloaded" : "Export CSV"}
             type="button"
             onClick={exportCsv}
           >
-            {exportState === "downloaded" ? <CheckCircle2 size={16} /> : <Download size={16} />}
+            {exported ? <CheckCircle2 size={16} /> : <Download size={16} />}
           </button>
           <button
             className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/60 text-slate-600 transition hover:bg-white hover:text-slate-950"
             title="Refresh tracker"
             type="button"
-            onClick={() => void refreshTrackers()}
+            onClick={() => void refreshTickets()}
           >
-            <RefreshCcw size={16} />
+            {loadState === "loading" ? <Loader2 className="animate-spin" size={16} /> : <RefreshCcw size={16} />}
           </button>
         </div>
       </header>
 
-      <div className="h-1 bg-slate-900/5">
-        <div
-          className={`h-full transition-all duration-300 ease-out ${progressClass(status.stage)}`}
-          style={{ width: progressWidth(status.stage) }}
+      <div className="grid shrink-0 gap-3 border-b border-slate-900/5 bg-white/20 p-4 lg:grid-cols-[minmax(12rem,1fr)_minmax(16rem,2fr)_9rem_8rem_2.5rem]">
+        <input
+          className="h-10 rounded-md border border-slate-200 bg-white/75 px-3 text-sm outline-none transition focus:border-slate-400"
+          placeholder="Ticket title"
+          value={draftTitle}
+          onChange={(event) => setDraftTitle(event.target.value)}
         />
+        <input
+          className="h-10 rounded-md border border-slate-200 bg-white/75 px-3 text-sm outline-none transition focus:border-slate-400"
+          placeholder="Description"
+          value={draftDescription}
+          onChange={(event) => setDraftDescription(event.target.value)}
+        />
+        <input
+          className="h-10 rounded-md border border-slate-200 bg-white/75 px-3 text-sm outline-none transition focus:border-slate-400"
+          type="date"
+          value={draftDueDate}
+          onChange={(event) => setDraftDueDate(event.target.value)}
+        />
+        <select
+          className="h-10 rounded-md border border-slate-200 bg-white/75 px-3 text-sm outline-none transition focus:border-slate-400"
+          value={draftPriority}
+          onChange={(event) => setDraftPriority(event.target.value as TrackerPriority)}
+        >
+          {priorityOptions.map((priority) => (
+            <option key={priority} value={priority}>
+              {titleCase(priority)}
+            </option>
+          ))}
+        </select>
+        <button
+          className="grid h-10 place-items-center rounded-md bg-slate-950 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!draftTitle.trim()}
+          title="Create ticket"
+          type="button"
+          onClick={() => void createTicket()}
+        >
+          <Plus size={16} />
+        </button>
       </div>
 
-      {status.stage !== "idle" ? (
-        <div
-          className={`flex items-center gap-2 border-b px-6 py-3 text-sm ${
-            status.stage === "error"
-              ? "border-rose-900/10 bg-rose-50 text-rose-900"
-              : "border-emerald-900/10 bg-emerald-50 text-emerald-900"
-          }`}
-        >
-          {status.stage === "extracting" ? (
-            <Loader2 className="animate-spin" size={16} />
-          ) : status.stage === "error" ? (
-            <AlertCircle size={16} />
-          ) : (
-            <CheckCircle2 size={16} />
-          )}
-          <span className="truncate">{status.message}</span>
+      {error ? (
+        <div className="flex items-center gap-2 border-b border-rose-200 bg-rose-50 px-6 py-3 text-sm text-rose-900">
+          <AlertCircle size={16} />
+          <span>{error}</span>
         </div>
       ) : null}
 
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-6">
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto p-6">
         {loadState === "loading" ? (
-          <div className="grid h-full place-items-center text-sm text-slate-500">Loading tracker...</div>
+          <div className="grid h-full place-items-center text-sm text-slate-500">Loading tickets...</div>
         ) : null}
 
         {loadState === "error" ? (
@@ -260,92 +236,95 @@ export function TrackerTable({ refreshKey }: TrackerTableProps): JSX.Element {
             <div className="max-w-sm text-center">
               <AlertCircle className="mx-auto text-rose-500" size={28} />
               <h2 className="mt-3 text-base font-semibold text-slate-950">Tracker unavailable</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">The local tracker could not be read.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{error ?? "The local tracker could not be read."}</p>
             </div>
           </div>
         ) : null}
 
-        {loadState === "ready" && sortedTrackers.length === 0 ? (
-          <div className="grid h-full place-items-center">
-            <div className="max-w-md text-center">
-              <CalendarClock className="mx-auto text-slate-400" size={32} />
-              <h2 className="mt-4 text-xl font-semibold text-slate-950">Nothing to track yet</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Drop notes, emails, PDFs, or snippets with explicit dates, times, deadlines, meetings, or follow-ups.
-              </p>
-            </div>
+        {loadState === "ready" && sortedTickets.length === 0 ? (
+          <div className="grid h-full place-items-center text-center text-sm leading-6 text-slate-500">
+            Create the first ticket for this project.
           </div>
         ) : null}
 
-        {loadState === "ready" && sortedTrackers.length > 0 ? (
-          <div className="max-w-full overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white/55 shadow-sm">
-            <table className="w-full min-w-[1320px] border-collapse text-left text-sm">
-              <thead className="border-b border-slate-200 bg-white/70 text-xs uppercase text-slate-500">
+        {loadState === "ready" && sortedTickets.length > 0 ? (
+          <div className="max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white/55 shadow-sm">
+            <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
+              <thead className="sticky top-0 z-10 border-b border-slate-200 bg-white/85 text-xs uppercase text-slate-500 backdrop-blur">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">When</th>
-                  <th className="px-4 py-3 font-semibold">Track</th>
-                  <th className="px-4 py-3 font-semibold">Place</th>
-                  <th className="px-4 py-3 font-semibold">Link</th>
+                  <th className="px-4 py-3 font-semibold">Ticket</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Context</th>
-                  <th className="px-4 py-3 font-semibold">Source</th>
+                  <th className="px-4 py-3 font-semibold">Priority</th>
+                  <th className="px-4 py-3 font-semibold">Due</th>
+                  <th className="px-4 py-3 font-semibold">Sources</th>
+                  <th className="px-4 py-3 font-semibold"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/80">
-                {sortedTrackers.map((tracker) => (
-                  <tr key={tracker.uuid} className="align-top transition hover:bg-white/70">
-                    <td className="whitespace-nowrap px-4 py-4 text-slate-700">
-                      <div className="font-semibold text-slate-950">{formatDate(tracker.date)}</div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {[
-                          tracker.time && tracker.endTime ? `${tracker.time}-${tracker.endTime}` : tracker.time,
-                          tracker.timezone
-                        ]
-                          .filter(Boolean)
-                          .join(" ") || "Any time"}
-                      </div>
-                    </td>
-                    <td className="min-w-64 px-4 py-4 font-semibold text-slate-950">{tracker.title}</td>
-                    <td className="max-w-56 px-4 py-4 text-slate-700">
-                      <div className="max-h-20 overflow-y-auto break-words pr-1">{tracker.location || "Unknown"}</div>
-                    </td>
-                    <td className="max-w-64 px-4 py-4 text-slate-700">
-                      {tracker.link ? (
-                        <a
-                          className="block max-h-20 overflow-y-auto break-words pr-1 text-slate-950 underline decoration-slate-300 underline-offset-4"
-                          href={tracker.link}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          {tracker.link}
-                        </a>
-                      ) : (
-                        "None"
-                      )}
+                {sortedTickets.map((ticket) => (
+                  <tr key={ticket.uuid} className="align-top transition hover:bg-white/70">
+                    <td className="min-w-96 px-4 py-4">
+                      <input
+                        className="w-full rounded-md border border-transparent bg-transparent px-2 py-1 font-semibold text-slate-950 outline-none transition focus:border-slate-200 focus:bg-white"
+                        value={ticket.title}
+                        onChange={(event) => void updateTicket({ uuid: ticket.uuid, title: event.target.value })}
+                      />
+                      <textarea
+                        className="mt-2 h-20 w-full resize-none rounded-md border border-transparent bg-transparent px-2 py-1 text-sm leading-6 text-slate-700 outline-none transition focus:border-slate-200 focus:bg-white"
+                        value={ticket.description}
+                        onChange={(event) => void updateTicket({ uuid: ticket.uuid, description: event.target.value })}
+                      />
                     </td>
                     <td className="px-4 py-4">
                       <select
                         className="h-9 rounded-md border border-slate-200 bg-white/75 px-2 text-sm font-medium text-slate-800 outline-none transition focus:border-slate-400"
-                        value={tracker.status}
-                        onChange={(event) =>
-                          void updateTracker({
-                            uuid: tracker.uuid,
-                            status: event.target.value as TrackerStatus
-                          })
-                        }
+                        value={ticket.status}
+                        onChange={(event) => void updateTicket({ uuid: ticket.uuid, status: event.target.value as TrackerStatus })}
                       >
                         {statusOptions.map((option) => (
                           <option key={option} value={option}>
-                            {option}
+                            {titleCase(option)}
                           </option>
                         ))}
                       </select>
                     </td>
-                    <td className="max-w-xl px-4 py-4 leading-6 text-slate-700">
-                      <div className="max-h-28 overflow-y-auto pr-1">{tracker.context}</div>
+                    <td className="px-4 py-4">
+                      <select
+                        className="h-9 rounded-md border border-slate-200 bg-white/75 px-2 text-sm font-medium text-slate-800 outline-none transition focus:border-slate-400"
+                        value={ticket.priority}
+                        onChange={(event) => void updateTicket({ uuid: ticket.uuid, priority: event.target.value as TrackerPriority })}
+                      >
+                        {priorityOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {titleCase(option)}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-4">
+                      <input
+                        className="h-9 rounded-md border border-slate-200 bg-white/75 px-2 text-sm text-slate-700 outline-none transition focus:border-slate-400"
+                        type="date"
+                        value={ticket.dueDate ?? ""}
+                        onChange={(event) =>
+                          void updateTicket({ uuid: ticket.uuid, dueDate: event.target.value || null })
+                        }
+                      />
                     </td>
                     <td className="max-w-xs px-4 py-4 text-slate-600">
-                      <div className="max-h-24 overflow-y-auto break-words pr-1">{tracker.source || "Dropped content"}</div>
+                      <div className="max-h-24 overflow-y-auto break-words pr-1">
+                        {ticket.sourceFiles.length ? ticket.sourceFiles.join(", ") : "None"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        className="grid h-9 w-9 place-items-center rounded-md text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
+                        title="Delete ticket"
+                        type="button"
+                        onClick={() => void deleteTicket(ticket.uuid)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}

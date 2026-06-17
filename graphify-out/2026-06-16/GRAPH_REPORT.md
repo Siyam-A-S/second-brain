@@ -1,11 +1,11 @@
 # Graph Report - second-brain  (2026-06-16)
 
 ## Corpus Check
-- 49 files · ~28,083 words
+- 49 files · ~29,328 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 662 nodes · 1350 edges · 31 communities (28 shown, 3 thin omitted)
+- 673 nodes · 1376 edges · 37 communities (31 shown, 6 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
@@ -39,7 +39,13 @@
 - [[_COMMUNITY_TS Project Refs|TS Project Refs]]
 - [[_COMMUNITY_Vite Dev Server|Vite Dev Server]]
 - [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 32|Community 32]]
 - [[_COMMUNITY_Community 33|Community 33]]
 - [[_COMMUNITY_Community 34|Community 34]]
@@ -47,7 +53,7 @@
 - [[_COMMUNITY_Community 36|Community 36]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `GraphifyController` - 65 edges
+1. `GraphifyController` - 72 edges
 2. `StorageService` - 22 edges
 3. `BrainNode` - 21 edges
 4. `LlmService` - 18 edges
@@ -67,8 +73,8 @@
   AGENTS.md → .codex/skills/graphify/references/query.md
 - `GraphifyController` --references--> `LlmService`  [EXTRACTED]
   src/main/services/GraphifyController.ts → src/main/services/LlmService.ts
-- `Window` --references--> `SecondBrainApi`  [EXTRACTED]
-  src/vite-env.d.ts → src/shared/ipc.ts
+- `GraphifyController` --references--> `GraphifyIngestionResult`  [EXTRACTED]
+  src/main/services/GraphifyController.ts → src/shared/brain.ts
 
 ## Import Cycles
 - None detected.
@@ -78,11 +84,11 @@
 - **Second Brain Ingest And Onboarding Surface** — second_brain_live_demo_index_drop_lane, second_brain_live_demo_index_board_canvas, onboarding_readme_onboarding_drop_tests [INFERRED 0.75]
 - **Vault Constellation Graph Motif** — assets_vault_constellation_constellation_network, assets_vault_constellation_knowledge_nodes, assets_vault_constellation_graph_connections [EXTRACTED 1.00]
 
-## Communities (31 total, 3 thin omitted)
+## Communities (37 total, 6 thin omitted)
 
 ### Community 0 - "GraphRAG Services"
-Cohesion: 0.05
-Nodes (29): AiSettingsProvider, asRecord(), asString(), bufferFromDroppedValue(), chunkArray(), collapsibleTextExtensions, errorMessage(), GraphifyController (+21 more)
+Cohesion: 0.12
+Nodes (4): GraphifyController, isCmdShim(), parseArgs(), GraphifyMcpToolSpec
 
 ### Community 1 - "Electron Shell"
 Cohesion: 0.11
@@ -93,16 +99,16 @@ Cohesion: 0.05
 Nodes (37): appId, asar, directories, buildResources, output, files, linux, target (+29 more)
 
 ### Community 3 - "Demo Mockup Logic"
-Cohesion: 0.50
-Nodes (3): BoardState, LoadState, BoardRule
+Cohesion: 0.11
+Nodes (17): AiSettingsProvider, asRecord(), asString(), chunkArray(), collapsibleTextExtensions, GraphifyGraph, GraphifyInvocation, GraphifyLinkRecord (+9 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.17
-Nodes (16): addBrowserSmartClip(), browserAiSettings, browserApiFallback, browserAppSettings, browserSmartClips, browserTrackers, compact(), emitTrackerStatus() (+8 more)
+Cohesion: 0.12
+Nodes (21): addBrowserSmartClip(), browserAiSettings, browserApiFallback, browserAppSettings, browserSmartClips, browserTrackers, compact(), emitTrackerStatus() (+13 more)
 
 ### Community 5 - "Markdown Storage"
-Cohesion: 0.05
-Nodes (37): AgentController, DraftFragment, inferContextHints(), inferTitle(), looksTrackable(), summarize(), agentPrompts, CandidateScore (+29 more)
+Cohesion: 0.07
+Nodes (26): CandidateScore, deriveTopicTitle(), GraphRagService, validationBoost(), LocalMcpServer, LocalMcpServerOptions, readJsonBody(), createGraphRagToolRegistry() (+18 more)
 
 ### Community 6 - "Project Dependencies"
 Cohesion: 0.07
@@ -113,24 +119,24 @@ Cohesion: 0.17
 Nodes (11): clampImportance(), createUuid(), isUserValidationState(), slugifyFilePart(), StorageService, stringArray(), UuidModule, wordsIn() (+3 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.17
-Nodes (7): CachedEmbedding, EmbeddingService, fingerprintNode(), searchableText(), TransformersModule, BrainSearchResult, SearchBrainNodesInput
+Cohesion: 0.19
+Nodes (5): CachedEmbedding, EmbeddingService, fingerprintNode(), searchableText(), TransformersModule
 
 ### Community 9 - "Drop UI Components"
 Cohesion: 0.50
 Nodes (3): For SSH/headless:, Use:, Verification:
 
 ### Community 10 - "Community 10"
-Cohesion: 0.10
+Cohesion: 0.11
 Nodes (22): ExportState, LoadState, progressClass(), progressWidth(), statusOptions, TrackerTable(), TrackerTableProps, normalizeDate() (+14 more)
 
 ### Community 11 - "Embedding Pipeline"
-Cohesion: 0.15
-Nodes (14): createMainWindow(), createWidgetWindow(), isDev, loadRenderer(), preloadEntry, rendererEntry, restoreMainWindow(), showWidget() (+6 more)
+Cohesion: 0.14
+Nodes (15): createMainWindow(), createWidgetWindow(), isDev, loadRenderer(), preloadEntry, rendererEntry, restoreMainWindow(), showWidget() (+7 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.12
-Nodes (18): ClipboardList(), ClipboardListProps, icons, compact(), extractBashCommands(), extractPaths(), extractTextClip(), normalizeCandidate() (+10 more)
+Cohesion: 0.10
+Nodes (23): AgentController, DraftFragment, inferContextHints(), inferTitle(), looksTrackable(), summarize(), compact(), extractBashCommands() (+15 more)
 
 ### Community 13 - "Base TS Config"
 Cohesion: 0.18
@@ -161,20 +167,32 @@ Cohesion: 0.67
 Nodes (4): Constellation Network, Graph Connections, Knowledge Nodes, Vault Constellation SVG
 
 ### Community 20 - "Hook Config"
-Cohesion: 0.17
-Nodes (13): BoardChannel, BrainChannel, ClipboardChannel, FileChannel, SettingsChannel, settingsChannels, TrackerChannel, WidgetBounds (+5 more)
+Cohesion: 0.18
+Nodes (13): BoardChannel, BrainChannel, ClipboardChannel, FileChannel, SettingsChannel, TrackerChannel, WidgetBounds, WindowChannel (+5 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.15
+Cohesion: 0.14
 Nodes (12): api, boardChannels, brainChannels, clipboardChannels, fileChannels, settingsChannels, trackerChannels, windowChannels (+4 more)
 
+### Community 25 - "Community 25"
+Cohesion: 0.20
+Nodes (3): looksComplete(), numberFromEnv(), AiSettings
+
+### Community 27 - "Community 27"
+Cohesion: 0.18
+Nodes (8): createDropPayload(), ElectronFile, DroppedFile, FilesDroppedPayload, WidgetMovePayload, DragState, DropTone, toneColors
+
+### Community 28 - "Community 28"
+Cohesion: 0.22
+Nodes (4): errorMessage(), isSpreadsheetSource(), spreadsheetComponentFileName(), spreadsheetComponentScript()
+
 ### Community 32 - "Community 32"
-Cohesion: 0.09
-Nodes (29): AgentMethodConfig, AiSettingsProvider, ChatCompletionResponse, ChatMessage, compactText(), ExtractedTrackerMetadata, GraphCardDefinition, hasTrackerDateSignal() (+21 more)
+Cohesion: 0.08
+Nodes (30): AgentMethodConfig, agentPrompts, AiSettingsProvider, ChatCompletionResponse, ChatMessage, compactText(), ExtractedTrackerMetadata, GraphCardDefinition (+22 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.11
-Nodes (8): BoardRenderer(), BoardRendererProps, BoardTab, boardTabs, formatDate(), GraphHtmlViewer(), GraphHtmlDocument, useBoardStore
+Cohesion: 0.10
+Nodes (11): BoardRenderer(), BoardRendererProps, BoardTab, boardTabs, formatDate(), GraphHtmlViewer(), GraphHtmlDocument, BoardState (+3 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.33
@@ -185,28 +203,28 @@ Cohesion: 0.26
 Nodes (13): AiSettingsService, asRecord(), booleanSetting(), defaultGraphifySettings, normalizeApiKey(), normalizeEndpoint(), normalizeGraphifySettings(), normalizeModel() (+5 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.06
-Nodes (32): DropTarget(), DropTargetProps, DropTone, toneColors, SettingsPanel(), SettingsPanelProps, Sidebar(), SidebarProps (+24 more)
+Cohesion: 0.08
+Nodes (24): ClipboardList(), ClipboardListProps, icons, DropTarget(), DropTargetProps, DropTone, toneColors, SettingsPanel() (+16 more)
 
 ## Knowledge Gaps
 - **200 isolated node(s):** `appId`, `productName`, `output`, `buildResources`, `files` (+195 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GraphifyController` connect `GraphRAG Services` to `Community 32`, `Embedding Pipeline`, `Community 12`, `Markdown Storage`?**
-  _High betweenness centrality (0.095) - this node is a cross-community bridge._
-- **Why does `LlmService` connect `Community 32` to `GraphRAG Services`, `Markdown Storage`, `Community 10`, `Embedding Pipeline`, `Community 12`?**
+- **Why does `GraphifyController` connect `GraphRAG Services` to `Community 32`, `Demo Mockup Logic`, `Embedding Pipeline`, `Community 12`, `Community 25`, `Community 26`, `Community 28`, `Community 29`?**
+  _High betweenness centrality (0.108) - this node is a cross-community bridge._
+- **Why does `LlmService` connect `Community 32` to `GraphRAG Services`, `Demo Mockup Logic`, `Community 10`, `Embedding Pipeline`, `Community 12`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `AiSettings` connect `GraphRAG Services` to `Community 32`, `Community 35`, `Community 36`, `Markdown Storage`, `Hook Config`?**
+- **Why does `StorageService` connect `Community 7` to `Community 32`, `Markdown Storage`, `Community 8`, `Community 10`, `Embedding Pipeline`?**
   _High betweenness centrality (0.023) - this node is a cross-community bridge._
 - **What connects `appId`, `productName`, `output` to the rest of the system?**
   _200 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `GraphRAG Services` be split into smaller, more focused modules?**
-  _Cohesion score 0.05445665445665446 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12307692307692308 - nodes in this community are weakly interconnected._
 - **Should `Electron Shell` be split into smaller, more focused modules?**
-  _Cohesion score 0.10512820512820513 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1064102564102564 - nodes in this community are weakly interconnected._
 - **Should `Packaging Config` be split into smaller, more focused modules?**
   _Cohesion score 0.05263157894736842 - nodes in this community are weakly interconnected._

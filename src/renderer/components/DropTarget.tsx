@@ -127,16 +127,7 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       .processDroppedItems(items)
       .then((result) => {
         setLastResult(result);
-        if (result.trackers?.length) {
-          setStatusText(`Tracking ${result.trackers.length} item${result.trackers.length === 1 ? "" : "s"}`);
-          setTone("success");
-        } else if (result.tracker) {
-          setStatusText(`Tracking ${result.tracker.title}`);
-          setTone("success");
-        } else if (result.trackerError) {
-          setStatusText(result.trackerError);
-          setTone("error");
-        } else if (result.routing) {
+        if (result.routing) {
           setStatusText(`Routed to ${result.routing.parent_title}`);
           setTone("success");
         } else if (result.graphify) {
@@ -288,32 +279,17 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
           {lastResult ? (
             <div className="mt-4 rounded-md border border-emerald-200 bg-white/65 p-3">
               <p className="text-xs font-semibold uppercase text-emerald-700">
-                {lastResult.trackers?.length
-                  ? "tracker"
-                  : lastResult.tracker
-                  ? "tracker"
-                  : lastResult.graphify
+                {lastResult.graphify
                     ? "graphify"
                     : lastResult.routing?.strategy.replace("-", " ") ?? "processed"}
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-900">
-                {lastResult.trackers?.length
-                  ? `${lastResult.trackers.length} tracker item${lastResult.trackers.length === 1 ? "" : "s"}`
-                  : lastResult.tracker
-                  ? lastResult.tracker.title
-                  : lastResult.graphify
+                {lastResult.graphify
                     ? `${lastResult.graphify.writtenFileCount} raw item${lastResult.graphify.writtenFileCount === 1 ? "" : "s"}`
                   : lastResult.createdNode?.title ?? "Processed drop"}
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-600">
-                {lastResult.trackers?.length
-                  ? lastResult.trackers
-                      .slice(0, 2)
-                      .map((tracker) => [tracker.title, tracker.date, tracker.time].filter(Boolean).join(" · "))
-                      .join(" / ")
-                  : lastResult.tracker
-                  ? [lastResult.tracker.date, lastResult.tracker.time].filter(Boolean).join(" ") || "Saved to Tracker"
-                  : lastResult.graphify
+                {lastResult.graphify
                     ? `${lastResult.graphify.graphEdgeCount ?? 0} graph connections`
                   : lastResult.routing
                     ? `Confidence ${Math.round(lastResult.routing.confidence * 100)}%`

@@ -167,50 +167,124 @@ export type UpdateAppSettingsInput = {
   graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;
 };
 
-export type TrackerStatus = "Tracking" | "Done" | "Dismissed";
+export type ProjectRecord = {
+  id: string;
+  name: string;
+  rootPath: string;
+  vaultPath: string;
+  rawVaultPath: string;
+  graphPath: string;
+  trackerPath: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | undefined;
+  active: boolean;
+};
+
+export type CreateProjectInput = {
+  name: string;
+};
+
+export type RenameProjectInput = {
+  projectId: string;
+  name: string;
+};
+
+export type ProjectSelectionInput = {
+  projectId: string;
+};
+
+export type GraphBoardNode = {
+  id: string;
+  label: string;
+  type: string;
+  summary: string;
+  sourceFile: string;
+  community: string;
+  degree: number;
+  rawData: Record<string, unknown>;
+};
+
+export type GraphBoardLink = {
+  source: string;
+  target: string;
+  label: string;
+  weight: number;
+  rawData: Record<string, unknown>;
+};
+
+export type GraphBoardState = {
+  nodes: GraphBoardNode[];
+  links: GraphBoardLink[];
+  graphPath: string;
+  updatedAt: string;
+};
+
+export type GraphBoardNeighbor = {
+  id: string;
+  label: string;
+  type: string;
+  relation: string;
+  direction: "incoming" | "outgoing";
+  sourceFile: string;
+};
+
+export type GraphBoardNodeDetails = GraphBoardNode & {
+  neighbors: GraphBoardNeighbor[];
+};
+
+export type CallflowHtmlDocument = {
+  html: string;
+  path: string;
+  updatedAt: string;
+  stdout: string;
+};
+
+export type TrackerStatus = "backlog" | "todo" | "in_progress" | "blocked" | "done";
+
+export type TrackerPriority = "low" | "medium" | "high" | "urgent";
 
 export type TrackerRecord = {
   uuid: string;
   title: string;
-  date: string;
-  time: string;
-  endTime?: string | undefined;
-  timezone?: string | undefined;
-  location?: string | undefined;
-  link?: string | undefined;
-  context: string;
-  source_node_uuid?: string | undefined;
-  source?: string | undefined;
+  description: string;
   status: TrackerStatus;
-  raw_content: string;
+  priority: TrackerPriority;
+  labels: string[];
+  dueDate?: string | undefined;
+  sourceNodeIds: string[];
+  sourceFiles: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type CreateTrackerInput = {
+  title: string;
+  description?: string | undefined;
+  status?: TrackerStatus | undefined;
+  priority?: TrackerPriority | undefined;
+  labels?: string[] | undefined;
+  dueDate?: string | undefined;
+  sourceNodeIds?: string[] | undefined;
+  sourceFiles?: string[] | undefined;
 };
 
 export type UpdateTrackerInput = {
   uuid: string;
   status?: TrackerStatus | undefined;
-  context?: string | undefined;
+  title?: string | undefined;
+  description?: string | undefined;
+  priority?: TrackerPriority | undefined;
+  labels?: string[] | undefined;
+  dueDate?: string | null | undefined;
+  sourceNodeIds?: string[] | undefined;
+  sourceFiles?: string[] | undefined;
 };
 
 export type TrackerIngestionStatus = {
   stage: "idle" | "extracting" | "saved" | "skipped" | "error";
   message: string;
-  tracker?: TrackerRecord | undefined;
-  trackers?: TrackerRecord[] | undefined;
   error?: string | undefined;
-};
-
-export type SmartClipKind = "bash" | "path" | "text";
-
-export type SmartClip = {
-  id: string;
-  title: string;
-  value: string;
-  kind: SmartClipKind;
-  frequency: number;
-  createdAt: string;
-  lastUsedAt: string;
 };
 
 export type ProcessDroppedItemsResult = {
@@ -218,11 +292,6 @@ export type ProcessDroppedItemsResult = {
   graphify?: GraphifyIngestionResult | undefined;
   createdNode?: BrainNode | undefined;
   routing?: RoutingDecision | undefined;
-  tracker?: TrackerRecord | undefined;
-  trackers?: TrackerRecord[] | undefined;
-  trackerSkipped?: boolean | undefined;
-  trackerError?: string | undefined;
-  smartClips?: SmartClip[] | undefined;
 };
 
 export type McpServerStatus = {

@@ -1,12 +1,19 @@
 import type {
   BoardRule,
   AppSettings,
+  CreateTrackerInput,
+  GraphBoardNodeDetails,
+  GraphBoardState,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
+  ProjectRecord,
   SecondBrainApi,
-  SmartClip,
+  SourceTreeSearchInput,
+  SourceTreeNode,
   TrackerIngestionStatus,
+  TrackerPriority,
   TrackerRecord,
+  TrackerStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateTrackerInput
@@ -14,7 +21,33 @@ import type {
 
 const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
 const browserTrackers: TrackerRecord[] = [];
-const browserSmartClips: SmartClip[] = [];
+let activeProjectId = "browser-default";
+const browserProjects: ProjectRecord[] = [
+  {
+    id: activeProjectId,
+    name: "Browser Preview",
+    rootPath: "/browser-preview",
+    vaultPath: "/browser-preview/vault",
+    rawVaultPath: "/browser-preview/vault/raw",
+    graphPath: "/browser-preview/vault/raw/graphify-out/graph.json",
+    trackerPath: "/browser-preview/tracker/tickets.json",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    active: true
+  }
+];
+const browserSourceTree: SourceTreeNode[] = [
+  {
+    id: "source:browser-preview.txt",
+    title: "browser-preview.txt",
+    kind: "source",
+    sourceFile: "browser-preview.txt",
+    type: "TXT",
+    summary: "Browser preview source.",
+    childrenCount: 1,
+    isExpandable: true
+  }
+];
 let browserAiSettings = {
   endpoint: "http://localhost:8080/v1/chat/completions",
   apiKey: "local-dev-placeholder",
@@ -42,86 +75,24 @@ function normalizeLine(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? compact(value) : fallback;
 }
 
-function looksTrackable(content: string): boolean {
-  return (
-    /\b(today|tomorrow|next\s+week|deadline|due|meeting|appointment|follow[- ]?up|remind|schedule|expires)\b/i.test(content) &&
-    (/\b\d{4}-\d{2}-\d{2}\b/.test(content) ||
-      /\b\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/.test(content) ||
-      /\b\d{1,2}(:\d{2})?\s*(am|pm)\b/i.test(content) ||
-      /\b(today|tomorrow|next\s+week)\b/i.test(content))
-  );
+function normalizeTrackerStatus(value: unknown): TrackerStatus {
+  return value === "backlog" ||
+    value === "todo" ||
+    value === "in_progress" ||
+    value === "blocked" ||
+    value === "done"
+    ? value
+    : "todo";
+}
+
+function normalizeTrackerPriority(value: unknown): TrackerPriority {
+  return value === "low" || value === "medium" || value === "high" || value === "urgent" ? value : "medium";
 }
 
 function emitTrackerStatus(status: TrackerIngestionStatus): void {
   for (const handler of trackerStatusHandlers) {
     handler(status);
   }
-}
-
-function extractFallbackDate(content: string): string {
-  const iso = content.match(/\b\d{4}-\d{2}-\d{2}\b/)?.[0];
-  if (iso) {
-    return iso;
-  }
-
-  if (/\btomorrow\b/i.test(content)) {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    return date.toISOString().slice(0, 10);
-  }
-
-  if (/\btoday\b/i.test(content)) {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  return "";
-}
-
-function extractFallbackTime(content: string): string {
-  return content.match(/\b\d{1,2}:\d{2}\s*(?:am|pm)?\b/i)?.[0] ?? content.match(/\b\d{1,2}\s*(?:am|pm)\b/i)?.[0] ?? "";
-}
-
-function extractFallbackUrl(content: string): string {
-  return content.match(/https?:\/\/\S+/i)?.[0] ?? "";
-}
-
-function addBrowserSmartClip(value: string, kind: SmartClip["kind"]): SmartClip | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const now = new Date().toISOString();
-  const id = `browser-${kind}-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 48)}`;
-  const existing = browserSmartClips.find((item) => item.id === id);
-
-  if (existing) {
-    existing.frequency += 1;
-    existing.lastUsedAt = now;
-    return existing;
-  }
-
-  const clip: SmartClip = {
-    id,
-    title: kind === "path" ? trimmed.split(/[\\/]/).filter(Boolean).at(-1) ?? trimmed : trimmed.slice(0, 80),
-    value: trimmed,
-    kind,
-    frequency: 1,
-    createdAt: now,
-    lastUsedAt: now
-  };
-
-  browserSmartClips.push(clip);
-  return clip;
-}
-
-function sortSmartClips(items: SmartClip[]): SmartClip[] {
-  return [...items].sort(
-    (left, right) =>
-      right.frequency - left.frequency ||
-      Date.parse(right.lastUsedAt) - Date.parse(left.lastUsedAt) ||
-      left.title.localeCompare(right.title)
-  );
 }
 
 function readDroppedContent(items: ProcessDroppedItem[]): string {
@@ -135,10 +106,6 @@ function readDroppedContent(items: ProcessDroppedItem[]): string {
 async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promise<ProcessDroppedItemsResult> {
   const rawContent = readDroppedContent(items);
   const now = new Date().toISOString();
-  const smartClips = [
-    ...items.map((item) => (item.path ? addBrowserSmartClip(item.path, "path") : null)),
-    rawContent ? addBrowserSmartClip(rawContent, "text") : null
-  ].filter((item): item is SmartClip => Boolean(item));
   const createdNode = {
     uuid: `browser-preview-${crypto.randomUUID()}`,
     title: compact(rawContent.split(/\r?\n/).find(Boolean) ?? "Browser Preview Fragment").slice(0, 80),
@@ -157,7 +124,6 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
   };
   const baseResult = {
     prompt: `Browser preview received ${items.length} dropped item(s).`,
-    smartClips,
     createdNode,
     routing: {
       strategy: "new-topic" as const,
@@ -168,60 +134,12 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
     }
   };
 
-  if (!rawContent) {
-    return baseResult;
-  }
-
-  if (!looksTrackable(rawContent)) {
-    return baseResult;
-  }
-
   emitTrackerStatus({
-    stage: "extracting",
-    message: "Checking dropped content for trackable dates..."
+    stage: "saved",
+    message: rawContent ? "Browser preview saved the dropped content." : "Browser preview received the drop."
   });
 
-  try {
-    const tracker: TrackerRecord = {
-      uuid: `browser-tracker-${crypto.randomUUID()}`,
-      title: compact(rawContent.split(/\r?\n/).find(Boolean) ?? "Track item").slice(0, 80),
-      date: extractFallbackDate(rawContent),
-      time: extractFallbackTime(rawContent),
-      link: extractFallbackUrl(rawContent),
-      context: compact(rawContent).slice(0, 420),
-      source: "Browser preview",
-      status: "Tracking",
-      raw_content: rawContent,
-      createdAt: now,
-      updatedAt: new Date().toISOString()
-    };
-
-    browserTrackers.unshift(tracker);
-    emitTrackerStatus({
-      stage: "saved",
-      message: `Tracking ${tracker.title}`,
-      tracker,
-      trackers: [tracker]
-    });
-
-    return {
-      prompt: baseResult.prompt,
-      tracker,
-      trackers: [tracker]
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Tracker extraction failed.";
-    emitTrackerStatus({
-      stage: "error",
-      message,
-      error: message
-    });
-
-    return {
-      prompt: baseResult.prompt,
-      trackerError: message
-    };
-  }
+  return baseResult;
 }
 
 const browserApiFallback: SecondBrainApi = {
@@ -297,6 +215,25 @@ const browserApiFallback: SecondBrainApi = {
   },
   tracker: {
     list: async () => browserTrackers,
+    create: async (input: CreateTrackerInput) => {
+      const now = new Date().toISOString();
+      const tracker: TrackerRecord = {
+        uuid: `browser-ticket-${crypto.randomUUID()}`,
+        title: normalizeLine(input.title, "Untitled ticket"),
+        description: normalizeLine(input.description, ""),
+        status: normalizeTrackerStatus(input.status),
+        priority: normalizeTrackerPriority(input.priority),
+        labels: input.labels ?? [],
+        dueDate: input.dueDate,
+        sourceNodeIds: input.sourceNodeIds ?? [],
+        sourceFiles: input.sourceFiles ?? [],
+        createdAt: now,
+        updatedAt: now
+      };
+
+      browserTrackers.unshift(tracker);
+      return tracker;
+    },
     update: async (input: UpdateTrackerInput) => {
       const trackerIndex = browserTrackers.findIndex((tracker) => tracker.uuid === input.uuid);
 
@@ -308,7 +245,13 @@ const browserApiFallback: SecondBrainApi = {
       const updated = {
         ...current,
         status: input.status ?? current.status,
-        context: input.context ?? current.context,
+        title: input.title ?? current.title,
+        description: input.description ?? current.description,
+        priority: input.priority ?? current.priority,
+        labels: input.labels ?? current.labels,
+        dueDate: input.dueDate === null ? undefined : input.dueDate ?? current.dueDate,
+        sourceNodeIds: input.sourceNodeIds ?? current.sourceNodeIds,
+        sourceFiles: input.sourceFiles ?? current.sourceFiles,
         updatedAt: new Date().toISOString()
       };
 
@@ -316,12 +259,124 @@ const browserApiFallback: SecondBrainApi = {
       browserTrackers.unshift(updated);
       return updated;
     },
+    remove: async (uuid: string) => {
+      const index = browserTrackers.findIndex((tracker) => tracker.uuid === uuid);
+      if (index >= 0) {
+        browserTrackers.splice(index, 1);
+      }
+    },
     onIngestionStatus: (handler) => {
       trackerStatusHandlers.add(handler);
       return () => {
         trackerStatusHandlers.delete(handler);
       };
     }
+  },
+  projects: {
+    list: async () => browserProjects.filter((project) => !project.archivedAt),
+    create: async (input) => {
+      const now = new Date().toISOString();
+      const id = `browser-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || crypto.randomUUID()}`;
+      const project: ProjectRecord = {
+        id,
+        name: input.name.trim() || "Untitled Project",
+        rootPath: `/browser-preview/projects/${id}`,
+        vaultPath: `/browser-preview/projects/${id}/vault`,
+        rawVaultPath: `/browser-preview/projects/${id}/vault/raw`,
+        graphPath: `/browser-preview/projects/${id}/vault/raw/graphify-out/graph.json`,
+        trackerPath: `/browser-preview/projects/${id}/tracker/tickets.json`,
+        createdAt: now,
+        updatedAt: now,
+        active: true
+      };
+      activeProjectId = id;
+      browserProjects.forEach((candidate) => {
+        candidate.active = false;
+      });
+      browserProjects.push(project);
+      return project;
+    },
+    select: async (input) => {
+      const project = browserProjects.find((candidate) => candidate.id === input.projectId && !candidate.archivedAt);
+      if (!project) {
+        throw new Error(`Browser preview cannot find project "${input.projectId}".`);
+      }
+
+      activeProjectId = project.id;
+      browserProjects.forEach((candidate) => {
+        candidate.active = candidate.id === activeProjectId;
+      });
+      return project;
+    },
+    rename: async (input) => {
+      const project = browserProjects.find((candidate) => candidate.id === input.projectId);
+      if (!project) {
+        throw new Error(`Browser preview cannot find project "${input.projectId}".`);
+      }
+
+      project.name = input.name.trim() || project.name;
+      project.updatedAt = new Date().toISOString();
+      return project;
+    },
+    archive: async (input) => {
+      const project = browserProjects.find((candidate) => candidate.id === input.projectId);
+      if (!project) {
+        throw new Error(`Browser preview cannot find project "${input.projectId}".`);
+      }
+
+      project.archivedAt = new Date().toISOString();
+      project.active = false;
+      const next = browserProjects.find((candidate) => !candidate.archivedAt);
+      if (next) {
+        activeProjectId = next.id;
+        next.active = true;
+      }
+      return project;
+    },
+    getActive: async () => {
+      const project = browserProjects.find((candidate) => candidate.id === activeProjectId) ?? browserProjects[0];
+      if (!project) {
+        throw new Error("Browser preview has no active project.");
+      }
+
+      return project;
+    }
+  },
+  graphBoard: {
+    getState: async (): Promise<GraphBoardState> => ({
+      nodes: [
+        {
+          id: "browser-preview-fragment",
+          label: "Browser Preview",
+          type: "fragment",
+          summary: "Preview-only graph node.",
+          sourceFile: "browser-preview.txt",
+          community: "preview",
+          degree: 0,
+          rawData: {}
+        }
+      ],
+      links: [],
+      graphPath: "/browser-preview/graph.json",
+      updatedAt: new Date().toISOString()
+    }),
+    getNodeDetails: async (nodeId: string): Promise<GraphBoardNodeDetails> => ({
+      id: nodeId,
+      label: "Browser Preview",
+      type: "fragment",
+      summary: "Preview-only graph node.",
+      sourceFile: "browser-preview.txt",
+      community: "preview",
+      degree: 0,
+      rawData: {},
+      neighbors: []
+    }),
+    generateCallflow: async () => ({
+      html: "<!doctype html><html><body><p>Call flow export is available in Electron.</p></body></html>",
+      path: "/browser-preview/callflow.html",
+      updatedAt: new Date().toISOString(),
+      stdout: "Browser preview callflow is a no-op."
+    })
   },
   board: {
     getState: async (rule: BoardRule) => [
@@ -376,28 +431,54 @@ const browserApiFallback: SecondBrainApi = {
     }),
     search: async () => []
   },
+  filesystem: {
+    getRoot: async () => browserSourceTree,
+    getChildren: async (nodeId: string) =>
+      nodeId === "source:browser-preview.txt"
+        ? [
+            {
+              id: "graph:browser-preview-fragment",
+              title: "Browser Preview Fragment",
+              kind: "entity",
+              sourceFile: "browser-preview.txt",
+              graphNodeId: "browser-preview-fragment",
+              type: "fragment",
+              summary: "Preview-only graph node.",
+              childrenCount: 0,
+              isExpandable: false
+            }
+          ]
+        : [],
+    getDetails: async (nodeId: string) => ({
+      node:
+        browserSourceTree.find((node) => node.id === nodeId) ?? {
+          id: nodeId,
+          title: "Browser Preview Fragment",
+          kind: "entity",
+          sourceFile: "browser-preview.txt",
+          graphNodeId: nodeId,
+          type: "fragment",
+          summary: "Preview-only graph node.",
+          childrenCount: 0,
+          isExpandable: false
+        },
+      relationGroups: []
+    }),
+    search: async (input: SourceTreeSearchInput) =>
+      browserSourceTree
+        .filter((node) => node.title.toLowerCase().includes(input.query.trim().toLowerCase()))
+        .map((node) => ({ ...node, score: 1 })),
+    getSourceOptions: async () => [
+      {
+        sourceFile: "browser-preview.txt",
+        title: "browser-preview.txt"
+      }
+    ]
+  },
   clipboard: {
     readText: async () => navigator.clipboard?.readText?.() ?? "",
     writeText: async (text: string) => {
       await navigator.clipboard?.writeText?.(text);
-    },
-    listSmartClips: async () => sortSmartClips(browserSmartClips),
-    useSmartClip: async (id: string) => {
-      const index = browserSmartClips.findIndex((item) => item.id === id);
-      if (index < 0) {
-        throw new Error(`Browser preview cannot find Smart Clip "${id}".`);
-      }
-
-      const current = browserSmartClips[index] as SmartClip;
-      const updated = {
-        ...current,
-        frequency: current.frequency + 1,
-        lastUsedAt: new Date().toISOString()
-      };
-
-      browserSmartClips.splice(index, 1, updated);
-      await navigator.clipboard?.writeText?.(updated.value);
-      return updated;
     }
   },
   settings: {

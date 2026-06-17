@@ -8,6 +8,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type {
   AiSettings,
+  CallflowHtmlDocument,
   FilesDroppedPayload,
   GraphHtmlDocument,
   GraphifyIngestionResult,
@@ -76,6 +77,7 @@ const defaultGraphifyRetryTemperature = 0;
 const defaultGraphifyRetryMaxTokens = 4096;
 const defaultIngestCommand = `graphify extract . --out . --backend ${graphifyProviderName} --max-concurrency 1 --token-budget 2048`;
 const defaultHtmlCommand = "graphify export html --graph graphify-out/graph.json";
+const defaultCallflowCommand = "graphify export callflow-html";
 const sourceCommentDirectoryName = "source-comments";
 const spreadsheetComponentDirectoryName = "spreadsheet-components";
 const collapsibleTextExtensions = new Set([
@@ -447,6 +449,48 @@ export class GraphifyController {
       html,
       path: this.graphHtmlPath,
       updatedAt: htmlStat.mtime.toISOString()
+    };
+  }
+
+  async generateCallflowHtml(nodeId: string): Promise<CallflowHtmlDocument> {
+    await this.initialize();
+    const graphExists = await this.fileExists(this.graphPath);
+
+    if (!graphExists) {
+      throw new Error(`Graphify graph is not available at ${this.graphPath}.`);
+    }
+
+    const settings = this.getGraphifyLocalModelSettings();
+    const aiSettings = await this.getAiSettings();
+    const command = (
+      process.env.SECOND_BRAIN_GRAPHIFY_CALLFLOW_COMMAND ?? defaultCallflowCommand
+    ).replace(/\{nodeId\}/g, nodeId);
+    const before = await this.listCallflowHtmlCandidates();
+    const stdout =
+      command === defaultCallflowCommand
+        ? await this.runGraphifyCli(["export", "callflow-html"], settings, "Graphify call flow export failed", aiSettings)
+        : await this.runGraphifyCommand(command, settings, "Graphify call flow export failed", aiSettings);
+    const after = await this.listCallflowHtmlCandidates();
+    const beforePaths = new Set(before.map((candidate) => candidate.path));
+    const created = after.find((candidate) => !beforePaths.has(candidate.path)) ?? after[0];
+
+    if (!created) {
+      throw new Error(
+        [
+          "Graphify call flow export finished but did not create an HTML artifact.",
+          `Command: ${command}`,
+          stdout ? `Graphify output:\n${stdout}` : ""
+        ]
+          .filter(Boolean)
+          .join("\n\n")
+      );
+    }
+
+    return {
+      html: await readFile(created.path, "utf8"),
+      path: created.path,
+      updatedAt: created.updatedAt,
+      stdout
     };
   }
 
@@ -1598,6 +1642,40 @@ export class GraphifyController {
     } catch {
       return "";
     }
+  }
+
+  private async listCallflowHtmlCandidates(
+    directory = this.graphOutPath
+  ): Promise<Array<{ path: string; updatedAt: string; mtimeMs: number }>> {
+    let entries: Dirent[];
+
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch {
+      return [];
+    }
+
+    const candidates: Array<{ path: string; updatedAt: string; mtimeMs: number }> = [];
+    for (const entry of entries) {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        candidates.push(...(await this.listCallflowHtmlCandidates(entryPath)));
+        continue;
+      }
+
+      if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".html") || entryPath === this.graphHtmlPath) {
+        continue;
+      }
+
+      const entryStat = await stat(entryPath);
+      candidates.push({
+        path: entryPath,
+        updatedAt: entryStat.mtime.toISOString(),
+        mtimeMs: entryStat.mtimeMs
+      });
+    }
+
+    return candidates.sort((left, right) => right.mtimeMs - left.mtimeMs);
   }
 
   private async removeSourceComment(sourceFile: string): Promise<void> {

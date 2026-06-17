@@ -5,15 +5,22 @@ import {
   brainChannels,
   clipboardChannels,
   fileChannels,
+  filesystemChannels,
+  graphBoardChannels,
   FilesDroppedPayload,
+  projectChannels,
   settingsChannels,
   trackerChannels,
   WidgetMovePayload,
   windowChannels
 } from "../shared/ipc";
 import type {
+  CreateProjectInput,
+  CreateTrackerInput,
   ExportBoardPlaintextInput,
   ListBrainNodesInput,
+  ProjectSelectionInput,
+  RenameProjectInput,
   SearchBrainNodesInput,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
@@ -22,15 +29,18 @@ import type {
   WriteBrainNodeInput
 } from "../shared/brain";
 import type { BoardRule, BoardSearchInput } from "../shared/types/board";
+import type { SourceTreeSearchInput } from "../shared/types/filesystem";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
 import { EmbeddingService } from "./services/EmbeddingService";
+import { GraphBoardService } from "./services/GraphBoardService";
 import { GraphifyBoardService } from "./services/GraphifyBoardService";
 import { GraphifyController } from "./services/GraphifyController";
+import { GraphFilesystemService } from "./services/GraphFilesystemService";
 import { GraphRagService } from "./services/GraphRagService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
 import { LlmService } from "./services/LlmService";
-import { SmartClipService } from "./services/SmartClipService";
+import { ProjectService } from "./services/ProjectService";
 import { StorageService } from "./services/StorageService";
 import { TrackerService } from "./services/TrackerService";
 
@@ -38,6 +48,19 @@ let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
 let mcpServer: LocalMcpServer | null = null;
 let graphifyController: GraphifyController | null = null;
+
+type ProjectRuntime = {
+  storage: StorageService;
+  graphify: GraphifyController;
+  graphifyBoard: GraphifyBoardService;
+  graphBoard: GraphBoardService;
+  graphFilesystem: GraphFilesystemService;
+  graphRag: GraphRagService;
+  tracker: TrackerService;
+  mcpServer: LocalMcpServer;
+};
+
+let projectRuntime: ProjectRuntime | null = null;
 
 const widgetWindowSize = 96;
 
@@ -177,17 +200,72 @@ function restoreMainWindow(): void {
   mainWindow.focus();
 }
 
-function registerIpc(
-  storage: StorageService,
-  embeddings: EmbeddingService,
-  graphRag: GraphRagService,
-  localMcpServer: LocalMcpServer,
-  tracker: TrackerService,
-  graphify: GraphifyController,
-  graphifyBoard: GraphifyBoardService,
+function requireRuntime(): ProjectRuntime {
+  if (!projectRuntime) {
+    throw new Error("Project runtime has not initialized.");
+  }
+
+  return projectRuntime;
+}
+
+async function createProjectRuntime(
+  project: Awaited<ReturnType<ProjectService["getActiveProject"]>>,
   aiSettings: AiSettingsService,
-  smartClips: SmartClipService
-): void {
+  embeddings: EmbeddingService
+): Promise<ProjectRuntime> {
+  const storage = new StorageService(project.vaultPath);
+  const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getSettings());
+  const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
+  const graphBoard = new GraphBoardService(graphify.getGraphPath());
+  const graphFilesystem = new GraphFilesystemService(graphify.getRawVaultPath(), graphify.getGraphPath());
+  const graphRag = new GraphRagService(storage, embeddings);
+  const tracker = new TrackerService(project.trackerPath);
+  const nextMcpServer = new LocalMcpServer({
+    graphRag,
+    port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
+  });
+
+  await aiSettings.initialize();
+  await storage.initialize();
+  await graphify.initialize();
+  await tracker.initialize(storage);
+
+  try {
+    await nextMcpServer.start();
+  } catch (error) {
+    console.error("Failed to start local MCP server", error);
+  }
+
+  return {
+    storage,
+    graphify,
+    graphifyBoard,
+    graphBoard,
+    graphFilesystem,
+    graphRag,
+    tracker,
+    mcpServer: nextMcpServer
+  };
+}
+
+async function switchProjectRuntime(
+  project: Awaited<ReturnType<ProjectService["getActiveProject"]>>,
+  aiSettings: AiSettingsService,
+  embeddings: EmbeddingService
+): Promise<ProjectRuntime> {
+  const previous = projectRuntime;
+  if (previous) {
+    await previous.graphify.stopMcp();
+    await previous.mcpServer.stop();
+  }
+
+  projectRuntime = await createProjectRuntime(project, aiSettings, embeddings);
+  graphifyController = projectRuntime.graphify;
+  mcpServer = projectRuntime.mcpServer;
+  return projectRuntime;
+}
+
+function registerIpc(projects: ProjectService, embeddings: EmbeddingService, aiSettings: AiSettingsService): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
   });
@@ -234,27 +312,7 @@ function registerIpc(
   });
 
   ipcMain.handle(fileChannels.dropped, async (_event, payload: FilesDroppedPayload) => {
-    const processItems = [
-      ...payload.files.map((file) => ({
-        name: file.name,
-        path: file.path,
-        type: file.type,
-        buffer: file.buffer
-      })),
-      ...(payload.text
-        ? [
-            {
-              name: "dropped-text.txt",
-              type: "text/plain",
-              text: payload.text
-            }
-          ]
-        : [])
-    ];
-    const [result] = await Promise.all([
-      graphify.ingestFilesDrop(payload),
-      smartClips.ingestDroppedItems(processItems, payload.text ?? "")
-    ]);
+    const result = await requireRuntime().graphify.ingestFilesDrop(payload);
     console.info("Files dropped and ingested by Graphify", {
       writtenFileCount: result.writtenFileCount,
       graphNodeCount: result.graphNodeCount,
@@ -264,41 +322,73 @@ function registerIpc(
     return result;
   });
 
-  ipcMain.handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => storage.writeNode(input));
-  ipcMain.handle(brainChannels.readNode, (_event, uuid: string) => storage.readNode(uuid));
-  ipcMain.handle(brainChannels.listNodes, (_event, input?: ListBrainNodesInput) => storage.listNodes(input));
+  ipcMain.handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => requireRuntime().storage.writeNode(input));
+  ipcMain.handle(brainChannels.readNode, (_event, uuid: string) => requireRuntime().storage.readNode(uuid));
+  ipcMain.handle(brainChannels.listNodes, (_event, input?: ListBrainNodesInput) => requireRuntime().storage.listNodes(input));
   ipcMain.handle(brainChannels.searchNodes, async (_event, input: SearchBrainNodesInput) => {
-    const nodes = await storage.listNodes();
+    const nodes = await requireRuntime().storage.listNodes();
     return embeddings.search(input, nodes);
   });
-  ipcMain.handle(brainChannels.mcpStatus, () => localMcpServer.getStatus());
-  ipcMain.handle(brainChannels.organizedBoard, () => graphRag.getOrganizedBoard());
-  ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) => graphRag.exportBoardPlaintext(input));
-  ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) => storage.updateNodeSignals(input));
-  ipcMain.handle(trackerChannels.list, () => tracker.listTrackers());
-  ipcMain.handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => tracker.updateTracker(input));
-  ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => graphifyBoard.buildBoardState(rule));
-  ipcMain.handle(boardChannels.getGraphHtml, () => graphify.readGraphHtml());
-  ipcMain.handle(boardChannels.removeSource, (_event, sourceFile: string) => graphify.removeSource(sourceFile));
+  ipcMain.handle(brainChannels.mcpStatus, () => requireRuntime().mcpServer.getStatus());
+  ipcMain.handle(brainChannels.organizedBoard, () => requireRuntime().graphRag.getOrganizedBoard());
+  ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) =>
+    requireRuntime().graphRag.exportBoardPlaintext(input)
+  );
+  ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) =>
+    requireRuntime().storage.updateNodeSignals(input)
+  );
+  ipcMain.handle(trackerChannels.list, () => requireRuntime().tracker.listTrackers());
+  ipcMain.handle(trackerChannels.create, (_event, input: CreateTrackerInput) => requireRuntime().tracker.createTracker(input));
+  ipcMain.handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => requireRuntime().tracker.updateTracker(input));
+  ipcMain.handle(trackerChannels.remove, (_event, uuid: string) => requireRuntime().tracker.removeTracker(uuid));
+  ipcMain.handle(projectChannels.list, () => projects.listProjects());
+  ipcMain.handle(projectChannels.getActive, () => projects.getActiveProject());
+  ipcMain.handle(projectChannels.create, async (_event, input: CreateProjectInput) => {
+    const project = await projects.createProject(input);
+    await switchProjectRuntime(project, aiSettings, embeddings);
+    return projects.getActiveProject();
+  });
+  ipcMain.handle(projectChannels.select, async (_event, input: ProjectSelectionInput) => {
+    const project = await projects.selectProject(input);
+    await switchProjectRuntime(project, aiSettings, embeddings);
+    return projects.getActiveProject();
+  });
+  ipcMain.handle(projectChannels.rename, (_event, input: RenameProjectInput) => projects.renameProject(input));
+  ipcMain.handle(projectChannels.archive, async (_event, input: ProjectSelectionInput) => {
+    const archived = await projects.archiveProject(input);
+    await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
+    return archived;
+  });
+  ipcMain.handle(graphBoardChannels.getState, () => requireRuntime().graphBoard.getState());
+  ipcMain.handle(graphBoardChannels.getNodeDetails, (_event, nodeId: string) =>
+    requireRuntime().graphBoard.getNodeDetails(nodeId)
+  );
+  ipcMain.handle(graphBoardChannels.generateCallflow, (_event, nodeId: string) =>
+    requireRuntime().graphify.generateCallflowHtml(nodeId)
+  );
+  ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => requireRuntime().graphifyBoard.buildBoardState(rule));
+  ipcMain.handle(boardChannels.getGraphHtml, () => requireRuntime().graphify.readGraphHtml());
+  ipcMain.handle(boardChannels.removeSource, (_event, sourceFile: string) => requireRuntime().graphify.removeSource(sourceFile));
   ipcMain.handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
-    graphify.collapseSourceInto(sourceFile, targetSourceFile)
+    requireRuntime().graphify.collapseSourceInto(sourceFile, targetSourceFile)
   );
   ipcMain.handle(boardChannels.renameSource, (_event, sourceFile: string, newName: string) =>
-    graphify.renameSource(sourceFile, newName)
+    requireRuntime().graphify.renameSource(sourceFile, newName)
   );
   ipcMain.handle(boardChannels.commentSource, (_event, sourceFile: string, comment: string) =>
-    graphify.commentSource(sourceFile, comment)
+    requireRuntime().graphify.commentSource(sourceFile, comment)
   );
-  ipcMain.handle(boardChannels.search, (_event, input: BoardSearchInput) => graphifyBoard.search(input));
+  ipcMain.handle(boardChannels.search, (_event, input: BoardSearchInput) => requireRuntime().graphifyBoard.search(input));
+  ipcMain.handle(filesystemChannels.getRoot, () => requireRuntime().graphFilesystem.getRoot());
+  ipcMain.handle(filesystemChannels.getChildren, (_event, nodeId: string) => requireRuntime().graphFilesystem.getChildren(nodeId));
+  ipcMain.handle(filesystemChannels.getDetails, (_event, nodeId: string) => requireRuntime().graphFilesystem.getDetails(nodeId));
+  ipcMain.handle(filesystemChannels.search, (_event, input: SourceTreeSearchInput) =>
+    requireRuntime().graphFilesystem.search(input)
+  );
+  ipcMain.handle(filesystemChannels.getSourceOptions, () => requireRuntime().graphFilesystem.listSourceOptions());
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
   ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
     clipboard.writeText(text);
-  });
-  ipcMain.handle(clipboardChannels.listSmartClips, () => smartClips.listClips());
-  ipcMain.handle(clipboardChannels.useSmartClip, async (_event, id: string) => {
-    const clip = await smartClips.recordUse(id);
-    clipboard.writeText(clip.value);
-    return clip;
   });
   ipcMain.handle(settingsChannels.getAi, () => aiSettings.getSettings());
   ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
@@ -309,34 +399,15 @@ function registerIpc(
 app.whenReady().then(async () => {
   const userDataPath = app.getPath("userData");
   const aiSettings = new AiSettingsService(userDataPath);
-  const storage = new StorageService(path.join(userDataPath, "vault"));
-  const graphify = new GraphifyController(path.join(userDataPath, "vault", "raw"), () => aiSettings.getSettings());
-  const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
-  graphifyController = graphify;
+  const projects = new ProjectService(userDataPath);
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
-  const graphRag = new GraphRagService(storage, embeddings);
-  const llm = new LlmService(() => aiSettings.getSettings());
-  const smartClips = new SmartClipService(userDataPath);
-  const tracker = new TrackerService(storage, llm);
-
-  mcpServer = new LocalMcpServer({
-    graphRag,
-    port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
-  });
-  const agentController = new AgentController(mcpServer, tracker, llm, smartClips, graphify);
 
   await aiSettings.initialize();
-  await smartClips.initialize();
-  await storage.initialize();
-  await graphify.initialize();
+  await projects.initialize();
+  await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
 
-  try {
-    await mcpServer.start();
-  } catch (error) {
-    console.error("Failed to start local MCP server", error);
-  }
-
-  registerIpc(storage, embeddings, graphRag, mcpServer, tracker, graphify, graphifyBoard, aiSettings, smartClips);
+  registerIpc(projects, embeddings, aiSettings);
+  const agentController = new AgentController(() => requireRuntime().graphify);
   agentController.registerIpc();
   mainWindow = createMainWindow();
   widgetWindow = createWidgetWindow();

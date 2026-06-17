@@ -23,10 +23,6 @@ export const agentMethods = {
     temperature: 0.2,
     maxTokens: 8192
   },
-  trackerExtraction: {
-    temperature: 0,
-    maxTokens: 8192
-  },
   droppedContentToolRouting: {
     temperature: 0,
     maxTokens: 4096,

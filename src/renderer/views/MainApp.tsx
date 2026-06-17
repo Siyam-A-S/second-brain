@@ -4,24 +4,28 @@ import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
 import { DropTarget } from "../components/DropTarget";
 import { TrackerTable } from "../components/TrackerTable";
-import { BoardRenderer } from "../components/BoardRenderer";
+import { GraphBoardRenderer } from "../components/GraphBoardRenderer";
 import { SettingsPanel } from "../components/SettingsPanel";
+import { FilesystemExplorer } from "../components/FilesystemExplorer";
 
-type ActiveView = "tracker" | "board";
+type ActiveView = "graph" | "filesystem" | "tracker";
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [activeView, setActiveView] = useState<ActiveView>("tracker");
+  const [activeView, setActiveView] = useState<ActiveView>("graph");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
 
   function handleDropProcessed(result: ProcessDroppedItemsResult): void {
     setRefreshKey((key) => key + 1);
-    if (result.tracker || result.trackerError) {
-      setActiveView("tracker");
-    } else if (result.graphify) {
-      setActiveView("board");
+    if (result.graphify) {
+      setActiveView("graph");
     }
+  }
+
+  function handleProjectChanged(): void {
+    setRefreshKey((key) => key + 1);
+    setActiveView("graph");
   }
 
   return (
@@ -35,10 +39,29 @@ export function MainApp(): JSX.Element {
           collapsed={leftPanelCollapsed}
           refreshKey={refreshKey}
           onDropProcessed={handleDropProcessed}
+          onProjectChanged={handleProjectChanged}
           onToggleCollapsed={() => setLeftPanelCollapsed((value) => !value)}
         />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex h-11 shrink-0 items-center gap-1 border-b border-slate-900/5 bg-white/20 px-6">
+            <button
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                activeView === "graph" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              }`}
+              type="button"
+              onClick={() => setActiveView("graph")}
+            >
+              Graph Board
+            </button>
+            <button
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                activeView === "filesystem" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              }`}
+              type="button"
+              onClick={() => setActiveView("filesystem")}
+            >
+              Filesystem
+            </button>
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
                 activeView === "tracker" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
@@ -48,20 +71,13 @@ export function MainApp(): JSX.Element {
             >
               Tracker
             </button>
-            <button
-              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-                activeView === "board" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
-              }`}
-              type="button"
-              onClick={() => setActiveView("board")}
-            >
-              Board
-            </button>
           </div>
-          {activeView === "tracker" ? (
-            <TrackerTable refreshKey={refreshKey} />
+          {activeView === "graph" ? (
+            <GraphBoardRenderer refreshKey={refreshKey} />
+          ) : activeView === "filesystem" ? (
+            <FilesystemExplorer refreshKey={refreshKey} />
           ) : (
-            <BoardRenderer refreshKey={refreshKey} />
+            <TrackerTable refreshKey={refreshKey} />
           )}
         </div>
       </div>

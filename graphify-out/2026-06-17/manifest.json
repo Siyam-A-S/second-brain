@@ -15,8 +15,8 @@
     "semantic_hash": "96fcb033aeff2d5ba9440863afa2b578"
   },
   "src/main/main.ts": {
-    "mtime": 1781585610.0631692,
-    "ast_hash": "54b7942c395a522d8280bca561a84de4",
+    "mtime": 1781654475.0993986,
+    "ast_hash": "19351626d02403e74b179ee1e0f4353b",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1781585514.7244194,
-    "ast_hash": "78a48e1ae3ce007c154bfafb31cbe05d",
+    "mtime": 1781654480.6554208,
+    "ast_hash": "1d39ba23496702f6d8d1aa25e5ea0a77",
     "semantic_hash": ""
   },
   "src/renderer/components/ClipboardList.tsx": {
@@ -90,8 +90,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1781585621.6152563,
-    "ast_hash": "3b20eebb08b9c4e6fbdc864e2d4c8bb1",
+    "mtime": 1781654490.162459,
+    "ast_hash": "4ba37c3ad328571f26f9dd374a084ce4",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -115,8 +115,8 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1781585688.4947474,
-    "ast_hash": "e2c9a0bc0fc17e73f3a9727e34f1d45c",
+    "mtime": 1781654578.5458097,
+    "ast_hash": "77d795314320b43d580bbb093339433c",
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1781585505.8163462,
-    "ast_hash": "4041f4ad6f9c7f2246af18a6f690b848",
+    "mtime": 1781654462.489348,
+    "ast_hash": "18d8aae9a4e736c6ed493261cb000db0",
     "semantic_hash": ""
   },
   "src/vite-env.d.ts": {
@@ -302,6 +302,21 @@
   "src/renderer/components/SettingsPanel.tsx": {
     "mtime": 1781585659.987541,
     "ast_hash": "8c1d81404a44aefe98922e20bb5fe5ec",
+    "semantic_hash": ""
+  },
+  "src/main/services/GraphFilesystemService.ts": {
+    "mtime": 1781654693.895261,
+    "ast_hash": "214c0f68319bb4b59f62d356180c5c4c",
+    "semantic_hash": ""
+  },
+  "src/renderer/components/FilesystemExplorer.tsx": {
+    "mtime": 1781654592.5328648,
+    "ast_hash": "e30b5d9419f0b0d0b66b7a22df2f133c",
+    "semantic_hash": ""
+  },
+  "src/shared/types/filesystem.ts": {
+    "mtime": 1781654375.654996,
+    "ast_hash": "a749c8f62e0b0dc0f98347478ea33501",
     "semantic_hash": ""
   }
 }

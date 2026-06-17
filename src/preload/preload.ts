@@ -1,10 +1,15 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
   BoardRule,
+  CreateProjectInput,
+  CreateTrackerInput,
   FilesDroppedPayload,
   ExportBoardPlaintextInput,
+  SourceTreeSearchInput,
   ListBrainNodesInput,
   ProcessDroppedItem,
+  ProjectSelectionInput,
+  RenameProjectInput,
   SearchBrainNodesInput,
   SecondBrainApi,
   TrackerIngestionStatus,
@@ -43,7 +48,9 @@ const brainChannels = {
 
 const trackerChannels = {
   list: "tracker-list",
+  create: "tracker-create",
   update: "tracker-update",
+  remove: "tracker-remove",
   ingestionStatus: "tracker-ingestion-status"
 } as const;
 
@@ -57,11 +64,32 @@ const boardChannels = {
   search: "search-board"
 } as const;
 
+const filesystemChannels = {
+  getRoot: "filesystem-get-root",
+  getChildren: "filesystem-get-children",
+  getDetails: "filesystem-get-details",
+  search: "filesystem-search",
+  getSourceOptions: "filesystem-get-source-options"
+} as const;
+
+const projectChannels = {
+  list: "projects-list",
+  create: "projects-create",
+  select: "projects-select",
+  rename: "projects-rename",
+  archive: "projects-archive",
+  getActive: "projects-get-active"
+} as const;
+
+const graphBoardChannels = {
+  getState: "graph-board-get-state",
+  getNodeDetails: "graph-board-get-node-details",
+  generateCallflow: "graph-board-generate-callflow"
+} as const;
+
 const clipboardChannels = {
   readText: "clipboard-read-text",
-  writeText: "clipboard-write-text",
-  listSmartClips: "smart-clips-list",
-  useSmartClip: "smart-clips-use"
+  writeText: "clipboard-write-text"
 } as const;
 
 const settingsChannels = {
@@ -96,7 +124,9 @@ const api: SecondBrainApi = {
   },
   tracker: {
     list: () => ipcRenderer.invoke(trackerChannels.list),
+    create: (input: CreateTrackerInput) => ipcRenderer.invoke(trackerChannels.create, input),
     update: (input: UpdateTrackerInput) => ipcRenderer.invoke(trackerChannels.update, input),
+    remove: (uuid: string) => ipcRenderer.invoke(trackerChannels.remove, uuid),
     onIngestionStatus: (handler: (status: TrackerIngestionStatus) => void) => {
       const listener = (_event: Electron.IpcRendererEvent, status: TrackerIngestionStatus): void => {
         handler(status);
@@ -107,6 +137,19 @@ const api: SecondBrainApi = {
         ipcRenderer.removeListener(trackerChannels.ingestionStatus, listener);
       };
     }
+  },
+  projects: {
+    list: () => ipcRenderer.invoke(projectChannels.list),
+    create: (input: CreateProjectInput) => ipcRenderer.invoke(projectChannels.create, input),
+    select: (input: ProjectSelectionInput) => ipcRenderer.invoke(projectChannels.select, input),
+    rename: (input: RenameProjectInput) => ipcRenderer.invoke(projectChannels.rename, input),
+    archive: (input: ProjectSelectionInput) => ipcRenderer.invoke(projectChannels.archive, input),
+    getActive: () => ipcRenderer.invoke(projectChannels.getActive)
+  },
+  graphBoard: {
+    getState: () => ipcRenderer.invoke(graphBoardChannels.getState),
+    getNodeDetails: (nodeId: string) => ipcRenderer.invoke(graphBoardChannels.getNodeDetails, nodeId),
+    generateCallflow: (nodeId: string) => ipcRenderer.invoke(graphBoardChannels.generateCallflow, nodeId)
   },
   board: {
     getState: (rule: BoardRule) => ipcRenderer.invoke(boardChannels.getState, rule),
@@ -120,11 +163,16 @@ const api: SecondBrainApi = {
       ipcRenderer.invoke(boardChannels.commentSource, sourceFile, comment),
     search: (input) => ipcRenderer.invoke(boardChannels.search, input)
   },
+  filesystem: {
+    getRoot: () => ipcRenderer.invoke(filesystemChannels.getRoot),
+    getChildren: (nodeId: string) => ipcRenderer.invoke(filesystemChannels.getChildren, nodeId),
+    getDetails: (nodeId: string) => ipcRenderer.invoke(filesystemChannels.getDetails, nodeId),
+    search: (input: SourceTreeSearchInput) => ipcRenderer.invoke(filesystemChannels.search, input),
+    getSourceOptions: () => ipcRenderer.invoke(filesystemChannels.getSourceOptions)
+  },
   clipboard: {
     readText: () => ipcRenderer.invoke(clipboardChannels.readText),
-    writeText: (text: string) => ipcRenderer.invoke(clipboardChannels.writeText, text),
-    listSmartClips: () => ipcRenderer.invoke(clipboardChannels.listSmartClips),
-    useSmartClip: (id: string) => ipcRenderer.invoke(clipboardChannels.useSmartClip, id)
+    writeText: (text: string) => ipcRenderer.invoke(clipboardChannels.writeText, text)
   },
   settings: {
     getAi: () => ipcRenderer.invoke(settingsChannels.getAi),
