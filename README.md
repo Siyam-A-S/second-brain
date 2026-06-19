@@ -25,6 +25,14 @@ If the direct download is not available yet, open the [GitHub Releases page](htt
    uv tool run --from "graphifyy[pdf,office,openai,mcp]" graphify --help
    ```
 
+   For research-paper mode, add the richer local PDF tools to the same Graphify tool environment:
+
+   ```powershell
+   uv tool install --upgrade "graphifyy[pdf,office,openai,mcp]" --with pymupdf --with pymupdf4llm --with numpy --with matplotlib
+   ```
+
+   These packages let Second Brain break PDFs into paper sections, figures, tables, references, claims, methods, datasets, and results before Graphify builds the graph. If they are missing, the app falls back to plain PDF text extraction and shows setup guidance in Settings.
+
 4. Download the release zip, extract the entire folder, and run `Second Brain.exe`.
 
 Restart PowerShell and Second Brain if Windows cannot find `uv` or `graphify` immediately after installation.
@@ -47,7 +55,8 @@ Model: local-model
 API key: leave blank for a local server
 ```
 
-For a hosted provider, enter its OpenAI-compatible `/v1/chat/completions` URL, model name, and API key instead.
+For a hosted provider, enter its OpenAI-compatible `/v1/chat/completions` URL, model name, and API key instead. Vertex AI OpenAPI base URLs such as `https://aiplatform.googleapis.com/v1/projects/.../locations/.../endpoints/openapi/` are also accepted.
+Second Brain adapts to common cloud differences such as `max_tokens` versus `max_completion_tokens`, unsupported custom temperature, and JSON-mode fallbacks. If definition enrichment fails, the Graph Board shows the AI endpoint error while keeping Graphify summaries visible.
 
 ## Environment Variables
 
@@ -60,10 +69,14 @@ The in-app AI settings are recommended. Environment variables override saved set
 | `SECOND_BRAIN_LLM_API_KEY` | API key for hosted providers | Local placeholder |
 | `SECOND_BRAIN_GRAPHIFY_BIN` | Full path to `graphify.exe` when it is not on `PATH` | Auto-detected |
 | `SECOND_BRAIN_GRAPHIFY_MAX_TOKENS` | Primary Graphify completion budget | `8192` |
+| `SECOND_BRAIN_GRAPHIFY_TOKEN_BUDGET` | Graphify extraction chunk token budget | Same as max tokens |
 | `SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS` | Strict JSON retry budget | `4096` |
 | `SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS` | Graphify command timeout in milliseconds | `600000` |
 | `SECOND_BRAIN_CARD_DEFINITIONS` | Set to `0` to disable card-definition enrichment | Enabled |
 | `SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS` | Maximum cards enriched after one ingestion | `24` |
+| `SECOND_BRAIN_PAPER_COMPONENTS` | Set to `0` to disable generated research-paper sidecars | Enabled |
+
+Generated paper artifacts are rebuildable cache files under each project at `vault/raw/paper-components/`. Explorer hides them from ordinary source delete/rename/merge actions, but exposes their sections, figures, tables, references, methods, datasets, claims, and results as graph workbench artifacts.
 
 Set variables for the current PowerShell window before launching the app:
 

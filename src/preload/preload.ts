@@ -5,17 +5,19 @@ import type {
   CreateTrackerInput,
   FilesDroppedPayload,
   ExportBoardPlaintextInput,
-  SourceTreeSearchInput,
+  ExplorerSearchInput,
   ListBrainNodesInput,
   ProcessDroppedItem,
   ProjectSelectionInput,
   RenameProjectInput,
+  SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   SecondBrainApi,
   TrackerIngestionStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
   WidgetMovePayload,
   WriteBrainNodeInput
@@ -64,12 +66,13 @@ const boardChannels = {
   search: "search-board"
 } as const;
 
-const filesystemChannels = {
-  getRoot: "filesystem-get-root",
-  getChildren: "filesystem-get-children",
-  getDetails: "filesystem-get-details",
-  search: "filesystem-search",
-  getSourceOptions: "filesystem-get-source-options"
+const explorerChannels = {
+  getRoot: "explorer-get-root",
+  getChildren: "explorer-get-children",
+  getDetails: "explorer-get-details",
+  search: "explorer-search",
+  getSourceOptions: "explorer-get-source-options",
+  getArtifactContent: "explorer-get-artifact-content"
 } as const;
 
 const projectChannels = {
@@ -84,7 +87,16 @@ const projectChannels = {
 const graphBoardChannels = {
   getState: "graph-board-get-state",
   getNodeDetails: "graph-board-get-node-details",
-  generateCallflow: "graph-board-generate-callflow"
+  generateCallflow: "graph-board-generate-callflow",
+  getDefinitionStatus: "graph-board-get-definition-status"
+} as const;
+
+const researchChannels = {
+  getDependencyStatus: "research-get-dependency-status",
+  listPapers: "research-list-papers",
+  getPaperDetails: "research-get-paper-details",
+  saveNodeNote: "research-save-node-note",
+  updatePaperStatus: "research-update-paper-status"
 } as const;
 
 const clipboardChannels = {
@@ -149,7 +161,16 @@ const api: SecondBrainApi = {
   graphBoard: {
     getState: () => ipcRenderer.invoke(graphBoardChannels.getState),
     getNodeDetails: (nodeId: string) => ipcRenderer.invoke(graphBoardChannels.getNodeDetails, nodeId),
-    generateCallflow: (nodeId: string) => ipcRenderer.invoke(graphBoardChannels.generateCallflow, nodeId)
+    generateCallflow: (nodeId: string) => ipcRenderer.invoke(graphBoardChannels.generateCallflow, nodeId),
+    getDefinitionStatus: () => ipcRenderer.invoke(graphBoardChannels.getDefinitionStatus)
+  },
+  research: {
+    getDependencyStatus: () => ipcRenderer.invoke(researchChannels.getDependencyStatus),
+    listPapers: () => ipcRenderer.invoke(researchChannels.listPapers),
+    getPaperDetails: (nodeId: string) => ipcRenderer.invoke(researchChannels.getPaperDetails, nodeId),
+    saveNodeNote: (input: SaveResearchNodeNoteInput) => ipcRenderer.invoke(researchChannels.saveNodeNote, input),
+    updatePaperStatus: (input: UpdateResearchPaperStatusInput) =>
+      ipcRenderer.invoke(researchChannels.updatePaperStatus, input)
   },
   board: {
     getState: (rule: BoardRule) => ipcRenderer.invoke(boardChannels.getState, rule),
@@ -163,12 +184,13 @@ const api: SecondBrainApi = {
       ipcRenderer.invoke(boardChannels.commentSource, sourceFile, comment),
     search: (input) => ipcRenderer.invoke(boardChannels.search, input)
   },
-  filesystem: {
-    getRoot: () => ipcRenderer.invoke(filesystemChannels.getRoot),
-    getChildren: (nodeId: string) => ipcRenderer.invoke(filesystemChannels.getChildren, nodeId),
-    getDetails: (nodeId: string) => ipcRenderer.invoke(filesystemChannels.getDetails, nodeId),
-    search: (input: SourceTreeSearchInput) => ipcRenderer.invoke(filesystemChannels.search, input),
-    getSourceOptions: () => ipcRenderer.invoke(filesystemChannels.getSourceOptions)
+  explorer: {
+    getRoot: () => ipcRenderer.invoke(explorerChannels.getRoot),
+    getChildren: (nodeId: string) => ipcRenderer.invoke(explorerChannels.getChildren, nodeId),
+    getDetails: (nodeId: string) => ipcRenderer.invoke(explorerChannels.getDetails, nodeId),
+    search: (input: ExplorerSearchInput) => ipcRenderer.invoke(explorerChannels.search, input),
+    getSourceOptions: () => ipcRenderer.invoke(explorerChannels.getSourceOptions),
+    getArtifactContent: (artifactId: string) => ipcRenderer.invoke(explorerChannels.getArtifactContent, artifactId)
   },
   clipboard: {
     readText: () => ipcRenderer.invoke(clipboardChannels.readText),

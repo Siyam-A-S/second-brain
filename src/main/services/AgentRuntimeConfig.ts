@@ -3,6 +3,7 @@ import type { LocalToolName } from "./LocalToolRegistry";
 export type AgentMethodConfig = {
   temperature: number;
   maxTokens: number;
+  jsonMode?: boolean | undefined;
   enabledTools?: LocalToolName[] | undefined;
 };
 
@@ -21,7 +22,8 @@ export const agentPrompts = {
 export const agentMethods = {
   cardDefinition: {
     temperature: 0.2,
-    maxTokens: 8192
+    maxTokens: 8192,
+    jsonMode: true
   },
   droppedContentToolRouting: {
     temperature: 0,

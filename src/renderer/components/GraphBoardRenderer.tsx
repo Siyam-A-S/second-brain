@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import { AlertCircle, FileText, Loader2, Network, RefreshCcw, Route, Search, X } from "lucide-react";
+import { AlertCircle, BookOpen, FileText, Layers3, Loader2, Network, RefreshCcw, Route, Search, X } from "lucide-react";
 import type {
   CallflowHtmlDocument,
   GraphBoardLink,
   GraphBoardNode,
   GraphBoardNodeDetails,
-  GraphBoardState
+  GraphBoardState,
+  GraphDefinitionStatus,
+  ResearchPaperStatus
 } from "../../shared/ipc";
 
 type GraphBoardRendererProps = {
@@ -67,8 +69,17 @@ function displaySource(sourceFile: string): string {
   return sourceFile.split(/[\\/]/).filter(Boolean).at(-1) ?? sourceFile;
 }
 
+function titleCase(value: string): string {
+  return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function paperStatusLabel(status: ResearchPaperStatus): string {
+  return titleCase(status);
+}
+
 export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX.Element {
   const [containerRef, size] = useElementSize<HTMLDivElement>();
+  const lastAppliedDefinitionKey = useRef("");
   const [graph, setGraph] = useState<GraphBoardState | null>(null);
   const [details, setDetails] = useState<GraphBoardNodeDetails | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphBoardNode | null>(null);
@@ -76,6 +87,9 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
   const [query, setQuery] = useState("");
   const [loadState, setLoadState] = useState<LoadState>("idle");
   const [callflowLoading, setCallflowLoading] = useState(false);
+  const [definitionStatus, setDefinitionStatus] = useState<GraphDefinitionStatus | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [callflowError, setCallflowError] = useState<string | null>(null);
 
@@ -84,8 +98,12 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
     setError(null);
 
     try {
-      const state = await window.api.graphBoard.getState();
+      const [state, status] = await Promise.all([
+        window.api.graphBoard.getState(),
+        window.api.graphBoard.getDefinitionStatus()
+      ]);
       setGraph(state);
+      setDefinitionStatus(status);
       setDetails(null);
       setCallflow(null);
       setLoadState("ready");
@@ -102,6 +120,38 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
   useEffect(() => {
     void loadGraph();
   }, [refreshKey]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void window.api.graphBoard
+        .getDefinitionStatus()
+        .then(setDefinitionStatus)
+        .catch(() => undefined);
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!definitionStatus?.completedAt || definitionStatus.running || definitionStatus.updatedCount <= 0) {
+      return;
+    }
+
+    const definitionKey = `${definitionStatus.completedAt}:${definitionStatus.updatedCount}`;
+    if (lastAppliedDefinitionKey.current === definitionKey) {
+      return;
+    }
+
+    lastAppliedDefinitionKey.current = definitionKey;
+    void window.api.graphBoard
+      .getState()
+      .then(setGraph)
+      .catch(() => undefined);
+  }, [definitionStatus?.completedAt, definitionStatus?.running, definitionStatus?.updatedCount]);
+
+  useEffect(() => {
+    setNoteDraft(details?.research?.notes[0]?.note ?? "");
+  }, [details?.id, details?.research?.notes]);
 
   const filteredNodes = useMemo(() => {
     const nodes = graph?.nodes ?? [];
@@ -143,6 +193,47 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load node details.";
       setError(message);
+    }
+  }
+
+  async function updatePaperStatus(status: ResearchPaperStatus): Promise<void> {
+    if (!details?.research) {
+      return;
+    }
+
+    const updated = await window.api.research.updatePaperStatus({
+      nodeId: details.research.paper.nodeId,
+      status
+    });
+    setDetails({
+      ...details,
+      research: {
+        ...details.research,
+        paper: updated
+      }
+    });
+  }
+
+  async function saveResearchNote(): Promise<void> {
+    if (!details?.research) {
+      return;
+    }
+
+    setNoteSaving(true);
+    try {
+      const note = await window.api.research.saveNodeNote({
+        nodeId: details.research.paper.nodeId,
+        note: noteDraft
+      });
+      setDetails({
+        ...details,
+        research: {
+          ...details.research,
+          notes: note.note ? [note, ...details.research.notes.filter((item) => item.nodeId !== note.nodeId)] : []
+        }
+      });
+    } finally {
+      setNoteSaving(false);
     }
   }
 
@@ -199,6 +290,22 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
           <p className="mt-1 truncate text-xs text-slate-500">
             {graph ? `${graph.nodes.length} nodes · ${graph.links.length} edges` : "Explore the active project graph"}
           </p>
+          {definitionStatus ? (
+            <p
+              className={`mt-1 max-w-xl truncate text-xs ${
+                definitionStatus.failedBatchCount > 0 ? "text-rose-700" : definitionStatus.running ? "text-amber-700" : "text-slate-400"
+              }`}
+              title={definitionStatus.lastError}
+            >
+              {definitionStatus.running
+                ? `Definitions running on ${definitionStatus.endpointHost || "AI endpoint"} · ${definitionStatus.updatedCount} updated`
+                : definitionStatus.failedBatchCount > 0
+                  ? `Definition enrichment failed: ${definitionStatus.lastError ?? "check AI endpoint settings"}`
+                  : definitionStatus.updatedCount > 0
+                    ? `Definitions updated · ${definitionStatus.updatedCount} cards`
+                    : "Definitions fall back to Graphify summaries until enrichment runs"}
+            </p>
+          ) : null}
         </div>
         <div className="flex min-w-0 items-center gap-2">
           <label className="relative hidden w-72 min-w-0 md:block">
@@ -303,6 +410,92 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                   <h2 className="mt-2 text-lg font-semibold leading-6 text-slate-950">{selectedNode.label}</h2>
                   <p className="mt-3 text-sm leading-6 text-slate-700">{selectedNode.summary}</p>
                 </section>
+
+                {details?.research ? (
+                  <section className="rounded-md border border-emerald-200 bg-emerald-50/70 p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold uppercase text-emerald-800">
+                        <BookOpen size={14} />
+                        <span>Research Paper</span>
+                      </div>
+                      <select
+                        className="h-8 rounded-md border border-emerald-200 bg-white px-2 text-xs font-semibold text-emerald-900 outline-none"
+                        value={details.research.paper.status}
+                        onChange={(event) => void updatePaperStatus(event.target.value as ResearchPaperStatus)}
+                      >
+                        {(["unread", "reading", "summarized", "cited", "discarded"] as ResearchPaperStatus[]).map((status) => (
+                          <option key={status} value={status}>
+                            {paperStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {details.research.abstract ? (
+                      <p className="line-clamp-6 text-sm leading-6 text-emerald-950">{details.research.abstract}</p>
+                    ) : null}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {["paper_section", "paper_figure", "paper_table", "paper_reference", "paper_claim", "paper_method", "paper_dataset", "paper_result"].map(
+                        (type) => {
+                          const count = details.research?.components.filter((component) => component.type === type).length ?? 0;
+                          return count > 0 ? (
+                            <div key={type} className="rounded-md bg-white/70 px-2 py-1.5 text-xs text-emerald-900">
+                              <span className="font-semibold">{count}</span> {titleCase(type.replace(/^paper_/, ""))}
+                            </div>
+                          ) : null;
+                        }
+                      )}
+                    </div>
+                    <label className="mt-3 block text-xs font-semibold uppercase text-emerald-800">
+                      Research note
+                      <textarea
+                        className="mt-2 min-h-24 w-full resize-y rounded-md border border-emerald-200 bg-white/85 p-2 text-sm normal-case leading-5 text-slate-800 outline-none focus:border-emerald-400"
+                        value={noteDraft}
+                        onChange={(event) => setNoteDraft(event.target.value)}
+                      />
+                    </label>
+                    <button
+                      className="mt-2 h-8 rounded-md bg-emerald-700 px-3 text-xs font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
+                      disabled={noteSaving}
+                      type="button"
+                      onClick={() => void saveResearchNote()}
+                    >
+                      {noteSaving ? "Saving" : "Save note"}
+                    </button>
+                  </section>
+                ) : null}
+
+                {details?.research?.components.length ? (
+                  <section>
+                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                      <Layers3 size={14} />
+                      <span>Paper Drilldown</span>
+                    </div>
+                    <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                      {details.research.components.slice(0, 32).map((component) => (
+                        <button
+                          key={component.id}
+                          className="w-full rounded-md border border-slate-200 bg-white/55 p-3 text-left transition hover:bg-white"
+                          type="button"
+                          onClick={() =>
+                            void selectNode({
+                              id: component.id,
+                              label: component.label,
+                              type: component.type,
+                              summary: component.summary,
+                              sourceFile: details.research?.paper.sourceFile ?? "",
+                              community: details.community,
+                              degree: 0,
+                              rawData: {}
+                            })
+                          }
+                        >
+                          <p className="truncate text-sm font-semibold text-slate-950">{component.label}</p>
+                          <p className="mt-1 truncate text-xs text-slate-500">{titleCase(component.type)}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
 
                 <section className="rounded-md border border-slate-200 bg-white/60 p-3">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">

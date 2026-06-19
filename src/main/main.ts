@@ -5,10 +5,11 @@ import {
   brainChannels,
   clipboardChannels,
   fileChannels,
-  filesystemChannels,
+  explorerChannels,
   graphBoardChannels,
   FilesDroppedPayload,
   projectChannels,
+  researchChannels,
   settingsChannels,
   trackerChannels,
   WidgetMovePayload,
@@ -25,22 +26,25 @@ import type {
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
+  SaveResearchNodeNoteInput,
+  UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
   WriteBrainNodeInput
 } from "../shared/brain";
 import type { BoardRule, BoardSearchInput } from "../shared/types/board";
-import type { SourceTreeSearchInput } from "../shared/types/filesystem";
+import type { ExplorerSearchInput } from "../shared/types/explorer";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
 import { EmbeddingService } from "./services/EmbeddingService";
 import { GraphBoardService } from "./services/GraphBoardService";
 import { GraphifyBoardService } from "./services/GraphifyBoardService";
 import { GraphifyController } from "./services/GraphifyController";
-import { GraphFilesystemService } from "./services/GraphFilesystemService";
+import { ExplorerService } from "./services/ExplorerService";
 import { GraphRagService } from "./services/GraphRagService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
 import { LlmService } from "./services/LlmService";
 import { ProjectService } from "./services/ProjectService";
+import { ResearchService } from "./services/ResearchService";
 import { StorageService } from "./services/StorageService";
 import { TrackerService } from "./services/TrackerService";
 
@@ -54,8 +58,9 @@ type ProjectRuntime = {
   graphify: GraphifyController;
   graphifyBoard: GraphifyBoardService;
   graphBoard: GraphBoardService;
-  graphFilesystem: GraphFilesystemService;
+  graphExplorer: ExplorerService;
   graphRag: GraphRagService;
+  research: ResearchService;
   tracker: TrackerService;
   mcpServer: LocalMcpServer;
 };
@@ -215,9 +220,10 @@ async function createProjectRuntime(
 ): Promise<ProjectRuntime> {
   const storage = new StorageService(project.vaultPath);
   const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getSettings());
+  const research = new ResearchService(project.rootPath, graphify.getGraphPath());
   const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
-  const graphBoard = new GraphBoardService(graphify.getGraphPath());
-  const graphFilesystem = new GraphFilesystemService(graphify.getRawVaultPath(), graphify.getGraphPath());
+  const graphBoard = new GraphBoardService(graphify.getGraphPath(), research);
+  const graphExplorer = new ExplorerService(graphify.getRawVaultPath(), graphify.getGraphPath());
   const graphRag = new GraphRagService(storage, embeddings);
   const tracker = new TrackerService(project.trackerPath);
   const nextMcpServer = new LocalMcpServer({
@@ -228,6 +234,7 @@ async function createProjectRuntime(
   await aiSettings.initialize();
   await storage.initialize();
   await graphify.initialize();
+  await research.initialize();
   await tracker.initialize(storage);
 
   try {
@@ -241,8 +248,9 @@ async function createProjectRuntime(
     graphify,
     graphifyBoard,
     graphBoard,
-    graphFilesystem,
+    graphExplorer,
     graphRag,
+    research,
     tracker,
     mcpServer: nextMcpServer
   };
@@ -366,6 +374,18 @@ function registerIpc(projects: ProjectService, embeddings: EmbeddingService, aiS
   ipcMain.handle(graphBoardChannels.generateCallflow, (_event, nodeId: string) =>
     requireRuntime().graphify.generateCallflowHtml(nodeId)
   );
+  ipcMain.handle(graphBoardChannels.getDefinitionStatus, () => requireRuntime().graphify.getDefinitionStatus());
+  ipcMain.handle(researchChannels.getDependencyStatus, () => requireRuntime().graphify.getResearchDependencyStatus());
+  ipcMain.handle(researchChannels.listPapers, () => requireRuntime().research.listPapers());
+  ipcMain.handle(researchChannels.getPaperDetails, (_event, nodeId: string) =>
+    requireRuntime().research.getPaperDetails(nodeId)
+  );
+  ipcMain.handle(researchChannels.saveNodeNote, (_event, input: SaveResearchNodeNoteInput) =>
+    requireRuntime().research.saveNodeNote(input)
+  );
+  ipcMain.handle(researchChannels.updatePaperStatus, (_event, input: UpdateResearchPaperStatusInput) =>
+    requireRuntime().research.updatePaperStatus(input)
+  );
   ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => requireRuntime().graphifyBoard.buildBoardState(rule));
   ipcMain.handle(boardChannels.getGraphHtml, () => requireRuntime().graphify.readGraphHtml());
   ipcMain.handle(boardChannels.removeSource, (_event, sourceFile: string) => requireRuntime().graphify.removeSource(sourceFile));
@@ -379,13 +399,16 @@ function registerIpc(projects: ProjectService, embeddings: EmbeddingService, aiS
     requireRuntime().graphify.commentSource(sourceFile, comment)
   );
   ipcMain.handle(boardChannels.search, (_event, input: BoardSearchInput) => requireRuntime().graphifyBoard.search(input));
-  ipcMain.handle(filesystemChannels.getRoot, () => requireRuntime().graphFilesystem.getRoot());
-  ipcMain.handle(filesystemChannels.getChildren, (_event, nodeId: string) => requireRuntime().graphFilesystem.getChildren(nodeId));
-  ipcMain.handle(filesystemChannels.getDetails, (_event, nodeId: string) => requireRuntime().graphFilesystem.getDetails(nodeId));
-  ipcMain.handle(filesystemChannels.search, (_event, input: SourceTreeSearchInput) =>
-    requireRuntime().graphFilesystem.search(input)
+  ipcMain.handle(explorerChannels.getRoot, () => requireRuntime().graphExplorer.getRoot());
+  ipcMain.handle(explorerChannels.getChildren, (_event, nodeId: string) => requireRuntime().graphExplorer.getChildren(nodeId));
+  ipcMain.handle(explorerChannels.getDetails, (_event, nodeId: string) => requireRuntime().graphExplorer.getDetails(nodeId));
+  ipcMain.handle(explorerChannels.search, (_event, input: ExplorerSearchInput) =>
+    requireRuntime().graphExplorer.search(input)
   );
-  ipcMain.handle(filesystemChannels.getSourceOptions, () => requireRuntime().graphFilesystem.listSourceOptions());
+  ipcMain.handle(explorerChannels.getSourceOptions, () => requireRuntime().graphExplorer.listSourceOptions());
+  ipcMain.handle(explorerChannels.getArtifactContent, (_event, artifactId: string) =>
+    requireRuntime().graphExplorer.getArtifactContent(artifactId)
+  );
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
   ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
     clipboard.writeText(text);

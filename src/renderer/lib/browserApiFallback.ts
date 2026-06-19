@@ -4,12 +4,16 @@ import type {
   CreateTrackerInput,
   GraphBoardNodeDetails,
   GraphBoardState,
+  GraphDefinitionStatus,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   ProjectRecord,
+  ResearchDependencyReport,
+  ResearchPaperDetails,
+  ResearchPaperSummary,
   SecondBrainApi,
-  SourceTreeSearchInput,
-  SourceTreeNode,
+  ExplorerSearchInput,
+  ExplorerNode,
   TrackerIngestionStatus,
   TrackerPriority,
   TrackerRecord,
@@ -36,7 +40,7 @@ const browserProjects: ProjectRecord[] = [
     active: true
   }
 ];
-const browserSourceTree: SourceTreeNode[] = [
+const browserExplorerTree: ExplorerNode[] = [
   {
     id: "source:browser-preview.txt",
     title: "browser-preview.txt",
@@ -62,9 +66,62 @@ let browserAppSettings: AppSettings = {
     retryMaxTokens: 4096,
     timeoutMs: 600_000,
     cardDefinitions: true,
-    cardDefinitionMaxPerPass: 24
+    cardDefinitionMaxPerPass: 24,
+    paperComponents: true
   },
   updatedAt: new Date().toISOString()
+};
+
+const browserResearchDependencyReport: ResearchDependencyReport = {
+  available: true,
+  checkedAt: new Date().toISOString(),
+  runtime: "/browser-preview/python",
+  dependencies: [
+    {
+      name: "Graphify",
+      importName: "graphify",
+      installed: true,
+      version: "preview",
+      required: true,
+      purpose: "Graph generation and MCP server",
+      guidance: ""
+    }
+  ],
+  guidance: []
+};
+
+const browserPaper: ResearchPaperSummary = {
+  nodeId: "browser-preview-paper",
+  title: "Browser Preview Paper",
+  sourceFile: "browser-preview-paper.pdf",
+  authors: [],
+  status: "unread",
+  updatedAt: new Date().toISOString()
+};
+
+const browserDefinitionStatus: GraphDefinitionStatus = {
+  running: false,
+  pendingCount: 0,
+  updatedCount: 0,
+  failedBatchCount: 0,
+  updatedAt: new Date().toISOString(),
+  endpointHost: "localhost:8080"
+};
+
+const browserPaperDetails: ResearchPaperDetails = {
+  paper: browserPaper,
+  abstract: "Browser preview paper details are available in Electron.",
+  components: [],
+  notes: [],
+  literature: {
+    problem: "",
+    method: "",
+    dataset: "",
+    keyResult: "",
+    limitations: "",
+    relevanceToThesis: ""
+  },
+  thesisLinks: []
 };
 
 function compact(value: string): string {
@@ -376,6 +433,23 @@ const browserApiFallback: SecondBrainApi = {
       path: "/browser-preview/callflow.html",
       updatedAt: new Date().toISOString(),
       stdout: "Browser preview callflow is a no-op."
+    }),
+    getDefinitionStatus: async () => browserDefinitionStatus
+  },
+  research: {
+    getDependencyStatus: async () => browserResearchDependencyReport,
+    listPapers: async () => [browserPaper],
+    getPaperDetails: async () => browserPaperDetails,
+    saveNodeNote: async (input) => ({
+      nodeId: input.nodeId,
+      note: input.note,
+      updatedAt: new Date().toISOString()
+    }),
+    updatePaperStatus: async (input) => ({
+      ...browserPaper,
+      nodeId: input.nodeId,
+      status: input.status,
+      updatedAt: new Date().toISOString()
     })
   },
   board: {
@@ -431,8 +505,8 @@ const browserApiFallback: SecondBrainApi = {
     }),
     search: async () => []
   },
-  filesystem: {
-    getRoot: async () => browserSourceTree,
+  explorer: {
+    getRoot: async () => browserExplorerTree,
     getChildren: async (nodeId: string) =>
       nodeId === "source:browser-preview.txt"
         ? [
@@ -451,7 +525,7 @@ const browserApiFallback: SecondBrainApi = {
         : [],
     getDetails: async (nodeId: string) => ({
       node:
-        browserSourceTree.find((node) => node.id === nodeId) ?? {
+        browserExplorerTree.find((node) => node.id === nodeId) ?? {
           id: nodeId,
           title: "Browser Preview Fragment",
           kind: "entity",
@@ -464,8 +538,8 @@ const browserApiFallback: SecondBrainApi = {
         },
       relationGroups: []
     }),
-    search: async (input: SourceTreeSearchInput) =>
-      browserSourceTree
+    search: async (input: ExplorerSearchInput) =>
+      browserExplorerTree
         .filter((node) => node.title.toLowerCase().includes(input.query.trim().toLowerCase()))
         .map((node) => ({ ...node, score: 1 })),
     getSourceOptions: async () => [
@@ -473,7 +547,18 @@ const browserApiFallback: SecondBrainApi = {
         sourceFile: "browser-preview.txt",
         title: "browser-preview.txt"
       }
-    ]
+    ],
+    getArtifactContent: async (artifactId: string) => ({
+      artifactId,
+      title: "Browser Preview Artifact",
+      artifactKind: "section",
+      sourceFile: "browser-preview-paper.pdf",
+      artifactPath: "paper-components/browser-preview/sections/section-1.md",
+      preview: "Artifact previews are available in Electron.",
+      llmFormat: "markdown",
+      content: "# Browser Preview Artifact\n\nPaper artifact content is available in Electron.",
+      updatedAt: new Date().toISOString()
+    })
   },
   clipboard: {
     readText: async () => navigator.clipboard?.readText?.() ?? "",

@@ -62,7 +62,7 @@ function displaySource(sourceFile: string): string {
 
 function folderName(sourceFile: string): string {
   const parts = sourceFile.split(/[\\/]/).filter(Boolean);
-  return parts.length > 1 ? parts.slice(0, -1).join("/") : "Raw vault";
+  return parts.length > 1 ? parts.slice(0, -1).join("/") : "Project Sources";
 }
 
 function sourceComment(topic: GraphBoardTopic): string {

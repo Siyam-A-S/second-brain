@@ -6,6 +6,7 @@ import type {
   GraphBoardNodeDetails,
   GraphBoardState
 } from "../../shared/brain";
+import type { ResearchService } from "./ResearchService";
 
 type GraphNodeRecord = Record<string, unknown> & {
   id?: unknown;
@@ -118,7 +119,10 @@ function graphLinks(graph: GraphJson): GraphLinkRecord[] {
 }
 
 export class GraphBoardService {
-  constructor(private readonly graphPath: string) {}
+  constructor(
+    private readonly graphPath: string,
+    private readonly research?: ResearchService
+  ) {}
 
   async getState(): Promise<GraphBoardState> {
     const graph = await this.readGraph();
@@ -176,12 +180,16 @@ export class GraphBoardService {
       }
     }
 
-    return {
-      ...this.toBoardNode(node, degrees, nodes.indexOf(node)),
+    const boardNode = this.toBoardNode(node, degrees, nodes.indexOf(node));
+    const details: GraphBoardNodeDetails = {
+      ...boardNode,
+      research: await this.tryPaperDetails(boardNode.id, boardNode.type),
       neighbors: neighbors
         .sort((left, right) => left.label.localeCompare(right.label))
         .slice(0, 80)
     };
+
+    return details;
   }
 
   private async readGraph(): Promise<GraphJson> {
@@ -247,5 +255,17 @@ export class GraphBoardService {
       weight: linkWeight(link),
       rawData: link
     };
+  }
+
+  private async tryPaperDetails(nodeId: string, type: string): Promise<GraphBoardNodeDetails["research"]> {
+    if (!this.research || !/^(paper|paper_file)$/i.test(type)) {
+      return undefined;
+    }
+
+    try {
+      return await this.research.getPaperDetails(nodeId);
+    } catch {
+      return undefined;
+    }
   }
 }

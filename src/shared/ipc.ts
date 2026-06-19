@@ -8,6 +8,7 @@ import type {
   CreateProjectInput,
   CreateTrackerInput,
   ExportBoardPlaintextInput,
+  GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
   GraphifyIngestionResult,
@@ -19,6 +20,11 @@ import type {
   ProjectRecord,
   ProjectSelectionInput,
   RenameProjectInput,
+  ResearchDependencyReport,
+  ResearchPaperDetails,
+  ResearchPaperNote,
+  ResearchPaperSummary,
+  SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
   TrackerPriority,
@@ -27,6 +33,7 @@ import type {
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
   UserValidationState,
   WriteBrainNodeInput
@@ -38,12 +45,13 @@ import type {
   OrganizedBoardTopic as GraphBoardTopic
 } from "./types/board";
 import type {
-  SourceTreeNode,
-  SourceTreeNodeDetails,
-  SourceTreeSearchInput,
-  SourceTreeSearchResult,
-  SourceTreeSourceOption
-} from "./types/filesystem";
+  ExplorerNode,
+  ExplorerArtifactContent,
+  ExplorerNodeDetails,
+  ExplorerSearchInput,
+  ExplorerSearchResult,
+  ExplorerSourceOption
+} from "./types/explorer";
 
 export type {
   BrainNode,
@@ -58,6 +66,7 @@ export type {
   GraphBoardLink,
   GraphBoardNeighbor,
   GraphBoardNode,
+  GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
   GraphifyIngestionResult,
@@ -69,6 +78,15 @@ export type {
   ProjectRecord,
   ProjectSelectionInput,
   RenameProjectInput,
+  ResearchDependencyReport,
+  ResearchPaperComponentType,
+  ResearchPaperDetails,
+  ResearchPaperNote,
+  ResearchPaperStatus,
+  ResearchPaperSummary,
+  ResearchLiteratureMatrix,
+  ResearchThesisLink,
+  SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
   TrackerPriority,
@@ -77,6 +95,7 @@ export type {
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateNodeSignalsInput,
+  UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
   UserValidationState,
   WriteBrainNodeInput
@@ -91,15 +110,18 @@ export type {
   OrganizedBoardTopic as GraphBoardTopic
 } from "./types/board";
 export type {
-  SourceTreeNode,
-  SourceTreeNodeDetails,
-  SourceTreeNodeKind,
-  SourceTreeRelationGroup,
-  SourceTreeRelationItem,
-  SourceTreeSearchInput,
-  SourceTreeSearchResult,
-  SourceTreeSourceOption
-} from "./types/filesystem";
+  ExplorerNode,
+  ExplorerArtifactContent,
+  ExplorerArtifactFormat,
+  ExplorerArtifactKind,
+  ExplorerNodeDetails,
+  ExplorerNodeKind,
+  ExplorerRelationGroup,
+  ExplorerRelationItem,
+  ExplorerSearchInput,
+  ExplorerSearchResult,
+  ExplorerSourceOption
+} from "./types/explorer";
 
 export const windowChannels = {
   minimize: "window-minimize",
@@ -144,12 +166,13 @@ export const boardChannels = {
   search: "search-board"
 } as const;
 
-export const filesystemChannels = {
-  getRoot: "filesystem-get-root",
-  getChildren: "filesystem-get-children",
-  getDetails: "filesystem-get-details",
-  search: "filesystem-search",
-  getSourceOptions: "filesystem-get-source-options"
+export const explorerChannels = {
+  getRoot: "explorer-get-root",
+  getChildren: "explorer-get-children",
+  getDetails: "explorer-get-details",
+  search: "explorer-search",
+  getSourceOptions: "explorer-get-source-options",
+  getArtifactContent: "explorer-get-artifact-content"
 } as const;
 
 export const projectChannels = {
@@ -164,7 +187,16 @@ export const projectChannels = {
 export const graphBoardChannels = {
   getState: "graph-board-get-state",
   getNodeDetails: "graph-board-get-node-details",
-  generateCallflow: "graph-board-generate-callflow"
+  generateCallflow: "graph-board-generate-callflow",
+  getDefinitionStatus: "graph-board-get-definition-status"
+} as const;
+
+export const researchChannels = {
+  getDependencyStatus: "research-get-dependency-status",
+  listPapers: "research-list-papers",
+  getPaperDetails: "research-get-paper-details",
+  saveNodeNote: "research-save-node-note",
+  updatePaperStatus: "research-update-paper-status"
 } as const;
 
 export const clipboardChannels = {
@@ -184,9 +216,10 @@ export type FileChannel = (typeof fileChannels)[keyof typeof fileChannels];
 export type BrainChannel = (typeof brainChannels)[keyof typeof brainChannels];
 export type TrackerChannel = (typeof trackerChannels)[keyof typeof trackerChannels];
 export type BoardChannel = (typeof boardChannels)[keyof typeof boardChannels];
-export type FilesystemChannel = (typeof filesystemChannels)[keyof typeof filesystemChannels];
+export type ExplorerChannel = (typeof explorerChannels)[keyof typeof explorerChannels];
 export type ProjectChannel = (typeof projectChannels)[keyof typeof projectChannels];
 export type GraphBoardChannel = (typeof graphBoardChannels)[keyof typeof graphBoardChannels];
+export type ResearchChannel = (typeof researchChannels)[keyof typeof researchChannels];
 export type ClipboardChannel = (typeof clipboardChannels)[keyof typeof clipboardChannels];
 export type SettingsChannel = (typeof settingsChannels)[keyof typeof settingsChannels];
 
@@ -264,6 +297,14 @@ export type SecondBrainApi = {
     getState: () => Promise<GraphBoardState>;
     getNodeDetails: (nodeId: string) => Promise<GraphBoardNodeDetails>;
     generateCallflow: (nodeId: string) => Promise<CallflowHtmlDocument>;
+    getDefinitionStatus: () => Promise<GraphDefinitionStatus>;
+  };
+  research: {
+    getDependencyStatus: () => Promise<ResearchDependencyReport>;
+    listPapers: () => Promise<ResearchPaperSummary[]>;
+    getPaperDetails: (nodeId: string) => Promise<ResearchPaperDetails>;
+    saveNodeNote: (input: SaveResearchNodeNoteInput) => Promise<ResearchPaperNote>;
+    updatePaperStatus: (input: UpdateResearchPaperStatusInput) => Promise<ResearchPaperSummary>;
   };
   board: {
     getState: (rule: BoardRule) => Promise<GraphBoardTopic[]>;
@@ -274,12 +315,13 @@ export type SecondBrainApi = {
     commentSource: (sourceFile: string, comment: string) => Promise<GraphifyIngestionResult>;
     search: (input: BoardSearchInput) => Promise<BoardSearchResult[]>;
   };
-  filesystem: {
-    getRoot: () => Promise<SourceTreeNode[]>;
-    getChildren: (nodeId: string) => Promise<SourceTreeNode[]>;
-    getDetails: (nodeId: string) => Promise<SourceTreeNodeDetails>;
-    search: (input: SourceTreeSearchInput) => Promise<SourceTreeSearchResult[]>;
-    getSourceOptions: () => Promise<SourceTreeSourceOption[]>;
+  explorer: {
+    getRoot: () => Promise<ExplorerNode[]>;
+    getChildren: (nodeId: string) => Promise<ExplorerNode[]>;
+    getDetails: (nodeId: string) => Promise<ExplorerNodeDetails>;
+    search: (input: ExplorerSearchInput) => Promise<ExplorerSearchResult[]>;
+    getSourceOptions: () => Promise<ExplorerSourceOption[]>;
+    getArtifactContent: (artifactId: string) => Promise<ExplorerArtifactContent>;
   };
   clipboard: {
     readText: () => Promise<string>;

@@ -6,9 +6,9 @@ import { DropTarget } from "../components/DropTarget";
 import { TrackerTable } from "../components/TrackerTable";
 import { GraphBoardRenderer } from "../components/GraphBoardRenderer";
 import { SettingsPanel } from "../components/SettingsPanel";
-import { FilesystemExplorer } from "../components/FilesystemExplorer";
+import { ExplorerWorkbench } from "../components/ExplorerWorkbench";
 
-type ActiveView = "graph" | "filesystem" | "tracker";
+type ActiveView = "graph" | "explorer" | "tracker";
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -55,12 +55,12 @@ export function MainApp(): JSX.Element {
             </button>
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-                activeView === "filesystem" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+                activeView === "explorer" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
               }`}
               type="button"
-              onClick={() => setActiveView("filesystem")}
+              onClick={() => setActiveView("explorer")}
             >
-              Filesystem
+              Explorer
             </button>
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
@@ -74,8 +74,8 @@ export function MainApp(): JSX.Element {
           </div>
           {activeView === "graph" ? (
             <GraphBoardRenderer refreshKey={refreshKey} />
-          ) : activeView === "filesystem" ? (
-            <FilesystemExplorer refreshKey={refreshKey} />
+          ) : activeView === "explorer" ? (
+            <ExplorerWorkbench refreshKey={refreshKey} />
           ) : (
             <TrackerTable refreshKey={refreshKey} />
           )}

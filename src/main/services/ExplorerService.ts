@@ -2,14 +2,17 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type {
-  SourceTreeNode,
-  SourceTreeNodeDetails,
-  SourceTreeRelationGroup,
-  SourceTreeRelationItem,
-  SourceTreeSearchInput,
-  SourceTreeSearchResult,
-  SourceTreeSourceOption
-} from "../../shared/types/filesystem";
+  ExplorerArtifactContent,
+  ExplorerArtifactFormat,
+  ExplorerArtifactKind,
+  ExplorerNode,
+  ExplorerNodeDetails,
+  ExplorerRelationGroup,
+  ExplorerRelationItem,
+  ExplorerSearchInput,
+  ExplorerSearchResult,
+  ExplorerSourceOption
+} from "../../shared/types/explorer";
 
 type GraphNode = Record<string, unknown> & {
   id?: unknown;
@@ -49,8 +52,26 @@ type GraphIndex = {
   sourceNodeIds: Map<string, Set<string>>;
 };
 
+type PaperArtifactRecord = {
+  artifactId: string;
+  artifactKind: ExplorerArtifactKind;
+  title: string;
+  sourceFile: string;
+  artifactPath: string;
+  graphNodeId?: string | undefined;
+  page?: number | undefined;
+  preview?: string | undefined;
+  llmFormat: ExplorerArtifactFormat;
+};
+
 const rootNodeId = "root";
-const generatedDirectoryNames = new Set(["graphify-out", ".graphify", "source-comments", "spreadsheet-components"]);
+const generatedDirectoryNames = new Set([
+  "graphify-out",
+  ".graphify",
+  "source-comments",
+  "spreadsheet-components",
+  "paper-components"
+]);
 const sourceCommentDirectoryName = "source-comments";
 const maxTreeChildren = 80;
 const maxRelationItems = 32;
@@ -83,11 +104,15 @@ function graphId(nodeId: string): string {
   return `graph:${encodeIdPart(nodeId)}`;
 }
 
+function artifactId(value: string): string {
+  return `artifact:${encodeIdPart(value)}`;
+}
+
 function relatedGroupId(ownerKind: "source" | "graph", ownerId: string, relation: string): string {
   return `related:${ownerKind}:${encodeIdPart(ownerId)}:${encodeIdPart(relation)}`;
 }
 
-function parseTreeId(id: string): { kind: "root" } | { kind: "folder" | "source" | "graph"; value: string } | {
+function parseTreeId(id: string): { kind: "root" } | { kind: "folder" | "source" | "graph" | "artifact"; value: string } | {
   kind: "related";
   ownerKind: "source" | "graph";
   ownerId: string;
@@ -98,7 +123,7 @@ function parseTreeId(id: string): { kind: "root" } | { kind: "folder" | "source"
   }
 
   const [prefix, first, second, third] = id.split(":");
-  if (prefix === "folder" || prefix === "source" || prefix === "graph") {
+  if (prefix === "folder" || prefix === "source" || prefix === "graph" || prefix === "artifact") {
     return { kind: prefix, value: decodeIdPart(first ?? "") };
   }
 
@@ -111,7 +136,7 @@ function parseTreeId(id: string): { kind: "root" } | { kind: "folder" | "source"
     };
   }
 
-  throw new Error(`Unknown source tree node id: ${id}`);
+  throw new Error(`Unknown Explorer node id: ${id}`);
 }
 
 function relationLabel(value: string): string {
@@ -150,7 +175,7 @@ function nodeSummary(node: GraphNode): string {
 }
 
 function isStructuralRelation(relation: string): boolean {
-  return /(contains|defines|part[_ -]?of|section|sheet|table|column|field|folder|file)/i.test(relation);
+    return /(contains|defines|part[_ -]?of|section|sheet|table|column|field|folder|file|reference|figure|abstract)/i.test(relation);
 }
 
 function compactSearchText(values: Array<string | undefined>): string {
@@ -172,7 +197,7 @@ function scoreText(text: string, query: string, tokens: string[]): number {
   return score;
 }
 
-function sortNodes(left: SourceTreeNode, right: SourceTreeNode): number {
+function sortNodes(left: ExplorerNode, right: ExplorerNode): number {
   const kindOrder = new Map([
     ["folder", 0],
     ["source", 1],
@@ -205,17 +230,17 @@ function parseGraphJson(raw: string): GraphJson {
   return graph;
 }
 
-export class GraphFilesystemService {
+export class ExplorerService {
   constructor(
     private readonly rawVaultPath: string,
     private readonly graphPath: string
   ) {}
 
-  async getRoot(): Promise<SourceTreeNode[]> {
+  async getRoot(): Promise<ExplorerNode[]> {
     return this.listDirectory("");
   }
 
-  async getChildren(nodeId: string): Promise<SourceTreeNode[]> {
+  async getChildren(nodeId: string): Promise<ExplorerNode[]> {
     const parsed = parseTreeId(nodeId);
 
     if (parsed.kind === "root") {
@@ -230,6 +255,10 @@ export class GraphFilesystemService {
       return this.getSourceChildren(parsed.value);
     }
 
+    if (parsed.kind === "artifact") {
+      return [];
+    }
+
     if (parsed.kind === "graph") {
       return this.getGraphNodeChildren(parsed.value);
     }
@@ -241,7 +270,7 @@ export class GraphFilesystemService {
     return [];
   }
 
-  async getDetails(nodeId: string): Promise<SourceTreeNodeDetails> {
+  async getDetails(nodeId: string): Promise<ExplorerNodeDetails> {
     const parsed = parseTreeId(nodeId);
     const index = await this.readGraphIndex();
 
@@ -249,7 +278,7 @@ export class GraphFilesystemService {
       return {
         node: {
           id: rootNodeId,
-          title: "Raw vault",
+          title: "Project Sources",
           kind: "root",
           childrenCount: (await this.getRoot()).length,
           isExpandable: true
@@ -263,7 +292,7 @@ export class GraphFilesystemService {
       return {
         node: {
           id: folderId(parsed.value),
-          title: path.basename(parsed.value) || "Raw vault",
+          title: path.basename(parsed.value) || "Project Sources",
           kind: "folder",
           childrenCount: children.length,
           isExpandable: children.length > 0
@@ -277,6 +306,19 @@ export class GraphFilesystemService {
       return {
         node,
         relationGroups: this.buildSourceRelationGroups(index, parsed.value)
+      };
+    }
+
+    if (parsed.kind === "artifact") {
+      const artifact = await this.getArtifactRecord(parsed.value);
+      if (!artifact) {
+        throw new Error(`Paper artifact not found: ${parsed.value}`);
+      }
+
+      return {
+        node: this.artifactTreeNode(artifact),
+        sourceLocation: artifact.artifactPath,
+        relationGroups: []
       };
     }
 
@@ -308,12 +350,12 @@ export class GraphFilesystemService {
     };
   }
 
-  async search(input: SourceTreeSearchInput): Promise<SourceTreeSearchResult[]> {
+  async search(input: ExplorerSearchInput): Promise<ExplorerSearchResult[]> {
     const query = input.query.trim().toLowerCase();
     const tokens = query.split(/\s+/).filter(Boolean);
     const limit = Math.max(1, input.limit ?? 30);
     const [sources, index] = await Promise.all([this.listSourceOptions(), this.readGraphIndex()]);
-    const results: SourceTreeSearchResult[] = [];
+    const results: ExplorerSearchResult[] = [];
 
     for (const source of sources) {
       const score = scoreText(compactSearchText([source.title, source.sourceFile]), query, tokens);
@@ -336,12 +378,29 @@ export class GraphFilesystemService {
       }
     }
 
+    for (const artifact of await this.readPaperArtifactIndex()) {
+      const score = scoreText(
+        compactSearchText([
+          artifact.title,
+          artifact.artifactKind,
+          artifact.sourceFile,
+          artifact.preview,
+          artifact.llmFormat
+        ]),
+        query,
+        tokens
+      );
+      if (score > 0) {
+        results.push({ ...this.artifactTreeNode(artifact), score: score + 1 });
+      }
+    }
+
     return results
       .sort((left, right) => right.score - left.score || sortNodes(left, right))
       .slice(0, limit);
   }
 
-  async listSourceOptions(): Promise<SourceTreeSourceOption[]> {
+  async listSourceOptions(): Promise<ExplorerSourceOption[]> {
     const files = await this.listSourceFiles();
     return files.map((sourceFile) => ({
       sourceFile,
@@ -349,7 +408,30 @@ export class GraphFilesystemService {
     }));
   }
 
-  private async listDirectory(relativeDirectory: string, index?: GraphIndex): Promise<SourceTreeNode[]> {
+  async getArtifactContent(inputArtifactId: string): Promise<ExplorerArtifactContent> {
+    const artifact = await this.getArtifactRecord(inputArtifactId);
+    if (!artifact) {
+      throw new Error(`Paper artifact not found: ${inputArtifactId}`);
+    }
+
+    const absolutePath = this.resolveRawPath(artifact.artifactPath);
+    const [content, fileStat] = await Promise.all([readFile(absolutePath, "utf8"), stat(absolutePath)]);
+
+    return {
+      artifactId: artifact.artifactId,
+      title: artifact.title,
+      artifactKind: artifact.artifactKind,
+      sourceFile: artifact.sourceFile,
+      artifactPath: artifact.artifactPath,
+      page: artifact.page,
+      preview: artifact.preview,
+      llmFormat: artifact.llmFormat,
+      content,
+      updatedAt: fileStat.mtime.toISOString()
+    };
+  }
+
+  private async listDirectory(relativeDirectory: string, index?: GraphIndex): Promise<ExplorerNode[]> {
     const graphIndex = index ?? (await this.readGraphIndex());
     const absoluteDirectory = this.resolveRawPath(relativeDirectory);
     let entries;
@@ -360,7 +442,7 @@ export class GraphFilesystemService {
       return [];
     }
 
-    const nodes: SourceTreeNode[] = [];
+    const nodes: ExplorerNode[] = [];
     for (const entry of entries) {
       if (generatedDirectoryNames.has(entry.name)) {
         continue;
@@ -388,12 +470,15 @@ export class GraphFilesystemService {
     return nodes.sort(sortNodes);
   }
 
-  private async getSourceChildren(sourceFile: string): Promise<SourceTreeNode[]> {
+  private async getSourceChildren(sourceFile: string): Promise<ExplorerNode[]> {
     const index = await this.readGraphIndex();
     const sourceNodeIds = index.sourceNodeIds.get(sourceFile) ?? new Set<string>();
+    const artifactNodes = (await this.readPaperArtifactIndex())
+      .filter((artifact) => artifact.sourceFile === sourceFile)
+      .map((artifact) => this.artifactTreeNode(artifact));
 
     if (sourceNodeIds.size === 0) {
-      return [];
+      return artifactNodes.slice(0, maxTreeChildren).sort(sortNodes);
     }
 
     const incomingStructural = new Set<string>();
@@ -413,6 +498,8 @@ export class GraphFilesystemService {
       .sort((left, right) => right.childrenCount - left.childrenCount || sortNodes(left, right))
       .slice(0, maxTreeChildren);
 
+    roots.push(...artifactNodes);
+
     const relatedCount = this.sourceRelatedItems(index, sourceFile).length;
     if (relatedCount > 0) {
       roots.push({
@@ -426,11 +513,14 @@ export class GraphFilesystemService {
       });
     }
 
-    return roots;
+    return roots.sort(sortNodes).slice(0, maxTreeChildren);
   }
 
-  private async getGraphNodeChildren(nodeId: string): Promise<SourceTreeNode[]> {
+  private async getGraphNodeChildren(nodeId: string): Promise<ExplorerNode[]> {
     const index = await this.readGraphIndex();
+    const artifacts = (await this.readPaperArtifactIndex())
+      .filter((artifact) => artifact.graphNodeId === nodeId)
+      .map((artifact) => this.artifactTreeNode(artifact));
     const structuralChildren = (index.outgoing.get(nodeId) ?? [])
       .filter((link) => isStructuralRelation(asString(link.relation) || "related"))
       .map((link) => linkEndpointId(link.target))
@@ -441,7 +531,7 @@ export class GraphFilesystemService {
 
     const groups = this.buildNodeRelationGroups(index, nodeId)
       .filter((group) => group.items.length > 0)
-      .map<SourceTreeNode>((group) => ({
+      .map<ExplorerNode>((group) => ({
         id: relatedGroupId("graph", nodeId, group.relation),
         title: group.title,
         kind: "related-group",
@@ -451,10 +541,10 @@ export class GraphFilesystemService {
         isExpandable: true
       }));
 
-    return [...structuralChildren, ...groups].slice(0, maxTreeChildren);
+    return [...artifacts, ...structuralChildren, ...groups].slice(0, maxTreeChildren);
   }
 
-  private async getRelatedGroupChildren(ownerKind: "source" | "graph", ownerId: string, relation: string): Promise<SourceTreeNode[]> {
+  private async getRelatedGroupChildren(ownerKind: "source" | "graph", ownerId: string, relation: string): Promise<ExplorerNode[]> {
     const index = await this.readGraphIndex();
     const items =
       ownerKind === "source"
@@ -467,7 +557,7 @@ export class GraphFilesystemService {
       .sort(sortNodes);
   }
 
-  private async sourceTreeNode(sourceFile: string, index?: GraphIndex): Promise<SourceTreeNode> {
+  private async sourceTreeNode(sourceFile: string, index?: GraphIndex): Promise<ExplorerNode> {
     let modifiedAt = "";
     try {
       modifiedAt = (await stat(this.resolveRawPath(sourceFile))).mtime.toISOString();
@@ -494,7 +584,7 @@ export class GraphFilesystemService {
     };
   }
 
-  private graphTreeNode(index: GraphIndex, nodeId: string): SourceTreeNode {
+  private graphTreeNode(index: GraphIndex, nodeId: string): ExplorerNode {
     const node = index.nodeById.get(nodeId);
     if (!node) {
       return {
@@ -511,22 +601,53 @@ export class GraphFilesystemService {
     const sourceFile = this.normalizeSourceFile(asString(node.source_file) || asString(node.sourceFile));
     const structuralCount = (index.outgoing.get(nodeId) ?? []).filter((link) => isStructuralRelation(asString(link.relation) || "related")).length;
     const relationCount = this.buildNodeRelationGroups(index, nodeId).length;
-    const childrenCount = structuralCount + relationCount;
+    const artifactKind = this.normalizeArtifactKind(asString(node.artifact_kind) || asString(node.artifactKind) || type);
+    const artifactPath = this.normalizeSourceFile(asString(node.artifact_path) || asString(node.artifactPath));
+    const artifactRecordId = asString(node.artifact_id) || asString(node.artifactId);
+    const childrenCount = structuralCount + relationCount + (artifactPath ? 1 : 0);
 
     return {
       id: graphId(nodeId),
       title: nodeTitle(node),
-      kind: /sheet|table|column|section|file|class|function|method/i.test(type) ? "component" : "entity",
+      kind: /sheet|table|column|section|file|class|function|method|paper_|reference|figure|abstract|dataset|result|claim/i.test(type)
+        ? "component"
+        : "entity",
       sourceFile,
       graphNodeId: nodeId,
       type,
       summary: nodeSummary(node),
+      artifactId: artifactRecordId || undefined,
+      artifactKind,
+      artifactPath: artifactPath || undefined,
+      page: this.normalizePage(node.page),
+      preview: asString(node.preview) || undefined,
+      llmFormat: this.normalizeArtifactFormat(asString(node.llm_format) || asString(node.llmFormat)),
       childrenCount,
       isExpandable: childrenCount > 0
     };
   }
 
-  private buildSourceRelationGroups(index: GraphIndex, sourceFile: string): SourceTreeRelationGroup[] {
+  private artifactTreeNode(artifact: PaperArtifactRecord): ExplorerNode {
+    return {
+      id: artifactId(artifact.artifactId),
+      title: artifact.title,
+      kind: "artifact",
+      sourceFile: artifact.sourceFile,
+      graphNodeId: artifact.graphNodeId,
+      type: artifact.artifactKind,
+      summary: artifact.preview,
+      artifactId: artifact.artifactId,
+      artifactKind: artifact.artifactKind,
+      artifactPath: artifact.artifactPath,
+      page: artifact.page,
+      preview: artifact.preview,
+      llmFormat: artifact.llmFormat,
+      childrenCount: 0,
+      isExpandable: false
+    };
+  }
+
+  private buildSourceRelationGroups(index: GraphIndex, sourceFile: string): ExplorerRelationGroup[] {
     const items = this.sourceRelatedItems(index, sourceFile);
     return items.length > 0
       ? [
@@ -539,8 +660,8 @@ export class GraphFilesystemService {
       : [];
   }
 
-  private buildNodeRelationGroups(index: GraphIndex, nodeId: string): SourceTreeRelationGroup[] {
-    const groups = new Map<string, SourceTreeRelationItem[]>();
+  private buildNodeRelationGroups(index: GraphIndex, nodeId: string): ExplorerRelationGroup[] {
+    const groups = new Map<string, ExplorerRelationItem[]>();
 
     for (const item of this.nodeRelatedItems(index, nodeId)) {
       const list = groups.get(item.relation) ?? [];
@@ -557,10 +678,10 @@ export class GraphFilesystemService {
       .sort((left, right) => right.items.length - left.items.length || left.title.localeCompare(right.title));
   }
 
-  private sourceRelatedItems(index: GraphIndex, sourceFile: string): SourceTreeRelationItem[] {
+  private sourceRelatedItems(index: GraphIndex, sourceFile: string): ExplorerRelationItem[] {
     const sourceNodeIds = index.sourceNodeIds.get(sourceFile) ?? new Set<string>();
     const seen = new Set<string>();
-    const items: SourceTreeRelationItem[] = [];
+    const items: ExplorerRelationItem[] = [];
 
     for (const nodeId of sourceNodeIds) {
       for (const item of this.nodeRelatedItems(index, nodeId)) {
@@ -574,10 +695,10 @@ export class GraphFilesystemService {
     return items.sort((left, right) => left.title.localeCompare(right.title));
   }
 
-  private nodeRelatedItems(index: GraphIndex, nodeId: string): SourceTreeRelationItem[] {
+  private nodeRelatedItems(index: GraphIndex, nodeId: string): ExplorerRelationItem[] {
     const links = [...(index.outgoing.get(nodeId) ?? []), ...(index.incoming.get(nodeId) ?? [])];
     const seen = new Set<string>();
-    const items: SourceTreeRelationItem[] = [];
+    const items: ExplorerRelationItem[] = [];
 
     for (const link of links) {
       const relation = asString(link.relation) || "related";
@@ -695,6 +816,113 @@ export class GraphFilesystemService {
         sourceNodeIds: new Map()
       };
     }
+  }
+
+  private async readPaperArtifactIndex(): Promise<PaperArtifactRecord[]> {
+    const root = path.join(this.rawVaultPath, "paper-components");
+    const records: PaperArtifactRecord[] = [];
+
+    const visit = async (directory: string): Promise<void> => {
+      let entries;
+      try {
+        entries = await readdir(directory, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const entryPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await visit(entryPath);
+          continue;
+        }
+
+        if (!entry.isFile() || entry.name !== "artifact-index.json") {
+          continue;
+        }
+
+        try {
+          const parsed = JSON.parse(await readFile(entryPath, "utf8")) as unknown;
+          const items = Array.isArray(parsed)
+            ? parsed
+            : Array.isArray(asRecord(parsed)?.artifacts)
+              ? (asRecord(parsed)?.artifacts as unknown[])
+              : [];
+
+          for (const item of items) {
+            const record = asRecord(item);
+            if (!record) {
+              continue;
+            }
+
+            const artifactIdValue = asString(record.artifactId) || asString(record.id);
+            const artifactPathValue = this.normalizeSourceFile(asString(record.artifactPath) || asString(record.path));
+            const sourceFile = this.normalizeSourceFile(asString(record.sourceFile) || asString(record.source_file));
+            if (!artifactIdValue || !artifactPathValue || !sourceFile) {
+              continue;
+            }
+
+            records.push({
+              artifactId: artifactIdValue,
+              artifactKind: this.normalizeArtifactKind(asString(record.artifactKind) || asString(record.kind) || asString(record.type)),
+              title: asString(record.title) || artifactIdValue,
+              sourceFile,
+              artifactPath: artifactPathValue,
+              graphNodeId: asString(record.graphNodeId) || asString(record.graph_node_id) || undefined,
+              page: this.normalizePage(record.page),
+              preview: asString(record.preview) || undefined,
+              llmFormat: this.normalizeArtifactFormat(asString(record.llmFormat) || asString(record.format))
+            });
+          }
+        } catch {
+          // Rebuildable cache only; skip malformed artifact indexes without blocking Explorer.
+        }
+      }
+    };
+
+    await visit(root);
+    return records.sort((left, right) => left.sourceFile.localeCompare(right.sourceFile) || left.title.localeCompare(right.title));
+  }
+
+  private async getArtifactRecord(inputArtifactId: string): Promise<PaperArtifactRecord | null> {
+    const artifacts = await this.readPaperArtifactIndex();
+    return artifacts.find((artifact) => artifact.artifactId === inputArtifactId) ?? null;
+  }
+
+  private normalizeArtifactKind(value: string): ExplorerArtifactKind {
+    const normalized = value.replace(/^paper_/, "").toLowerCase();
+    if (
+      normalized === "section" ||
+      normalized === "abstract" ||
+      normalized === "figure" ||
+      normalized === "diagram" ||
+      normalized === "graph" ||
+      normalized === "table" ||
+      normalized === "experiment" ||
+      normalized === "reference" ||
+      normalized === "claim" ||
+      normalized === "method" ||
+      normalized === "dataset" ||
+      normalized === "result"
+    ) {
+      return normalized;
+    }
+
+    return "artifact";
+  }
+
+  private normalizeArtifactFormat(value: string): ExplorerArtifactFormat {
+    const normalized = value.toLowerCase();
+    if (normalized === "markdown" || normalized === "csv" || normalized === "json" || normalized === "text") {
+      return normalized;
+    }
+
+    return "markdown";
+  }
+
+  private normalizePage(value: unknown): number | undefined {
+    const numeric = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : undefined;
   }
 
   private async readSourceComment(sourceFile: string): Promise<string> {

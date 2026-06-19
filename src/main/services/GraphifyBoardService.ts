@@ -48,6 +48,7 @@ const unknownSource = "Unknown source";
 const fallbackDate = new Date(0).toISOString();
 const sourceCommentDirectoryName = "source-comments";
 const spreadsheetComponentDirectoryName = "spreadsheet-components";
+const paperComponentDirectoryName = "paper-components";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
@@ -193,7 +194,11 @@ function isSourceCommentFile(sourceFile: string): boolean {
 
 function isGeneratedSourceFile(sourceFile: string): boolean {
   const parts = sourceFile.split(/[\\/]/);
-  return parts.includes(sourceCommentDirectoryName) || parts.includes(spreadsheetComponentDirectoryName);
+  return (
+    parts.includes(sourceCommentDirectoryName) ||
+    parts.includes(spreadsheetComponentDirectoryName) ||
+    parts.includes(paperComponentDirectoryName)
+  );
 }
 
 function scoreSearch(text: string, query: string, tokens: string[]): number {

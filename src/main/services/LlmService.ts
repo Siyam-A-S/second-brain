@@ -35,12 +35,27 @@ export type PlannedLocalToolCall = {
 };
 
 type ChatCompletionResponse = {
+  output_text?: string | null | undefined;
   choices?: Array<{
+    text?: string | null | undefined;
     message?: {
-      content?: string | null | undefined;
+      content?:
+        | string
+        | Array<{
+            type?: string | undefined;
+            text?: string | undefined;
+            content?: string | undefined;
+          }>
+        | null
+        | undefined;
       reasoning_content?: string | null | undefined;
     };
   }>;
+  error?: {
+    message?: string | undefined;
+    type?: string | undefined;
+    code?: string | undefined;
+  };
 };
 
 const defaultEndpoint = "http://localhost:8080/v1/chat/completions";
@@ -48,8 +63,17 @@ const defaultModel = "local-model";
 const requestTimeoutMs = Number(process.env.SECOND_BRAIN_LLM_TIMEOUT_MS ?? 120_000);
 const fallbackMaxTokens = 4096;
 const placeholderApiKey = "local-dev-placeholder";
+const maxErrorBodyLength = 2400;
 
 type AiSettingsProvider = () => Promise<AiSettings>;
+type TokenParameterName = "max_tokens" | "max_completion_tokens";
+
+type ChatAttemptOptions = {
+  maxTokens: number;
+  tokenParameter: TokenParameterName;
+  includeTemperature: boolean;
+  useJsonMode: boolean;
+};
 
 function normalizeOptionalLine(value: unknown): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
@@ -73,6 +97,79 @@ function shouldRetryWithFallback(message: string): boolean {
   return /context|token|too large|max_tokens|max_completion_tokens|400|413|422|valid JSON|truncat/i.test(message);
 }
 
+function sanitizeErrorText(value: string): string {
+  return value.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/g, "Bearer [redacted]").replace(/\s+/g, " ").trim().slice(0, maxErrorBodyLength);
+}
+
+function normalizeChatCompletionsEndpoint(endpoint: string): string {
+  const trimmed = endpoint.trim() || defaultEndpoint;
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
+
+  if (/\/chat\/completions$/i.test(withoutTrailingSlash)) {
+    return withoutTrailingSlash;
+  }
+
+  if (/\/openapi$/i.test(withoutTrailingSlash) || /\/v1$/i.test(withoutTrailingSlash)) {
+    return `${withoutTrailingSlash}/chat/completions`;
+  }
+
+  return trimmed;
+}
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function providerRejectsMaxTokens(detail: string): boolean {
+  return /max_tokens.+(unsupported|unrecognized|unknown|invalid|not supported)|unsupported.+max_tokens|use max_completion_tokens/i.test(detail);
+}
+
+function providerRejectsTemperature(detail: string): boolean {
+  return /temperature.+(unsupported|unrecognized|unknown|invalid|not supported)|unsupported.+temperature|only.*default.*temperature/i.test(detail);
+}
+
+function providerRejectsJsonMode(detail: string): boolean {
+  return /response_format.+(unsupported|unrecognized|unknown|invalid|not supported)|json_object.+(unsupported|not supported)|unsupported.+response_format/i.test(detail);
+}
+
+function extractContentPart(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (!Array.isArray(value)) {
+    return "";
+  }
+
+  return value
+    .map((part) => {
+      if (!part || typeof part !== "object") {
+        return "";
+      }
+
+      const record = part as Record<string, unknown>;
+      return typeof record.text === "string"
+        ? record.text
+        : typeof record.content === "string"
+          ? record.content
+          : "";
+    })
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function extractChatContent(payload: ChatCompletionResponse): string {
+  const choice = payload.choices?.[0];
+  const message = choice?.message;
+  return (
+    extractContentPart(message?.content).trim() ||
+    normalizeOptionalLine(message?.reasoning_content) ||
+    normalizeOptionalLine(choice?.text) ||
+    normalizeOptionalLine(payload.output_text)
+  );
+}
+
 export class LlmService {
   private requestQueue: Promise<unknown> = Promise.resolve();
 
@@ -94,7 +191,7 @@ export class LlmService {
     try {
       return parseLocalModelJsonObject(content);
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
+      const detail = errorText(error);
 
       if (!input.method || input.method.maxTokens <= fallbackMaxTokens || !shouldRetryWithFallback(detail)) {
         throw error;
@@ -145,12 +242,12 @@ export class LlmService {
 
     const tool = parsed.tool ?? parsed.name;
     if (typeof tool !== "string" || !tool.trim()) {
-      throw new Error("Local AI server did not return a tool name.");
+      throw new Error("AI endpoint did not return a tool name.");
     }
 
     const toolInput = parsed.input ?? parsed.arguments ?? parsed.parameters;
     if (!toolInput || typeof toolInput !== "object") {
-      throw new Error(`Local AI server did not return input for tool "${tool}".`);
+      throw new Error(`AI endpoint did not return input for tool "${tool}".`);
     }
 
     return {
@@ -238,50 +335,122 @@ export class LlmService {
     maxTokens: number
   ): Promise<string> {
     const settings = await this.settingsProvider();
+    let options: ChatAttemptOptions = {
+      maxTokens,
+      tokenParameter: "max_tokens",
+      includeTemperature: input.method?.temperature !== undefined,
+      useJsonMode: Boolean(input.method?.jsonMode)
+    };
+    const tried = new Set<string>();
+    let lastError = "";
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const key = JSON.stringify(options);
+      if (tried.has(key)) {
+        break;
+      }
+      tried.add(key);
+
+      try {
+        return await this.requestChatCompletion(input, settings, options);
+      } catch (error) {
+        const detail = errorText(error);
+        lastError = detail;
+
+        if (options.tokenParameter === "max_tokens" && providerRejectsMaxTokens(detail)) {
+          options = { ...options, tokenParameter: "max_completion_tokens" };
+          continue;
+        }
+
+        if (options.includeTemperature && providerRejectsTemperature(detail)) {
+          options = { ...options, includeTemperature: false };
+          continue;
+        }
+
+        if (options.useJsonMode && providerRejectsJsonMode(detail)) {
+          options = { ...options, useJsonMode: false };
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    throw new Error(lastError || "AI endpoint request failed before a response could be parsed.");
+  }
+
+  private async requestChatCompletion(
+    input: {
+      messages: ChatMessage[];
+      method?: AgentMethodConfig | undefined;
+    },
+    settings: AiSettings,
+    options: ChatAttemptOptions
+  ): Promise<string> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
     try {
-      const response = await fetch(settings.endpoint || defaultEndpoint, {
+      const body: Record<string, unknown> = {
+        model: settings.model || defaultModel,
+        [options.tokenParameter]: options.maxTokens,
+        stream: false,
+        messages: input.messages
+      };
+
+      if (options.includeTemperature) {
+        body.temperature = input.method?.temperature ?? 0;
+      }
+
+      if (options.useJsonMode) {
+        body.response_format = { type: "json_object" };
+      }
+
+      const response = await fetch(normalizeChatCompletionsEndpoint(settings.endpoint), {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          model: settings.model || defaultModel,
-          temperature: input.method?.temperature ?? 0,
-          max_tokens: maxTokens,
-          stream: false,
-          messages: input.messages
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal
       });
 
+      const responseText = await response.text();
       if (!response.ok) {
-        throw new Error(`Local AI server responded with ${response.status}.`);
+        throw new Error(
+          `AI endpoint responded with ${response.status} ${response.statusText}: ${sanitizeErrorText(responseText)}`
+        );
       }
 
-      const payload = (await response.json()) as ChatCompletionResponse;
-      const message = payload.choices?.[0]?.message;
-      const content = message?.content?.trim() || message?.reasoning_content?.trim();
+      let payload: ChatCompletionResponse;
+      try {
+        payload = JSON.parse(responseText) as ChatCompletionResponse;
+      } catch {
+        throw new Error(`AI endpoint returned non-JSON response: ${sanitizeErrorText(responseText)}`);
+      }
 
+      if (payload.error?.message) {
+        throw new Error(`AI endpoint returned an error: ${sanitizeErrorText(payload.error.message)}`);
+      }
+
+      const content = extractChatContent(payload);
       if (!content) {
-        throw new Error("Local AI server returned an empty response.");
+        throw new Error(`AI endpoint returned an empty response: ${sanitizeErrorText(responseText)}`);
       }
 
       return content;
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
+      const detail = errorText(error);
       if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`AI server timed out after ${Math.round(requestTimeoutMs / 1000)} seconds. ${detail}`);
+        throw new Error(`AI endpoint timed out after ${Math.round(requestTimeoutMs / 1000)} seconds. ${detail}`);
       }
 
-      if (detail.includes("valid JSON")) {
+      if (detail.includes("valid JSON") || detail.startsWith("AI endpoint")) {
         throw new Error(detail);
       }
 
-      throw new Error(`AI server is unavailable. ${detail}`);
+      throw new Error(`AI endpoint is unavailable. ${detail}`);
     } finally {
       clearTimeout(timeout);
     }

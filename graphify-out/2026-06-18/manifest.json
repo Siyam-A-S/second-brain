@@ -225,8 +225,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1781835743.3135285,
-    "ast_hash": "4f61340cb1550ecd1bede8589e8e2c2f",
+    "mtime": 1781835661.9623613,
+    "ast_hash": "a00edd890be63e5d20b40b0e608002e5",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {

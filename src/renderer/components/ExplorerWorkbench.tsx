@@ -15,15 +15,21 @@ import {
   Trash2,
   X
 } from "lucide-react";
-import type { SourceTreeNode, SourceTreeNodeDetails, SourceTreeSearchResult, SourceTreeSourceOption } from "../../shared/ipc";
+import type {
+  ExplorerArtifactContent,
+  ExplorerNode,
+  ExplorerNodeDetails,
+  ExplorerSearchResult,
+  ExplorerSourceOption
+} from "../../shared/ipc";
 
-type FilesystemExplorerProps = {
+type ExplorerWorkbenchProps = {
   refreshKey: number;
 };
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
-function nodeIcon(node: SourceTreeNode): typeof Folder {
+function nodeIcon(node: ExplorerNode): typeof Folder {
   switch (node.kind) {
     case "folder":
       return Folder;
@@ -31,6 +37,8 @@ function nodeIcon(node: SourceTreeNode): typeof Folder {
       return FileText;
     case "related-group":
       return Network;
+    case "artifact":
+      return FileText;
     case "component":
     case "entity":
     default:
@@ -59,7 +67,7 @@ function displaySource(sourceFile: string): string {
   return sourceFile.split(/[\\/]/).filter(Boolean).at(-1) ?? sourceFile;
 }
 
-function kindLabel(node: SourceTreeNode): string {
+function kindLabel(node: ExplorerNode): string {
   if (node.type) {
     return node.type;
   }
@@ -67,7 +75,7 @@ function kindLabel(node: SourceTreeNode): string {
   return node.kind.replace(/-/g, " ");
 }
 
-function emptyDetailsNode(): SourceTreeNode {
+function emptyDetailsNode(): ExplorerNode {
   return {
     id: "empty",
     title: "No source selected",
@@ -87,14 +95,14 @@ function TreeRow({
   onToggle,
   onSelect
 }: {
-  node: SourceTreeNode;
+  node: ExplorerNode;
   depth: number;
   selectedId: string;
   expanded: Set<string>;
   loadingIds: Set<string>;
-  childrenById: Map<string, SourceTreeNode[]>;
-  onToggle: (node: SourceTreeNode) => void;
-  onSelect: (node: SourceTreeNode) => void;
+  childrenById: Map<string, ExplorerNode[]>;
+  onToggle: (node: ExplorerNode) => void;
+  onSelect: (node: ExplorerNode) => void;
 }): JSX.Element {
   const Icon = nodeIcon(node);
   const isExpanded = expanded.has(node.id);
@@ -149,18 +157,18 @@ function TreeRow({
   );
 }
 
-export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX.Element {
-  const [rootNodes, setRootNodes] = useState<SourceTreeNode[]>([]);
-  const [childrenById, setChildrenById] = useState<Map<string, SourceTreeNode[]>>(new Map());
+export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.Element {
+  const [rootNodes, setRootNodes] = useState<ExplorerNode[]>([]);
+  const [childrenById, setChildrenById] = useState<Map<string, ExplorerNode[]>>(new Map());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set());
   const [loadState, setLoadState] = useState<LoadState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState("");
-  const [details, setDetails] = useState<SourceTreeNodeDetails | null>(null);
-  const [sourceOptions, setSourceOptions] = useState<SourceTreeSourceOption[]>([]);
+  const [details, setDetails] = useState<ExplorerNodeDetails | null>(null);
+  const [sourceOptions, setSourceOptions] = useState<ExplorerSourceOption[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SourceTreeSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<ExplorerSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
@@ -169,6 +177,8 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
   const [commentDraft, setCommentDraft] = useState("");
   const [merging, setMerging] = useState(false);
   const [targetSourceFile, setTargetSourceFile] = useState("");
+  const [artifactContent, setArtifactContent] = useState<ExplorerArtifactContent | null>(null);
+  const [artifactLoading, setArtifactLoading] = useState(false);
 
   const selectedNode = details?.node ?? emptyDetailsNode();
   const sourceTargets = useMemo(
@@ -190,11 +200,11 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
 
     setSearchLoading(true);
     const timer = window.setTimeout(() => {
-      void window.api.filesystem
+      void window.api.explorer
         .search({ query, limit: 24 })
         .then(setSearchResults)
         .catch((error) => {
-          console.error("Unable to search filesystem", error);
+          console.error("Unable to search explorer", error);
           setSearchResults([]);
         })
         .finally(() => setSearchLoading(false));
@@ -218,7 +228,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
     setActionError(null);
 
     try {
-      const [root, options] = await Promise.all([window.api.filesystem.getRoot(), window.api.filesystem.getSourceOptions()]);
+      const [root, options] = await Promise.all([window.api.explorer.getRoot(), window.api.explorer.getSourceOptions()]);
       setRootNodes(root);
       setSourceOptions(options);
       setChildrenById(new Map());
@@ -231,7 +241,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
         setDetails(null);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to load filesystem view.";
+      const message = error instanceof Error ? error.message : "Unable to load explorer view.";
       setRootNodes([]);
       setDetails(null);
       setLoadState("error");
@@ -239,7 +249,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
     }
   }
 
-  async function loadChildren(node: SourceTreeNode): Promise<SourceTreeNode[]> {
+  async function loadChildren(node: ExplorerNode): Promise<ExplorerNode[]> {
     const existing = childrenById.get(node.id);
     if (existing) {
       return existing;
@@ -247,7 +257,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
 
     setLoadingIds((current) => new Set(current).add(node.id));
     try {
-      const children = await window.api.filesystem.getChildren(node.id);
+      const children = await window.api.explorer.getChildren(node.id);
       setChildrenById((current) => {
         const next = new Map(current);
         next.set(node.id, children);
@@ -263,22 +273,34 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
     }
   }
 
-  async function selectNode(node: SourceTreeNode): Promise<void> {
+  async function selectNode(node: ExplorerNode): Promise<void> {
     setSelectedId(node.id);
     setActionError(null);
     setRenaming(false);
     setCommenting(false);
     setMerging(false);
+    setArtifactContent(null);
 
     try {
-      setDetails(await window.api.filesystem.getDetails(node.id));
+      const nodeDetails = await window.api.explorer.getDetails(node.id);
+      setDetails(nodeDetails);
+      const artifactId = nodeDetails.node.artifactId ?? node.artifactId;
+      if (artifactId) {
+        setArtifactLoading(true);
+        try {
+          setArtifactContent(await window.api.explorer.getArtifactContent(artifactId));
+        } finally {
+          setArtifactLoading(false);
+        }
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to read node details.";
+      setArtifactLoading(false);
       setActionError(message);
     }
   }
 
-  function toggleNode(node: SourceTreeNode): void {
+  function toggleNode(node: ExplorerNode): void {
     if (!node.isExpandable) {
       return;
     }
@@ -364,7 +386,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
   }
 
   if (loadState === "loading" && rootNodes.length === 0) {
-    return <div className="grid h-full place-items-center text-sm text-slate-500">Loading filesystem...</div>;
+    return <div className="grid h-full place-items-center text-sm text-slate-500">Loading explorer...</div>;
   }
 
   if (loadState === "error") {
@@ -372,7 +394,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
       <div className="grid h-full place-items-center">
         <div className="max-w-sm text-center">
           <AlertCircle className="mx-auto text-rose-500" size={28} />
-          <h2 className="mt-3 text-base font-semibold text-slate-950">Filesystem unavailable</h2>
+          <h2 className="mt-3 text-base font-semibold text-slate-950">Explorer unavailable</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">{error}</p>
         </div>
       </div>
@@ -383,7 +405,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
     <main className="flex min-h-0 flex-1 flex-col bg-floral">
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-900/5 px-6">
         <div>
-          <h1 className="text-base font-semibold text-slate-950">Filesystem</h1>
+          <h1 className="text-base font-semibold text-slate-950">Explorer</h1>
           <p className="text-xs text-slate-500">Sources expanded through Graphify relationships</p>
         </div>
         <div className="flex min-w-0 items-center gap-2">
@@ -399,7 +421,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
           </label>
           <button
             className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/60 text-slate-600 transition hover:bg-white hover:text-slate-950"
-            title="Refresh filesystem"
+            title="Refresh explorer"
             type="button"
             onClick={() => void loadRoot()}
           >
@@ -411,7 +433,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
       <section className="grid min-h-0 flex-1 grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)] gap-3 p-3">
         <aside className="min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white/45 shadow-sm">
           <div className="flex h-10 items-center justify-between border-b border-slate-200/80 px-3 text-xs font-semibold uppercase text-slate-500">
-            <span>Raw Vault</span>
+            <span>Project Sources</span>
             <span>{rootNodes.length}</span>
           </div>
           {searchQuery.trim() ? (
@@ -469,6 +491,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
                 <p className="mt-1 text-sm text-slate-500">
                   {kindLabel(selectedNode)}
                   {selectedNode.sourceFile ? ` · ${selectedNode.sourceFile}` : ""}
+                  {selectedNode.page ? ` · page ${selectedNode.page}` : ""}
                   {selectedNode.modifiedAt ? ` · ${formatDate(selectedNode.modifiedAt)}` : ""}
                 </p>
               </div>
@@ -541,6 +564,7 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
             </div>
             {actionError ? <p className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">{actionError}</p> : null}
             {selectedNode.summary ? <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{selectedNode.summary}</p> : null}
+            {selectedNode.preview ? <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{selectedNode.preview}</p> : null}
             {details?.sourceLocation ? <p className="mt-2 text-xs text-slate-500">Location: {details.sourceLocation}</p> : null}
           </div>
 
@@ -597,6 +621,27 @@ export function FilesystemExplorer({ refreshKey }: FilesystemExplorerProps): JSX
           ) : null}
 
           <div className="space-y-6 p-5">
+            {selectedNode.artifactId || artifactLoading || artifactContent ? (
+              <section>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h3 className="text-xs font-semibold uppercase text-slate-500">Artifact Preview</h3>
+                  {artifactContent ? <span className="text-xs text-slate-400">{artifactContent.llmFormat}</span> : null}
+                </div>
+                <div className="max-h-96 overflow-auto rounded-lg border border-slate-200 bg-white/55">
+                  {artifactLoading ? (
+                    <div className="flex items-center gap-2 p-4 text-sm text-slate-500">
+                      <Loader2 className="animate-spin" size={15} />
+                      Loading artifact...
+                    </div>
+                  ) : artifactContent ? (
+                    <pre className="whitespace-pre-wrap p-4 text-sm leading-6 text-slate-800">{artifactContent.content}</pre>
+                  ) : (
+                    <p className="p-4 text-sm text-slate-500">Artifact content is unavailable.</p>
+                  )}
+                </div>
+              </section>
+            ) : null}
+
             {details?.relationGroups.length ? (
               details.relationGroups.map((group) => (
                 <section key={group.relation}>

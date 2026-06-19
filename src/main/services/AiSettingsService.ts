@@ -17,7 +17,8 @@ const defaultGraphifySettings: GraphifyRuntimeSettings = {
   retryMaxTokens: 4096,
   timeoutMs: 600_000,
   cardDefinitions: true,
-  cardDefinitionMaxPerPass: 24
+  cardDefinitionMaxPerPass: 24,
+  paperComponents: true
 };
 
 function normalizeEndpoint(value: string | undefined): string {
@@ -92,6 +93,10 @@ function normalizeGraphifySettings(value: unknown, useEnvironment = true): Graph
       (useEnvironment ? process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS : undefined) ??
         parsed.cardDefinitionMaxPerPass,
       defaultGraphifySettings.cardDefinitionMaxPerPass
+    ),
+    paperComponents: booleanSetting(
+      (useEnvironment ? process.env.SECOND_BRAIN_PAPER_COMPONENTS : undefined) ?? parsed.paperComponents,
+      defaultGraphifySettings.paperComponents
     )
   };
 }
@@ -203,6 +208,7 @@ export class AiSettingsService {
     process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS = String(settings.graphify.timeoutMs);
     process.env.SECOND_BRAIN_CARD_DEFINITIONS = settings.graphify.cardDefinitions ? "1" : "0";
     process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS = String(settings.graphify.cardDefinitionMaxPerPass);
+    process.env.SECOND_BRAIN_PAPER_COMPONENTS = settings.graphify.paperComponents ? "1" : "0";
   }
 
   private async saveAppSettings(settings: AppSettings): Promise<void> {

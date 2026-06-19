@@ -152,6 +152,7 @@ export type GraphifyRuntimeSettings = {
   timeoutMs: number;
   cardDefinitions: boolean;
   cardDefinitionMaxPerPass: number;
+  paperComponents: boolean;
 };
 
 export type AppSettings = {
@@ -220,6 +221,18 @@ export type GraphBoardState = {
   updatedAt: string;
 };
 
+export type GraphDefinitionStatus = {
+  running: boolean;
+  pendingCount: number;
+  updatedCount: number;
+  failedBatchCount: number;
+  lastError?: string | undefined;
+  startedAt?: string | undefined;
+  completedAt?: string | undefined;
+  updatedAt: string;
+  endpointHost: string;
+};
+
 export type GraphBoardNeighbor = {
   id: string;
   label: string;
@@ -229,8 +242,98 @@ export type GraphBoardNeighbor = {
   sourceFile: string;
 };
 
+export type ResearchPaperStatus = "unread" | "reading" | "summarized" | "cited" | "discarded";
+
+export type ResearchPaperComponentType =
+  | "paper_file"
+  | "paper_abstract"
+  | "paper_section"
+  | "paper_figure"
+  | "paper_table"
+  | "paper_reference"
+  | "paper_claim"
+  | "paper_method"
+  | "paper_dataset"
+  | "paper_result";
+
+export type ResearchDependencyStatus = {
+  name: string;
+  importName: string;
+  installed: boolean;
+  version: string;
+  required: boolean;
+  purpose: string;
+  guidance: string;
+};
+
+export type ResearchDependencyReport = {
+  available: boolean;
+  checkedAt: string;
+  runtime: string;
+  dependencies: ResearchDependencyStatus[];
+  guidance: string[];
+};
+
+export type ResearchPaperSummary = {
+  nodeId: string;
+  title: string;
+  sourceFile: string;
+  year?: string | undefined;
+  authors: string[];
+  status: ResearchPaperStatus;
+  updatedAt: string;
+};
+
+export type ResearchPaperNote = {
+  nodeId: string;
+  note: string;
+  updatedAt: string;
+};
+
+export type ResearchLiteratureMatrix = {
+  problem: string;
+  method: string;
+  dataset: string;
+  keyResult: string;
+  limitations: string;
+  relevanceToThesis: string;
+};
+
+export type ResearchThesisLink = {
+  claim: string;
+  relation: "supports" | "opposes" | "extends" | "background";
+  nodeIds: string[];
+  updatedAt: string;
+};
+
+export type ResearchPaperDetails = {
+  paper: ResearchPaperSummary;
+  abstract?: string | undefined;
+  components: Array<{
+    id: string;
+    label: string;
+    type: ResearchPaperComponentType | string;
+    summary: string;
+    sourceLocation: string;
+  }>;
+  notes: ResearchPaperNote[];
+  literature: ResearchLiteratureMatrix;
+  thesisLinks: ResearchThesisLink[];
+};
+
+export type UpdateResearchPaperStatusInput = {
+  nodeId: string;
+  status: ResearchPaperStatus;
+};
+
+export type SaveResearchNodeNoteInput = {
+  nodeId: string;
+  note: string;
+};
+
 export type GraphBoardNodeDetails = GraphBoardNode & {
   neighbors: GraphBoardNeighbor[];
+  research?: ResearchPaperDetails | undefined;
 };
 
 export type CallflowHtmlDocument = {
