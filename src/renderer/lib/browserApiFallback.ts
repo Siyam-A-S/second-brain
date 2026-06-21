@@ -1,7 +1,9 @@
 import type {
   BoardRule,
   AppSettings,
+  ChatThread,
   CreateTrackerInput,
+  DependencyRuntimeStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
   GraphDefinitionStatus,
@@ -20,6 +22,7 @@ import type {
   TrackerStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput,
   UpdateTrackerInput
 } from "../../shared/ipc";
 
@@ -60,6 +63,14 @@ let browserAiSettings = {
 };
 let browserAppSettings: AppSettings = {
   ai: browserAiSettings,
+  managedProxy: {
+    enabled: false,
+    endpoint: "",
+    secretKey: "",
+    model: "gemini-3.1-flash",
+    groundingEnabled: true,
+    updatedAt: new Date().toISOString()
+  },
   graphify: {
     graphifyBin: "",
     maxTokens: 8192,
@@ -71,6 +82,7 @@ let browserAppSettings: AppSettings = {
   },
   updatedAt: new Date().toISOString()
 };
+const browserThreads: ChatThread[] = [];
 
 const browserResearchDependencyReport: ResearchDependencyReport = {
   available: true,
@@ -88,6 +100,36 @@ const browserResearchDependencyReport: ResearchDependencyReport = {
     }
   ],
   guidance: []
+};
+
+const browserRuntimeStatus: DependencyRuntimeStatus = {
+  available: true,
+  checkedAt: new Date().toISOString(),
+  dependencies: [
+    {
+      name: "python",
+      available: true,
+      version: "Python 3.10 preview",
+      required: true,
+      guidance: ""
+    },
+    {
+      name: "uv",
+      available: true,
+      version: "uv preview",
+      required: true,
+      guidance: ""
+    },
+    {
+      name: "graphify",
+      available: true,
+      version: "graphify preview",
+      required: true,
+      guidance: ""
+    }
+  ],
+  guidance: [],
+  repairCommand: "uv tool install --upgrade \"graphifyy[all]\""
 };
 
 const browserPaper: ResearchPaperSummary = {
@@ -596,10 +638,102 @@ const browserApiFallback: SecondBrainApi = {
           ...browserAppSettings.graphify,
           ...input.graphify
         },
+        managedProxy: {
+          ...browserAppSettings.managedProxy,
+          ...input.managedProxy,
+          updatedAt: new Date().toISOString()
+        },
         updatedAt: new Date().toISOString()
       };
       return browserAppSettings;
+    },
+    updateManagedProxy: async (input: UpdateManagedProxySettingsInput) => {
+      browserAppSettings = {
+        ...browserAppSettings,
+        managedProxy: {
+          ...browserAppSettings.managedProxy,
+          ...input,
+          updatedAt: new Date().toISOString()
+        },
+        updatedAt: new Date().toISOString()
+      };
+      return browserAppSettings.managedProxy;
     }
+  },
+  chat: {
+    listThreads: async () => browserThreads,
+    createThread: async (input) => {
+      const now = new Date().toISOString();
+      const thread: ChatThread = {
+        id: crypto.randomUUID(),
+        title: input?.title?.trim() || "Browser Preview Chat",
+        messages: [],
+        createdAt: now,
+        updatedAt: now
+      };
+      browserThreads.unshift(thread);
+      return thread;
+    },
+    sendMessage: async (input) => {
+      const now = new Date().toISOString();
+      let thread = input.threadId ? browserThreads.find((candidate) => candidate.id === input.threadId) : undefined;
+      if (!thread) {
+        thread = {
+          id: crypto.randomUUID(),
+          title: input.message.slice(0, 80) || "Browser Preview Chat",
+          messages: [],
+          createdAt: now,
+          updatedAt: now
+        };
+        browserThreads.unshift(thread);
+      }
+
+      thread.messages.push({
+        id: crypto.randomUUID(),
+        role: "user",
+        content: input.message,
+        createdAt: now
+      });
+      const message = {
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: "Browser preview chat is available in Electron. Local Graphify MCP retrieval runs in the Main process.",
+        createdAt: new Date().toISOString(),
+        grounding: {
+          graphify: {
+            query: input.message,
+            stdout: "Browser preview Graphify context.",
+            budget: input.budget ?? 1800,
+            command: "graphify query",
+            graphPath: "/browser-preview/graph.json",
+            citations: []
+          }
+        }
+      };
+      thread.messages.push(message);
+      thread.updatedAt = new Date().toISOString();
+      return { thread, message };
+    },
+    deleteThread: async (threadId) => {
+      const index = browserThreads.findIndex((thread) => thread.id === threadId);
+      if (index >= 0) {
+        browserThreads.splice(index, 1);
+      }
+    },
+    getGrounding: async (messageId) => {
+      for (const thread of browserThreads) {
+        const message = thread.messages.find((candidate) => candidate.id === messageId);
+        if (message?.grounding?.graphify) {
+          return message.grounding.graphify;
+        }
+      }
+
+      return null;
+    }
+  },
+  runtime: {
+    getDependencyStatus: async () => browserRuntimeStatus,
+    installOrRepairDependencies: async () => browserRuntimeStatus
   }
 };
 

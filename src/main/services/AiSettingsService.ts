@@ -4,13 +4,17 @@ import type {
   AiSettings,
   AppSettings,
   GraphifyRuntimeSettings,
+  ManagedProxySettings,
   UpdateAiSettingsInput,
-  UpdateAppSettingsInput
+  UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput
 } from "../../shared/brain";
 
 const defaultEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultModel = "local-model";
 const placeholderApiKey = "local-dev-placeholder";
+const defaultManagedProxyEndpoint = "";
+const defaultManagedProxyModel = "gemini-3.1-flash";
 const defaultGraphifySettings: GraphifyRuntimeSettings = {
   graphifyBin: "",
   maxTokens: 8192,
@@ -32,6 +36,10 @@ function normalizeApiKey(value: string | undefined): string {
 
 function normalizeModel(value: string | undefined): string {
   return value?.trim() || defaultModel;
+}
+
+function normalizeManagedProxyModel(value: string | undefined): string {
+  return value?.trim() || defaultManagedProxyModel;
 }
 
 function numberSetting(value: unknown, fallback: number, minimum = 1): number {
@@ -59,6 +67,19 @@ function booleanSetting(value: unknown, fallback: boolean): boolean {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeManagedProxySettings(value: unknown): ManagedProxySettings {
+  const parsed = asRecord(value);
+
+  return {
+    enabled: booleanSetting(parsed.enabled, false),
+    endpoint: typeof parsed.endpoint === "string" ? parsed.endpoint.trim() : defaultManagedProxyEndpoint,
+    secretKey: typeof parsed.secretKey === "string" ? parsed.secretKey.trim() : "",
+    model: normalizeManagedProxyModel(typeof parsed.model === "string" ? parsed.model : undefined),
+    groundingEnabled: booleanSetting(parsed.groundingEnabled, true),
+    updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
+  };
 }
 
 function normalizeGraphifySettings(value: unknown, useEnvironment = true): GraphifyRuntimeSettings {
@@ -130,6 +151,22 @@ export class AiSettingsService {
     return (await this.getAppSettings()).ai;
   }
 
+  async getEffectiveSettings(): Promise<AiSettings> {
+    const settings = await this.getAppSettings();
+    const proxy = settings.managedProxy;
+
+    if (proxy.enabled && proxy.endpoint.trim()) {
+      return {
+        endpoint: proxy.endpoint.trim(),
+        apiKey: proxy.secretKey.trim() || placeholderApiKey,
+        model: normalizeManagedProxyModel(proxy.model),
+        updatedAt: proxy.updatedAt
+      };
+    }
+
+    return settings.ai;
+  }
+
   async getAppSettings(): Promise<AppSettings> {
     try {
       const parsed = JSON.parse(await readFile(this.settingsPath, "utf8")) as Record<string, unknown>;
@@ -143,6 +180,7 @@ export class AiSettingsService {
           ),
           updatedAt: typeof aiRecord.updatedAt === "string" ? aiRecord.updatedAt : new Date().toISOString()
         },
+        managedProxy: normalizeManagedProxySettings(parsed.managedProxy),
         graphify: normalizeGraphifySettings(parsed.graphify),
         updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
       };
@@ -161,6 +199,10 @@ export class AiSettingsService {
     return (await this.updateAppSettings({ ai: input })).ai;
   }
 
+  async updateManagedProxy(input: UpdateManagedProxySettingsInput): Promise<ManagedProxySettings> {
+    return (await this.updateAppSettings({ managedProxy: input })).managedProxy;
+  }
+
   async updateAppSettings(input: UpdateAppSettingsInput): Promise<AppSettings> {
     const current = await this.getAppSettings();
     const next: AppSettings = {
@@ -168,6 +210,20 @@ export class AiSettingsService {
         endpoint: normalizeEndpoint(input.ai?.endpoint ?? current.ai.endpoint),
         apiKey: normalizeApiKey(input.ai?.apiKey ?? current.ai.apiKey),
         model: normalizeModel(input.ai?.model ?? current.ai.model),
+        updatedAt: new Date().toISOString()
+      },
+      managedProxy: {
+        enabled: input.managedProxy?.enabled ?? current.managedProxy.enabled,
+        endpoint:
+          typeof input.managedProxy?.endpoint === "string"
+            ? input.managedProxy.endpoint.trim()
+            : current.managedProxy.endpoint,
+        secretKey:
+          typeof input.managedProxy?.secretKey === "string"
+            ? input.managedProxy.secretKey.trim()
+            : current.managedProxy.secretKey,
+        model: normalizeManagedProxyModel(input.managedProxy?.model ?? current.managedProxy.model),
+        groundingEnabled: input.managedProxy?.groundingEnabled ?? current.managedProxy.groundingEnabled,
         updatedAt: new Date().toISOString()
       },
       graphify: normalizeGraphifySettings({
@@ -190,6 +246,7 @@ export class AiSettingsService {
         model: normalizeModel(process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL),
         updatedAt: new Date().toISOString()
       },
+      managedProxy: normalizeManagedProxySettings(undefined),
       graphify: normalizeGraphifySettings(undefined),
       updatedAt: new Date().toISOString()
     };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ProcessDroppedItemsResult } from "../../shared/ipc";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
@@ -7,14 +7,35 @@ import { TrackerTable } from "../components/TrackerTable";
 import { GraphBoardRenderer } from "../components/GraphBoardRenderer";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { ExplorerWorkbench } from "../components/ExplorerWorkbench";
+import { ChatWorkbench } from "../components/ChatWorkbench";
 
-type ActiveView = "graph" | "explorer" | "tracker";
+type ActiveView = "graph" | "chat" | "explorer" | "tracker";
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeView, setActiveView] = useState<ActiveView>("graph");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void window.api.runtime
+      .getDependencyStatus()
+      .then((status) => {
+        if (mounted && !status.available) {
+          setSettingsOpen(true);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setSettingsOpen(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   function handleDropProcessed(result: ProcessDroppedItemsResult): void {
     setRefreshKey((key) => key + 1);
@@ -51,7 +72,16 @@ export function MainApp(): JSX.Element {
               type="button"
               onClick={() => setActiveView("graph")}
             >
-              Graph Board
+              Board
+            </button>
+            <button
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                activeView === "chat" ? "bg-white text-slate-950 shadow-sm" : "text-slate-500 hover:text-slate-950"
+              }`}
+              type="button"
+              onClick={() => setActiveView("chat")}
+            >
+              Chat
             </button>
             <button
               className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
@@ -74,6 +104,8 @@ export function MainApp(): JSX.Element {
           </div>
           {activeView === "graph" ? (
             <GraphBoardRenderer refreshKey={refreshKey} />
+          ) : activeView === "chat" ? (
+            <ChatWorkbench refreshKey={refreshKey} />
           ) : activeView === "explorer" ? (
             <ExplorerWorkbench refreshKey={refreshKey} />
           ) : (

@@ -320,13 +320,13 @@
     "semantic_hash": ""
   },
   "src/main/services/ExplorerService.ts": {
-    "mtime": 1782006182.9321942,
-    "ast_hash": "ed48fc62d23210510f68348c1e342412",
+    "mtime": 1781849559.2368808,
+    "ast_hash": "3bcdfac7760bdb63e781a1a4fe0e7dcc",
     "semantic_hash": ""
   },
   "src/renderer/components/ExplorerWorkbench.tsx": {
-    "mtime": 1782006201.002278,
-    "ast_hash": "0ec5cc65322b335e4719eafcae6e215c",
+    "mtime": 1781849573.6429033,
+    "ast_hash": "90de815f013d16ef6d78d648de42510f",
     "semantic_hash": ""
   },
   "src/shared/types/explorer.ts": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1782006035.3404808,
-    "ast_hash": "e02322c822fc0bc24e106e687abcc076",
+    "mtime": 1781849502.3647919,
+    "ast_hash": "354bc319a83ec2dc4a3393191797164f",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -345,13 +345,13 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782006028.447446,
-    "ast_hash": "e4f5e2dd3d29b4a4d88ff82c80f248a0",
+    "mtime": 1781841719.6496994,
+    "ast_hash": "71452c78b412694f89bf9512af2debb6",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782006147.3550267,
-    "ast_hash": "61d37737d753416003242445a357ebf0",
+    "mtime": 1781841963.0706828,
+    "ast_hash": "291e8067676602387bc30776bf230506",
     "semantic_hash": ""
   },
   "proxy/main.py": {

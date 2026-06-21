@@ -286,7 +286,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
     <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-floral">
       <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-900/5 px-6">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold leading-6 text-slate-950">Graph Board</h1>
+          <h1 className="text-lg font-semibold leading-6 text-slate-950">Board</h1>
           <p className="mt-1 truncate text-xs text-slate-500">
             {graph ? `${graph.nodes.length} nodes · ${graph.links.length} edges` : "Explore the active project graph"}
           </p>
@@ -320,7 +320,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
           </label>
           <button
             className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/60 text-slate-600 transition hover:bg-white hover:text-slate-950"
-            title="Refresh graph board"
+            title="Refresh board"
             type="button"
             onClick={() => void loadGraph()}
           >
@@ -339,7 +339,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
             <div className="grid h-full place-items-center">
               <div className="max-w-sm text-center">
                 <AlertCircle className="mx-auto text-rose-500" size={28} />
-                <h2 className="mt-3 text-base font-semibold text-slate-950">Graph Board unavailable</h2>
+                <h2 className="mt-3 text-base font-semibold text-slate-950">Board unavailable</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{error ?? "The active project graph could not be read."}</p>
               </div>
             </div>

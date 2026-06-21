@@ -2,11 +2,13 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { McpServerStatus } from "../../shared/brain";
+import type { GraphifyContextService } from "./GraphifyContextService";
 import { GraphRagService } from "./GraphRagService";
-import { createGraphRagToolRegistry, filterLocalToolSpecs, type LocalToolDefinition, type LocalToolName, type LocalToolSpec } from "./LocalToolRegistry";
+import { createLocalToolRegistry, filterLocalToolSpecs, type LocalToolDefinition, type LocalToolName, type LocalToolSpec } from "./LocalToolRegistry";
 
 type LocalMcpServerOptions = {
   graphRag: GraphRagService;
+  graphifyContext?: GraphifyContextService | undefined;
   port?: number;
   host?: string;
   tools?: LocalToolDefinition[] | undefined;
@@ -43,7 +45,10 @@ export class LocalMcpServer {
   constructor(private readonly options: LocalMcpServerOptions) {
     this.host = options.host ?? "127.0.0.1";
     this.actualPort = options.port ?? 4127;
-    this.tools = options.tools ?? createGraphRagToolRegistry(options.graphRag);
+    this.tools = options.tools ?? createLocalToolRegistry({
+      graphRag: options.graphRag,
+      graphifyContext: options.graphifyContext
+    });
   }
 
   async start(): Promise<McpServerStatus> {

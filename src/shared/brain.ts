@@ -139,11 +139,22 @@ export type AiSettings = {
   updatedAt: string;
 };
 
+export type ManagedProxySettings = {
+  enabled: boolean;
+  endpoint: string;
+  secretKey: string;
+  model: string;
+  groundingEnabled: boolean;
+  updatedAt: string;
+};
+
 export type UpdateAiSettingsInput = {
   endpoint?: string | undefined;
   apiKey?: string | undefined;
   model?: string | undefined;
 };
+
+export type UpdateManagedProxySettingsInput = Partial<Omit<ManagedProxySettings, "updatedAt">>;
 
 export type GraphifyRuntimeSettings = {
   graphifyBin: string;
@@ -157,6 +168,7 @@ export type GraphifyRuntimeSettings = {
 
 export type AppSettings = {
   ai: AiSettings;
+  managedProxy: ManagedProxySettings;
   graphify: GraphifyRuntimeSettings;
   updatedAt: string;
 };
@@ -165,7 +177,75 @@ export type UpdateGraphifyRuntimeSettingsInput = Partial<GraphifyRuntimeSettings
 
 export type UpdateAppSettingsInput = {
   ai?: UpdateAiSettingsInput | undefined;
+  managedProxy?: UpdateManagedProxySettingsInput | undefined;
   graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;
+};
+
+export type GraphifyContextCitation = {
+  sourceFile: string;
+  sourceLocation?: string | undefined;
+  label?: string | undefined;
+};
+
+export type GraphifyContextResult = {
+  query: string;
+  stdout: string;
+  budget: number;
+  command: string;
+  graphPath: string;
+  citations: GraphifyContextCitation[];
+  error?: string | undefined;
+};
+
+export type ChatRole = "user" | "assistant" | "system";
+
+export type ChatMessage = {
+  id: string;
+  role: ChatRole;
+  content: string;
+  createdAt: string;
+  grounding?: {
+    graphify: GraphifyContextResult;
+    api?: unknown;
+  } | undefined;
+  error?: string | undefined;
+};
+
+export type ChatThread = {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ChatSendInput = {
+  threadId?: string | undefined;
+  message: string;
+  budget?: number | undefined;
+};
+
+export type ChatResponse = {
+  thread: ChatThread;
+  message: ChatMessage;
+};
+
+export type RuntimeDependencyCheck = {
+  name: "python" | "uv" | "graphify";
+  available: boolean;
+  version: string;
+  path?: string | undefined;
+  required: boolean;
+  guidance: string;
+};
+
+export type DependencyRuntimeStatus = {
+  available: boolean;
+  checkedAt: string;
+  dependencies: RuntimeDependencyCheck[];
+  guidance: string[];
+  repairCommand: string;
+  lastRepairOutput?: string | undefined;
 };
 
 export type ProjectRecord = {

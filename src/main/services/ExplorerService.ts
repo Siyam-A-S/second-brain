@@ -360,7 +360,7 @@ export class ExplorerService {
     for (const source of sources) {
       const score = scoreText(compactSearchText([source.title, source.sourceFile]), query, tokens);
       if (score > 0) {
-      const node = await this.sourceTreeNode(source.sourceFile, index);
+        const node = await this.sourceTreeNode(source.sourceFile, index);
         results.push({ ...node, score: score + 2 });
       }
     }

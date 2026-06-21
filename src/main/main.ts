@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   boardChannels,
   brainChannels,
+  chatChannels,
   clipboardChannels,
   fileChannels,
   explorerChannels,
@@ -10,6 +11,7 @@ import {
   FilesDroppedPayload,
   projectChannels,
   researchChannels,
+  runtimeChannels,
   settingsChannels,
   trackerChannels,
   WidgetMovePayload,
@@ -25,6 +27,7 @@ import type {
   SearchBrainNodesInput,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
   SaveResearchNodeNoteInput,
   UpdateResearchPaperStatusInput,
@@ -35,9 +38,12 @@ import type { BoardRule, BoardSearchInput } from "../shared/types/board";
 import type { ExplorerSearchInput } from "../shared/types/explorer";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
+import { ChatService } from "./services/ChatService";
+import { DependencyRuntimeService } from "./services/DependencyRuntimeService";
 import { EmbeddingService } from "./services/EmbeddingService";
 import { GraphBoardService } from "./services/GraphBoardService";
 import { GraphifyBoardService } from "./services/GraphifyBoardService";
+import { GraphifyContextService } from "./services/GraphifyContextService";
 import { GraphifyController } from "./services/GraphifyController";
 import { ExplorerService } from "./services/ExplorerService";
 import { GraphRagService } from "./services/GraphRagService";
@@ -60,8 +66,10 @@ type ProjectRuntime = {
   graphBoard: GraphBoardService;
   graphExplorer: ExplorerService;
   graphRag: GraphRagService;
+  graphifyContext: GraphifyContextService;
   research: ResearchService;
   tracker: TrackerService;
+  chat: ChatService;
   mcpServer: LocalMcpServer;
 };
 
@@ -219,23 +227,27 @@ async function createProjectRuntime(
   embeddings: EmbeddingService
 ): Promise<ProjectRuntime> {
   const storage = new StorageService(project.vaultPath);
-  const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getSettings());
+  const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getEffectiveSettings());
   const research = new ResearchService(project.rootPath, graphify.getGraphPath());
   const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
   const graphBoard = new GraphBoardService(graphify.getGraphPath(), research);
   const graphExplorer = new ExplorerService(graphify.getRawVaultPath(), graphify.getGraphPath());
   const graphRag = new GraphRagService(storage, embeddings);
+  const graphifyContext = new GraphifyContextService(graphify.getRawVaultPath());
   const tracker = new TrackerService(project.trackerPath);
   const nextMcpServer = new LocalMcpServer({
     graphRag,
+    graphifyContext,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
+  const chat = new ChatService(project.rootPath, nextMcpServer, () => aiSettings.getAppSettings());
 
   await aiSettings.initialize();
   await storage.initialize();
   await graphify.initialize();
   await research.initialize();
   await tracker.initialize(storage);
+  await chat.initialize();
 
   try {
     await nextMcpServer.start();
@@ -250,8 +262,10 @@ async function createProjectRuntime(
     graphBoard,
     graphExplorer,
     graphRag,
+    graphifyContext,
     research,
     tracker,
+    chat,
     mcpServer: nextMcpServer
   };
 }
@@ -273,7 +287,12 @@ async function switchProjectRuntime(
   return projectRuntime;
 }
 
-function registerIpc(projects: ProjectService, embeddings: EmbeddingService, aiSettings: AiSettingsService): void {
+function registerIpc(
+  projects: ProjectService,
+  embeddings: EmbeddingService,
+  aiSettings: AiSettingsService,
+  runtimeDependencies: DependencyRuntimeService
+): void {
   ipcMain.handle(windowChannels.minimize, () => {
     showWidget();
   });
@@ -417,11 +436,24 @@ function registerIpc(projects: ProjectService, embeddings: EmbeddingService, aiS
   ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
   ipcMain.handle(settingsChannels.getApp, () => aiSettings.getAppSettings());
   ipcMain.handle(settingsChannels.updateApp, (_event, input: UpdateAppSettingsInput) => aiSettings.updateAppSettings(input));
+  ipcMain.handle(settingsChannels.updateManagedProxy, (_event, input: UpdateManagedProxySettingsInput) =>
+    aiSettings.updateManagedProxy(input)
+  );
+  ipcMain.handle(chatChannels.listThreads, () => requireRuntime().chat.listThreads());
+  ipcMain.handle(chatChannels.createThread, (_event, input?: { title?: string | undefined }) =>
+    requireRuntime().chat.createThread(input)
+  );
+  ipcMain.handle(chatChannels.sendMessage, (_event, input) => requireRuntime().chat.sendMessage(input));
+  ipcMain.handle(chatChannels.deleteThread, (_event, threadId: string) => requireRuntime().chat.deleteThread(threadId));
+  ipcMain.handle(chatChannels.getGrounding, (_event, messageId: string) => requireRuntime().chat.getGrounding(messageId));
+  ipcMain.handle(runtimeChannels.getDependencyStatus, () => runtimeDependencies.getStatus());
+  ipcMain.handle(runtimeChannels.installOrRepairDependencies, () => runtimeDependencies.installOrRepair());
 }
 
 app.whenReady().then(async () => {
   const userDataPath = app.getPath("userData");
   const aiSettings = new AiSettingsService(userDataPath);
+  const runtimeDependencies = new DependencyRuntimeService();
   const projects = new ProjectService(userDataPath);
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
 
@@ -429,7 +461,7 @@ app.whenReady().then(async () => {
   await projects.initialize();
   await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
 
-  registerIpc(projects, embeddings, aiSettings);
+  registerIpc(projects, embeddings, aiSettings, runtimeDependencies);
   const agentController = new AgentController(() => requireRuntime().graphify);
   agentController.registerIpc();
   mainWindow = createMainWindow();

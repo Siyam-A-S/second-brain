@@ -5,3 +5,5 @@ release
 .env
 .DS_Store
 .codex
+__pycache__/
+*.pyc

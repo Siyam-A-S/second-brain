@@ -113,6 +113,10 @@ function normalizeChatCompletionsEndpoint(endpoint: string): string {
     return `${withoutTrailingSlash}/chat/completions`;
   }
 
+  if (/\/generate$/i.test(withoutTrailingSlash)) {
+    return `${withoutTrailingSlash}/chat/completions`;
+  }
+
   return trimmed;
 }
 
@@ -300,7 +304,7 @@ export class LlmService {
       .filter((value): value is GraphCardDefinition => Boolean(value));
   }
 
-  private async completeText(input: {
+  async completeText(input: {
     messages: ChatMessage[];
     method?: AgentMethodConfig | undefined;
   }): Promise<string> {

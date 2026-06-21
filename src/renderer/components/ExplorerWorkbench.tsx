@@ -413,7 +413,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
               className="h-9 w-full rounded-md border border-slate-200 bg-white/65 pl-9 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white"
-              placeholder="Search sources and graph nodes"
+              placeholder="Search sources and graph entities"
               type="search"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -440,7 +440,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
             <div className="max-h-[calc(100vh-10rem)] overflow-auto p-2">
               {searchLoading ? <p className="px-2 py-3 text-sm text-slate-500">Searching...</p> : null}
               {!searchLoading && searchResults.length === 0 ? (
-                <p className="px-2 py-3 text-sm text-slate-500">No matching sources or graph nodes.</p>
+                <p className="px-2 py-3 text-sm text-slate-500">No matching sources or graph entities.</p>
               ) : null}
               {searchResults.map((result) => (
                 <button
@@ -685,7 +685,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                 <div>
                   <Network className="mx-auto text-slate-300" size={30} />
                   <p className="mt-3 text-sm font-semibold text-slate-700">No related graph edges yet</p>
-                  <p className="mt-1 text-sm text-slate-500">Expand the tree to browse structural children.</p>
+                  <p className="mt-1 text-sm text-slate-500">Search for entities or expand the tree to browse structural children.</p>
                 </div>
               </div>
             )}

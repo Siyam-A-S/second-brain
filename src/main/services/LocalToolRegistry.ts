@@ -2,16 +2,21 @@ import * as z from "zod";
 import type {
   ExportBoardPlaintextInput,
   FetchFileSegmentsInput,
+  GraphifyContextResult,
   IngestAndRouteFragmentInput,
   SearchBoardTopologyInput
 } from "../../shared/brain";
 import type { GraphRagService } from "./GraphRagService";
+import type { GraphifyContextService } from "./GraphifyContextService";
 
 export type LocalToolName =
   | "search_board_topology"
   | "fetch_file_segments"
   | "ingest_and_route_fragment"
-  | "export_board_plaintext";
+  | "export_board_plaintext"
+  | "query_graphify_context"
+  | "explain_graph_node"
+  | "trace_graph_path";
 
 export type LocalToolSpec = {
   name: LocalToolName;
@@ -48,8 +53,30 @@ const exportBoardPlaintextSchema = {
   include_body: z.boolean().optional()
 };
 
+const queryGraphifyContextSchema = {
+  question: z.string().min(1),
+  budget: z.number().min(250).max(4000).optional()
+};
+
+const explainGraphNodeSchema = {
+  nodeIdOrLabel: z.string().min(1)
+};
+
+const traceGraphPathSchema = {
+  from: z.string().min(1),
+  to: z.string().min(1)
+};
+
 export function createGraphRagToolRegistry(graphRag: GraphRagService): LocalToolDefinition[] {
-  return [
+  return createLocalToolRegistry({ graphRag });
+}
+
+export function createLocalToolRegistry(options: {
+  graphRag: GraphRagService;
+  graphifyContext?: GraphifyContextService | undefined;
+}): LocalToolDefinition[] {
+  const { graphRag } = options;
+  const tools: LocalToolDefinition[] = [
     {
       name: "search_board_topology",
       title: "Search board topology",
@@ -113,6 +140,66 @@ export function createGraphRagToolRegistry(graphRag: GraphRagService): LocalTool
       execute: async (input) => graphRag.exportBoardPlaintext(z.object(exportBoardPlaintextSchema).parse(input) as ExportBoardPlaintextInput)
     }
   ];
+
+  if (options.graphifyContext) {
+    tools.push(
+      {
+        name: "query_graphify_context",
+        title: "Query Graphify context",
+        description: "Run a bounded Graphify query against the active project's local graph.",
+        inputSchema: queryGraphifyContextSchema,
+        inputSchemaJson: {
+          type: "object",
+          properties: {
+            question: { type: "string" },
+            budget: { type: "number", minimum: 250, maximum: 4000 }
+          },
+          required: ["question"]
+        },
+        execute: async (input): Promise<GraphifyContextResult> => {
+          const parsed = z.object(queryGraphifyContextSchema).parse(input);
+          return options.graphifyContext?.query(parsed.question, parsed.budget) as Promise<GraphifyContextResult>;
+        }
+      },
+      {
+        name: "explain_graph_node",
+        title: "Explain graph node",
+        description: "Run Graphify explain for one local graph node or label.",
+        inputSchema: explainGraphNodeSchema,
+        inputSchemaJson: {
+          type: "object",
+          properties: {
+            nodeIdOrLabel: { type: "string" }
+          },
+          required: ["nodeIdOrLabel"]
+        },
+        execute: async (input): Promise<GraphifyContextResult> => {
+          const parsed = z.object(explainGraphNodeSchema).parse(input);
+          return options.graphifyContext?.explain(parsed.nodeIdOrLabel) as Promise<GraphifyContextResult>;
+        }
+      },
+      {
+        name: "trace_graph_path",
+        title: "Trace graph path",
+        description: "Run Graphify path between two local graph nodes or labels.",
+        inputSchema: traceGraphPathSchema,
+        inputSchemaJson: {
+          type: "object",
+          properties: {
+            from: { type: "string" },
+            to: { type: "string" }
+          },
+          required: ["from", "to"]
+        },
+        execute: async (input): Promise<GraphifyContextResult> => {
+          const parsed = z.object(traceGraphPathSchema).parse(input);
+          return options.graphifyContext?.tracePath(parsed.from, parsed.to) as Promise<GraphifyContextResult>;
+        }
+      }
+    );
+  }
+
+  return tools;
 }
 
 export function filterLocalToolSpecs(tools: LocalToolDefinition[], names?: LocalToolName[]): LocalToolSpec[] {

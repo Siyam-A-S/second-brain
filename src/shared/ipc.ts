@@ -4,14 +4,20 @@ import type {
   BoardChildNode,
   AiSettings,
   AppSettings,
+  ChatResponse,
+  ChatSendInput,
+  ChatThread,
   CallflowHtmlDocument,
   CreateProjectInput,
   CreateTrackerInput,
+  DependencyRuntimeStatus,
   ExportBoardPlaintextInput,
+  GraphifyContextResult,
   GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
   GraphifyIngestionResult,
+  ManagedProxySettings,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
@@ -32,6 +38,7 @@ import type {
   TrackerStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
@@ -59,17 +66,24 @@ export type {
   BoardChildNode,
   AiSettings,
   AppSettings,
+  ChatResponse,
+  ChatSendInput,
+  ChatThread,
   CallflowHtmlDocument,
   CreateProjectInput,
   CreateTrackerInput,
+  DependencyRuntimeStatus,
   ExportBoardPlaintextInput,
   GraphBoardLink,
   GraphBoardNeighbor,
   GraphBoardNode,
+  GraphifyContextCitation,
+  GraphifyContextResult,
   GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
   GraphifyIngestionResult,
+  ManagedProxySettings,
   OrganizedBoardTopic,
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
@@ -94,6 +108,7 @@ export type {
   TrackerStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
@@ -208,7 +223,21 @@ export const settingsChannels = {
   getAi: "settings-get-ai",
   updateAi: "settings-update-ai",
   getApp: "settings-get-app",
-  updateApp: "settings-update-app"
+  updateApp: "settings-update-app",
+  updateManagedProxy: "settings-update-managed-proxy"
+} as const;
+
+export const chatChannels = {
+  listThreads: "chat-list-threads",
+  createThread: "chat-create-thread",
+  sendMessage: "chat-send-message",
+  deleteThread: "chat-delete-thread",
+  getGrounding: "chat-get-grounding"
+} as const;
+
+export const runtimeChannels = {
+  getDependencyStatus: "runtime-get-dependency-status",
+  installOrRepairDependencies: "runtime-install-or-repair-dependencies"
 } as const;
 
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
@@ -222,6 +251,8 @@ export type GraphBoardChannel = (typeof graphBoardChannels)[keyof typeof graphBo
 export type ResearchChannel = (typeof researchChannels)[keyof typeof researchChannels];
 export type ClipboardChannel = (typeof clipboardChannels)[keyof typeof clipboardChannels];
 export type SettingsChannel = (typeof settingsChannels)[keyof typeof settingsChannels];
+export type ChatChannel = (typeof chatChannels)[keyof typeof chatChannels];
+export type RuntimeChannel = (typeof runtimeChannels)[keyof typeof runtimeChannels];
 
 export type DroppedFile = {
   name: string;
@@ -332,5 +363,17 @@ export type SecondBrainApi = {
     updateAi: (input: UpdateAiSettingsInput) => Promise<AiSettings>;
     getApp: () => Promise<AppSettings>;
     updateApp: (input: UpdateAppSettingsInput) => Promise<AppSettings>;
+    updateManagedProxy: (input: UpdateManagedProxySettingsInput) => Promise<ManagedProxySettings>;
+  };
+  chat: {
+    listThreads: () => Promise<ChatThread[]>;
+    createThread: (input?: { title?: string | undefined }) => Promise<ChatThread>;
+    sendMessage: (input: ChatSendInput) => Promise<ChatResponse>;
+    deleteThread: (threadId: string) => Promise<void>;
+    getGrounding: (messageId: string) => Promise<GraphifyContextResult | null>;
+  };
+  runtime: {
+    getDependencyStatus: () => Promise<DependencyRuntimeStatus>;
+    installOrRepairDependencies: () => Promise<DependencyRuntimeStatus>;
   };
 };

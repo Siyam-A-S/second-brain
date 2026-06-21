@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
   BoardRule,
+  ChatSendInput,
   CreateProjectInput,
   CreateTrackerInput,
   FilesDroppedPayload,
@@ -16,6 +17,7 @@ import type {
   TrackerIngestionStatus,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
+  UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
@@ -108,7 +110,21 @@ const settingsChannels = {
   getAi: "settings-get-ai",
   updateAi: "settings-update-ai",
   getApp: "settings-get-app",
-  updateApp: "settings-update-app"
+  updateApp: "settings-update-app",
+  updateManagedProxy: "settings-update-managed-proxy"
+} as const;
+
+const chatChannels = {
+  listThreads: "chat-list-threads",
+  createThread: "chat-create-thread",
+  sendMessage: "chat-send-message",
+  deleteThread: "chat-delete-thread",
+  getGrounding: "chat-get-grounding"
+} as const;
+
+const runtimeChannels = {
+  getDependencyStatus: "runtime-get-dependency-status",
+  installOrRepairDependencies: "runtime-install-or-repair-dependencies"
 } as const;
 
 const api: SecondBrainApi = {
@@ -200,7 +216,20 @@ const api: SecondBrainApi = {
     getAi: () => ipcRenderer.invoke(settingsChannels.getAi),
     updateAi: (input: UpdateAiSettingsInput) => ipcRenderer.invoke(settingsChannels.updateAi, input),
     getApp: () => ipcRenderer.invoke(settingsChannels.getApp),
-    updateApp: (input: UpdateAppSettingsInput) => ipcRenderer.invoke(settingsChannels.updateApp, input)
+    updateApp: (input: UpdateAppSettingsInput) => ipcRenderer.invoke(settingsChannels.updateApp, input),
+    updateManagedProxy: (input: UpdateManagedProxySettingsInput) =>
+      ipcRenderer.invoke(settingsChannels.updateManagedProxy, input)
+  },
+  chat: {
+    listThreads: () => ipcRenderer.invoke(chatChannels.listThreads),
+    createThread: (input?: { title?: string | undefined }) => ipcRenderer.invoke(chatChannels.createThread, input),
+    sendMessage: (input: ChatSendInput) => ipcRenderer.invoke(chatChannels.sendMessage, input),
+    deleteThread: (threadId: string) => ipcRenderer.invoke(chatChannels.deleteThread, threadId),
+    getGrounding: (messageId: string) => ipcRenderer.invoke(chatChannels.getGrounding, messageId)
+  },
+  runtime: {
+    getDependencyStatus: () => ipcRenderer.invoke(runtimeChannels.getDependencyStatus),
+    installOrRepairDependencies: () => ipcRenderer.invoke(runtimeChannels.installOrRepairDependencies)
   }
 };
 

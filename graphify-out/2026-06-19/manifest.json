@@ -15,8 +15,8 @@
     "semantic_hash": ""
   },
   "src/main/main.ts": {
-    "mtime": 1781849459.2047246,
-    "ast_hash": "5793fabd6a4033baf938f54655ceaaf7",
+    "mtime": 1781841862.440666,
+    "ast_hash": "576e675ff8774b4c89a4c8f16af416e0",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1781849608.8350444,
-    "ast_hash": "160ec7c06758090494841c4a898414d9",
+    "mtime": 1781835620.3562756,
+    "ast_hash": "5083055d5939a64f1d513bb2fe31dd9a",
     "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
@@ -105,8 +105,8 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1781849577.5339093,
-    "ast_hash": "443da8498f067b428eda30cd0672129d",
+    "mtime": 1781842027.7657077,
+    "ast_hash": "b4c6993e094c950290a4239b457291b8",
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
@@ -250,8 +250,8 @@
     "semantic_hash": ""
   },
   "src/main/services/AiSettingsService.ts": {
-    "mtime": 1781849455.741719,
-    "ast_hash": "569503522a9964a9a23b273af4be98bb",
+    "mtime": 1781841682.1857216,
+    "ast_hash": "0d247b7066d51de275e8c844b611fa45",
     "semantic_hash": ""
   },
   "src/main/services/TrackerService.ts": {
@@ -285,8 +285,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
-    "mtime": 1781849514.5338109,
-    "ast_hash": "d8fafe566be18d9950c592be1b9c6d2f",
+    "mtime": 1781841925.444673,
+    "ast_hash": "d72cba0c49f8190038a94a3fcbd9d3b8",
     "semantic_hash": ""
   },
   "src/main/services/GraphBoardService.ts": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/GraphBoardRenderer.tsx": {
-    "mtime": 1781849581.5909157,
-    "ast_hash": "5fbb66b9aba3a090957f36df9ad530b4",
+    "mtime": 1781835673.423385,
+    "ast_hash": "cdb0239e89e48302318b93de0d86acee",
     "semantic_hash": ""
   },
   "src/renderer/components/ProjectList.tsx": {
@@ -320,13 +320,13 @@
     "semantic_hash": ""
   },
   "src/main/services/ExplorerService.ts": {
-    "mtime": 1782006182.9321942,
-    "ast_hash": "ed48fc62d23210510f68348c1e342412",
+    "mtime": 1781762753.129613,
+    "ast_hash": "aece43bbd2ed6ae95e7b4616842287ff",
     "semantic_hash": ""
   },
   "src/renderer/components/ExplorerWorkbench.tsx": {
-    "mtime": 1782006201.002278,
-    "ast_hash": "0ec5cc65322b335e4719eafcae6e215c",
+    "mtime": 1781762596.4960263,
+    "ast_hash": "f6d1acc6b61cf15c50a367537d93c1cd",
     "semantic_hash": ""
   },
   "src/shared/types/explorer.ts": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1782006035.3404808,
-    "ast_hash": "e02322c822fc0bc24e106e687abcc076",
+    "mtime": 1781841784.243675,
+    "ast_hash": "762e920bf2ae57bd54292d692c8b76fa",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -345,23 +345,23 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782006028.447446,
-    "ast_hash": "e4f5e2dd3d29b4a4d88ff82c80f248a0",
+    "mtime": 1781841719.6496994,
+    "ast_hash": "71452c78b412694f89bf9512af2debb6",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782006147.3550267,
-    "ast_hash": "61d37737d753416003242445a357ebf0",
+    "mtime": 1781841963.0706828,
+    "ast_hash": "291e8067676602387bc30776bf230506",
     "semantic_hash": ""
   },
   "proxy/main.py": {
-    "mtime": 1781849600.2669976,
-    "ast_hash": "94b06d1dc8a1ba53493bbf97bf857b00",
+    "mtime": 1781842087.4885798,
+    "ast_hash": "2d95f9c9a4a4fe31065b6cd1d7914e3b",
     "semantic_hash": ""
   },
   "proxy/README.md": {
-    "mtime": 1781849626.6581402,
-    "ast_hash": "4a6e122009721adc6cf3bdab941b4404",
+    "mtime": 1781842087.4867396,
+    "ast_hash": "799569be45b05fe6a24c7d0ae4ef690b",
     "semantic_hash": ""
   },
   "proxy/requirements.txt": {
