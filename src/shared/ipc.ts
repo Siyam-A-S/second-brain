@@ -4,8 +4,11 @@ import type {
   BoardChildNode,
   AiSettings,
   AppSettings,
+  ClipboardIngestibleItemsResult,
+  ChatArtifactActionResult,
   ChatResponse,
   ChatSendInput,
+  ChatStreamEvent,
   ChatThread,
   CallflowHtmlDocument,
   CreateProjectInput,
@@ -16,6 +19,7 @@ import type {
   GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
+  GroupGraphNodesInput,
   GraphifyIngestionResult,
   ManagedProxySettings,
   OrganizedBoardTopic,
@@ -30,6 +34,7 @@ import type {
   ResearchPaperDetails,
   ResearchPaperNote,
   ResearchPaperSummary,
+  SaveChatArtifactInput,
   SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
@@ -66,9 +71,14 @@ export type {
   BoardChildNode,
   AiSettings,
   AppSettings,
+  ClipboardIngestibleItemsResult,
   ChatResponse,
   ChatSendInput,
+  ChatStreamEvent,
   ChatThread,
+  ChatArtifact,
+  ChatArtifactActionResult,
+  ChatArtifactSource,
   CallflowHtmlDocument,
   CreateProjectInput,
   CreateTrackerInput,
@@ -82,6 +92,7 @@ export type {
   GraphDefinitionStatus,
   GraphBoardNodeDetails,
   GraphBoardState,
+  GroupGraphNodesInput,
   GraphifyIngestionResult,
   ManagedProxySettings,
   OrganizedBoardTopic,
@@ -100,6 +111,7 @@ export type {
   ResearchPaperSummary,
   ResearchLiteratureMatrix,
   ResearchThesisLink,
+  SaveChatArtifactInput,
   SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
@@ -176,6 +188,7 @@ export const boardChannels = {
   getGraphHtml: "get-graph-html",
   removeSource: "remove-board-source",
   collapseSource: "collapse-board-source",
+  groupNodes: "group-board-nodes",
   renameSource: "rename-board-source",
   commentSource: "comment-board-source",
   search: "search-board"
@@ -187,7 +200,8 @@ export const explorerChannels = {
   getDetails: "explorer-get-details",
   search: "explorer-search",
   getSourceOptions: "explorer-get-source-options",
-  getArtifactContent: "explorer-get-artifact-content"
+  getArtifactContent: "explorer-get-artifact-content",
+  openNode: "explorer-open-node"
 } as const;
 
 export const projectChannels = {
@@ -216,7 +230,8 @@ export const researchChannels = {
 
 export const clipboardChannels = {
   readText: "clipboard-read-text",
-  writeText: "clipboard-write-text"
+  writeText: "clipboard-write-text",
+  readIngestibleItems: "clipboard-read-ingestible-items"
 } as const;
 
 export const settingsChannels = {
@@ -231,8 +246,14 @@ export const chatChannels = {
   listThreads: "chat-list-threads",
   createThread: "chat-create-thread",
   sendMessage: "chat-send-message",
+  sendMessageStream: "chat-send-message-stream",
+  streamEvent: "chat-stream-event",
+  abortGeneration: "chat-abort-generation",
   deleteThread: "chat-delete-thread",
-  getGrounding: "chat-get-grounding"
+  getGrounding: "chat-get-grounding",
+  saveMessageArtifact: "chat-save-message-artifact",
+  ingestArtifact: "chat-ingest-artifact",
+  downloadArtifact: "chat-download-artifact"
 } as const;
 
 export const runtimeChannels = {
@@ -342,6 +363,7 @@ export type SecondBrainApi = {
     getGraphHtml: () => Promise<GraphHtmlDocument>;
     removeSource: (sourceFile: string) => Promise<GraphifyIngestionResult>;
     collapseSource: (sourceFile: string, targetSourceFile: string) => Promise<GraphifyIngestionResult>;
+    groupNodes: (input: GroupGraphNodesInput) => Promise<GraphifyIngestionResult>;
     renameSource: (sourceFile: string, newName: string) => Promise<GraphifyIngestionResult>;
     commentSource: (sourceFile: string, comment: string) => Promise<GraphifyIngestionResult>;
     search: (input: BoardSearchInput) => Promise<BoardSearchResult[]>;
@@ -353,9 +375,11 @@ export type SecondBrainApi = {
     search: (input: ExplorerSearchInput) => Promise<ExplorerSearchResult[]>;
     getSourceOptions: () => Promise<ExplorerSourceOption[]>;
     getArtifactContent: (artifactId: string) => Promise<ExplorerArtifactContent>;
+    openNode: (nodeId: string) => Promise<void>;
   };
   clipboard: {
     readText: () => Promise<string>;
+    readIngestibleItems: () => Promise<ClipboardIngestibleItemsResult>;
     writeText: (text: string) => Promise<void>;
   };
   settings: {
@@ -369,8 +393,14 @@ export type SecondBrainApi = {
     listThreads: () => Promise<ChatThread[]>;
     createThread: (input?: { title?: string | undefined }) => Promise<ChatThread>;
     sendMessage: (input: ChatSendInput) => Promise<ChatResponse>;
+    sendMessageStream: (input: ChatSendInput) => Promise<ChatResponse>;
+    onStreamEvent: (handler: (event: ChatStreamEvent) => void) => () => void;
+    abortGeneration: (generationId: string) => Promise<void>;
     deleteThread: (threadId: string) => Promise<void>;
     getGrounding: (messageId: string) => Promise<GraphifyContextResult | null>;
+    saveMessageArtifact: (input: SaveChatArtifactInput) => Promise<ChatArtifactActionResult>;
+    ingestArtifact: (messageId: string, artifactId: string) => Promise<ChatArtifactActionResult>;
+    downloadArtifact: (messageId: string, artifactId: string) => Promise<ChatArtifactActionResult>;
   };
   runtime: {
     getDependencyStatus: () => Promise<DependencyRuntimeStatus>;

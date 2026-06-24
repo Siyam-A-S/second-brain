@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Loader2, UploadCloud, XCircle } from "lucide-react";
-import type { FilesDroppedPayload, ProcessDroppedItem, ProcessDroppedItemsResult } from "../../shared/ipc";
+import type { FilesDroppedPayload, ProcessDroppedItem, ProcessDroppedItemsResult, TrackerIngestionStatus } from "../../shared/ipc";
 import { createDropPayload } from "../lib/dropPayload";
 
 type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
@@ -86,6 +86,47 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
     []
   );
 
+  useEffect(() => {
+    return window.api.tracker.onIngestionStatus((status: TrackerIngestionStatus) => {
+      if (resetTimer.current) {
+        window.clearTimeout(resetTimer.current);
+      }
+
+      if (status.stage === "extracting") {
+        setIsProcessing(true);
+        setTone("success");
+        setStatusText(status.message);
+        setErrorDetails(null);
+        return;
+      }
+
+      if (status.stage === "saved") {
+        setIsProcessing(false);
+        setTone("success");
+        setStatusText(status.message);
+        setErrorDetails(null);
+        scheduleReset();
+        return;
+      }
+
+      if (status.stage === "error") {
+        setIsProcessing(false);
+        setTone("error");
+        setStatusText(status.message);
+        setErrorDetails(status.error ?? status.message);
+        scheduleReset();
+        return;
+      }
+
+      if (status.stage === "skipped") {
+        setIsProcessing(false);
+        setTone("unknown");
+        setStatusText(status.message);
+        scheduleReset();
+      }
+    });
+  }, []);
+
   function scheduleReset(): void {
     if (resetTimer.current) {
       window.clearTimeout(resetTimer.current);
@@ -163,27 +204,16 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
     setErrorDetails(null);
 
     void window.api.clipboard
-      .readText()
-      .then((text) => {
-        const trimmed = text.trim();
-
-        if (!trimmed) {
-          setStatusText("Clipboard does not contain text.");
+      .readIngestibleItems()
+      .then((result) => {
+        if (result.items.length === 0) {
+          setStatusText(result.message);
           setTone("error");
           scheduleReset();
           return;
         }
 
-        processItems(
-          [
-            {
-              name: "clipboard.txt",
-              text: trimmed,
-              type: "text/plain"
-            }
-          ],
-          "Routing clipboard locally..."
-        );
+        processItems(result.items, "Routing clipboard locally...");
       })
       .catch((error) => {
         const message = errorMessage(error);

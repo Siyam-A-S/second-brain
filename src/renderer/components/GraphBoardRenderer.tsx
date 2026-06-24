@@ -273,13 +273,18 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
       ctx.stroke();
     }
 
+    const shouldShowLabel = isActive || globalScale >= 1.15 || ((node.degree ?? 0) >= 8 && globalScale >= 0.9);
+    if (!shouldShowLabel) {
+      return;
+    }
+
     const label = node.label;
-    const fontSize = Math.max(9, 12 / globalScale);
+    const fontSize = isActive ? Math.max(8, 10 / globalScale) : Math.max(7, 8.5 / globalScale);
     ctx.font = `${fontSize}px Inter, ui-sans-serif, system-ui`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = "#0f172a";
-    ctx.fillText(label.slice(0, 34), x, y + radius + 4);
+    ctx.fillStyle = isActive ? "#0f172a" : "rgba(15,23,42,0.78)";
+    ctx.fillText(label.slice(0, isActive ? 38 : 26), x, y + radius + 4);
   }
 
   return (

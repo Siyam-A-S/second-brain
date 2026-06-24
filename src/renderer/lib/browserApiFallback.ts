@@ -1,6 +1,7 @@
 import type {
   BoardRule,
   AppSettings,
+  ChatStreamEvent,
   ChatThread,
   CreateTrackerInput,
   DependencyRuntimeStatus,
@@ -27,6 +28,7 @@ import type {
 } from "../../shared/ipc";
 
 const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
+const chatStreamHandlers = new Set<(event: ChatStreamEvent) => void>();
 const browserTrackers: TrackerRecord[] = [];
 let activeProjectId = "browser-default";
 const browserProjects: ProjectRecord[] = [
@@ -191,6 +193,12 @@ function normalizeTrackerPriority(value: unknown): TrackerPriority {
 function emitTrackerStatus(status: TrackerIngestionStatus): void {
   for (const handler of trackerStatusHandlers) {
     handler(status);
+  }
+}
+
+function emitChatStreamEvent(event: ChatStreamEvent): void {
+  for (const handler of chatStreamHandlers) {
+    handler(event);
   }
 }
 
@@ -529,6 +537,14 @@ const browserApiFallback: SecondBrainApi = {
       stdout: "Browser preview source collapse is a no-op.",
       updatedAt: new Date().toISOString()
     }),
+    groupNodes: async () => ({
+      completed: true,
+      writtenFileCount: 0,
+      graphPath: "/browser-preview/graph.json",
+      reportPath: "/browser-preview/GRAPH_REPORT.md",
+      stdout: "Browser preview group relationship is a no-op.",
+      updatedAt: new Date().toISOString()
+    }),
     renameSource: async () => ({
       completed: true,
       writtenFileCount: 0,
@@ -600,10 +616,26 @@ const browserApiFallback: SecondBrainApi = {
       llmFormat: "markdown",
       content: "# Browser Preview Artifact\n\nPaper artifact content is available in Electron.",
       updatedAt: new Date().toISOString()
-    })
+    }),
+    openNode: async () => undefined
   },
   clipboard: {
     readText: async () => navigator.clipboard?.readText?.() ?? "",
+    readIngestibleItems: async () => {
+      const text = (await navigator.clipboard?.readText?.()) ?? "";
+      return {
+        items: text.trim()
+          ? [
+              {
+                name: "clipboard.txt",
+                type: "text/plain",
+                text
+              }
+            ]
+          : [],
+        message: text.trim() ? "Clipboard contains text." : "Clipboard does not contain ingestible content."
+      };
+    },
     writeText: async (text: string) => {
       await navigator.clipboard?.writeText?.(text);
     }
@@ -714,6 +746,55 @@ const browserApiFallback: SecondBrainApi = {
       thread.updatedAt = new Date().toISOString();
       return { thread, message };
     },
+    sendMessageStream: async (input) => {
+      const response = await browserApiFallback.chat.sendMessage(input);
+      const userMessage = response.thread.messages[response.thread.messages.length - 2];
+      if (userMessage) {
+        emitChatStreamEvent({
+          type: "started",
+          generationId: response.message.id,
+          thread: response.thread,
+          userMessage,
+          assistantMessage: response.message
+        });
+      }
+      emitChatStreamEvent({
+        type: "grounding",
+        generationId: response.message.id,
+        messageId: response.message.id,
+        grounding: response.message.grounding?.graphify ?? {
+          query: input.message,
+          stdout: "Browser preview Graphify context.",
+          budget: input.budget ?? 1800,
+          command: "graphify query",
+          graphPath: "/browser-preview/graph.json",
+          citations: []
+        }
+      });
+      emitChatStreamEvent({
+        type: "delta",
+        generationId: response.message.id,
+        messageId: response.message.id,
+        delta: response.message.content,
+        content: response.message.content
+      });
+      emitChatStreamEvent({
+        type: "done",
+        generationId: response.message.id,
+        thread: response.thread,
+        message: response.message
+      });
+      return response;
+    },
+    onStreamEvent: (handler) => {
+      chatStreamHandlers.add(handler);
+      return () => {
+        chatStreamHandlers.delete(handler);
+      };
+    },
+    abortGeneration: async (generationId) => {
+      emitChatStreamEvent({ type: "aborted", generationId });
+    },
     deleteThread: async (threadId) => {
       const index = browserThreads.findIndex((thread) => thread.id === threadId);
       if (index >= 0) {
@@ -729,6 +810,53 @@ const browserApiFallback: SecondBrainApi = {
       }
 
       return null;
+    },
+    saveMessageArtifact: async (input) => {
+      const messageId = input.messageId;
+      for (const thread of browserThreads) {
+        const message = thread.messages.find((candidate) => candidate.id === messageId);
+        if (message) {
+          const content = input.content ?? message.content;
+          const title = input.title?.trim() || "browser-preview-response";
+          const artifact = {
+            id: crypto.randomUUID(),
+            messageId,
+            filename: `${title}.md`,
+            mimeType: "text/markdown",
+            sizeBytes: content.length,
+            kind: "text" as const,
+            storagePath: `/browser-preview/chat/artifacts/${title}.md`,
+            createdAt: new Date().toISOString(),
+            source: "assistant-text" as const
+          };
+          message.artifacts = [...(message.artifacts ?? []), artifact];
+          return { thread, message, artifact };
+        }
+      }
+      throw new Error(`Browser preview cannot find message "${messageId}".`);
+    },
+    ingestArtifact: async (messageId, artifactId) => {
+      const saved = await browserApiFallback.chat.saveMessageArtifact({ messageId });
+      return {
+        ...saved,
+        artifact: saved.message.artifacts?.find((artifact) => artifact.id === artifactId) ?? saved.artifact,
+        ingestion: {
+          completed: true,
+          writtenFileCount: 1,
+          graphPath: "/browser-preview/graph.json",
+          reportPath: "/browser-preview/GRAPH_REPORT.md",
+          stdout: "Browser preview artifact ingestion is a no-op.",
+          updatedAt: new Date().toISOString()
+        }
+      };
+    },
+    downloadArtifact: async (messageId, artifactId) => {
+      const saved = await browserApiFallback.chat.saveMessageArtifact({ messageId });
+      return {
+        ...saved,
+        artifact: saved.message.artifacts?.find((artifact) => artifact.id === artifactId) ?? saved.artifact,
+        downloadedPath: "/browser-preview/downloads/browser-preview-response.md"
+      };
     }
   },
   runtime: {

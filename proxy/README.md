@@ -5,7 +5,7 @@ Tiny Cloud Run proxy for Second Brain AI calls. Chat sends only bounded local Gr
 ## Routes
 
 - `/generate` accepts the Second Brain chat proxy contract.
-- `/chat/completions`, `/v1/chat/completions`, and `/generate/chat/completions` accept OpenAI-compatible chat-completions requests for Graphify and enrichment.
+- `/chat/completions`, `/v1/chat/completions`, `/generate/chat/completions`, and `/generate/v1/chat/completions` accept OpenAI-compatible chat-completions requests for Graphify and enrichment.
 
 ## Environment
 

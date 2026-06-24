@@ -73,8 +73,10 @@ const generatedDirectoryNames = new Set([
   "paper-components"
 ]);
 const sourceCommentDirectoryName = "source-comments";
+const inlineCommentEnd = "<!-- /second-brain:comment -->";
 const maxTreeChildren = 80;
 const maxRelationItems = 32;
+const inlineCommentExtensions = new Set([".css", ".html", ".log", ".md", ".markdown", ".mdx", ".txt", ".xml", ".yaml", ".yml"]);
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
@@ -230,6 +232,36 @@ function parseGraphJson(raw: string): GraphJson {
   return graph;
 }
 
+function canInlineSourceComment(filePath: string): boolean {
+  return inlineCommentExtensions.has(path.extname(filePath).toLowerCase());
+}
+
+function readInlineSourceComment(content: string): string {
+  const pattern = /<!-- second-brain:comment[\s\S]*?-->\s*([\s\S]*?)\s*<!-- \/second-brain:comment -->/;
+  const match = content.match(pattern);
+  return match?.[1]?.trim() ?? "";
+}
+
+function titleFromMarkdown(content: string, fallback: string): string {
+  const heading = content.match(/^#\s+(.+)$/m)?.[1]?.trim();
+  return heading || fallback;
+}
+
+function displaySourceName(sourceFile: string): string {
+  const base = path.basename(sourceFile);
+  return base.replace(/-\d{12,}-[a-f0-9]{8}(?=\.[^.]+$|$)/i, "");
+}
+
+function compactPreview(content: string): string {
+  return content
+    .replace(new RegExp(`<!-- second-brain:comment[\\s\\S]*?${inlineCommentEnd}`, "g"), "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#>*_`|[\]()~-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 320);
+}
+
 export class ExplorerService {
   constructor(
     private readonly rawVaultPath: string,
@@ -378,7 +410,7 @@ export class ExplorerService {
       }
     }
 
-    for (const artifact of await this.readPaperArtifactIndex()) {
+    for (const artifact of await this.readArtifactIndex()) {
       const score = scoreText(
         compactSearchText([
           artifact.title,
@@ -404,7 +436,7 @@ export class ExplorerService {
     const files = await this.listSourceFiles();
     return files.map((sourceFile) => ({
       sourceFile,
-      title: path.basename(sourceFile)
+      title: displaySourceName(sourceFile)
     }));
   }
 
@@ -429,6 +461,47 @@ export class ExplorerService {
       content,
       updatedAt: fileStat.mtime.toISOString()
     };
+  }
+
+  async getOpenPath(nodeId: string): Promise<string> {
+    const parsed = parseTreeId(nodeId);
+
+    if (parsed.kind === "root") {
+      return this.rawVaultPath;
+    }
+
+    if (parsed.kind === "folder" || parsed.kind === "source") {
+      return this.resolveRawPath(parsed.value);
+    }
+
+    if (parsed.kind === "artifact") {
+      const artifact = await this.getArtifactRecord(parsed.value);
+      if (!artifact) {
+        throw new Error(`Paper artifact not found: ${parsed.value}`);
+      }
+
+      return this.resolveRawPath(artifact.artifactPath);
+    }
+
+    if (parsed.kind === "graph") {
+      const index = await this.readGraphIndex();
+      const node = index.nodeById.get(parsed.value);
+      if (!node) {
+        throw new Error(`Graph node not found: ${parsed.value}`);
+      }
+
+      const artifactPath = this.normalizeSourceFile(asString(node.artifact_path) || asString(node.artifactPath));
+      if (artifactPath) {
+        return this.resolveRawPath(artifactPath);
+      }
+
+      const sourceFile = this.normalizeSourceFile(asString(node.source_file) || asString(node.sourceFile));
+      if (sourceFile) {
+        return this.resolveRawPath(sourceFile);
+      }
+    }
+
+    throw new Error("This Explorer item does not map to a local file.");
   }
 
   private async listDirectory(relativeDirectory: string, index?: GraphIndex): Promise<ExplorerNode[]> {
@@ -473,7 +546,7 @@ export class ExplorerService {
   private async getSourceChildren(sourceFile: string): Promise<ExplorerNode[]> {
     const index = await this.readGraphIndex();
     const sourceNodeIds = index.sourceNodeIds.get(sourceFile) ?? new Set<string>();
-    const artifactNodes = (await this.readPaperArtifactIndex())
+    const artifactNodes = (await this.readArtifactIndex())
       .filter((artifact) => artifact.sourceFile === sourceFile)
       .map((artifact) => this.artifactTreeNode(artifact));
 
@@ -518,7 +591,7 @@ export class ExplorerService {
 
   private async getGraphNodeChildren(nodeId: string): Promise<ExplorerNode[]> {
     const index = await this.readGraphIndex();
-    const artifacts = (await this.readPaperArtifactIndex())
+    const artifacts = (await this.readArtifactIndex())
       .filter((artifact) => artifact.graphNodeId === nodeId)
       .map((artifact) => this.artifactTreeNode(artifact));
     const structuralChildren = (index.outgoing.get(nodeId) ?? [])
@@ -573,7 +646,7 @@ export class ExplorerService {
 
     return {
       id: sourceId(sourceFile),
-      title: path.basename(sourceFile),
+      title: displaySourceName(sourceFile),
       kind: "source",
       sourceFile,
       type: path.extname(sourceFile).replace(/^\./, "").toUpperCase() || "FILE",
@@ -818,6 +891,17 @@ export class ExplorerService {
     }
   }
 
+  private async readArtifactIndex(): Promise<PaperArtifactRecord[]> {
+    const [paper, converted, wiki] = await Promise.all([
+      this.readPaperArtifactIndex(),
+      this.readConvertedArtifactIndex(),
+      this.readWikiArtifactIndex()
+    ]);
+    return [...paper, ...converted, ...wiki].sort(
+      (left, right) => left.sourceFile.localeCompare(right.sourceFile) || left.title.localeCompare(right.title)
+    );
+  }
+
   private async readPaperArtifactIndex(): Promise<PaperArtifactRecord[]> {
     const root = path.join(this.rawVaultPath, "paper-components");
     const records: PaperArtifactRecord[] = [];
@@ -884,8 +968,104 @@ export class ExplorerService {
     return records.sort((left, right) => left.sourceFile.localeCompare(right.sourceFile) || left.title.localeCompare(right.title));
   }
 
+  private async readConvertedArtifactIndex(): Promise<PaperArtifactRecord[]> {
+    const root = path.join(this.rawVaultPath, "graphify-out", "converted");
+    const records: PaperArtifactRecord[] = [];
+    const sourceFiles = await this.listSourceFiles();
+    const sourceByBase = new Map(
+      sourceFiles.map((sourceFile) => [path.basename(sourceFile, path.extname(sourceFile)).toLowerCase(), sourceFile] as const)
+    );
+
+    const visit = async (directory: string): Promise<void> => {
+      let entries;
+      try {
+        entries = await readdir(directory, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const entryPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await visit(entryPath);
+          continue;
+        }
+
+        if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".md")) {
+          continue;
+        }
+
+        try {
+          const relativePath = this.toRelativeSourcePath(entryPath);
+          const content = await readFile(entryPath, "utf8");
+          const base = path.basename(entry.name, path.extname(entry.name)).toLowerCase();
+          const sourceFile = sourceByBase.get(base) ?? relativePath;
+          records.push({
+            artifactId: `converted:${relativePath}`,
+            artifactKind: "artifact",
+            title: titleFromMarkdown(content, path.basename(entry.name)),
+            sourceFile,
+            artifactPath: relativePath,
+            preview: compactPreview(content),
+            llmFormat: "markdown"
+          });
+        } catch {
+          // Converted sidecars are rebuildable.
+        }
+      }
+    };
+
+    await visit(root);
+    return records;
+  }
+
+  private async readWikiArtifactIndex(): Promise<PaperArtifactRecord[]> {
+    const root = path.join(this.rawVaultPath, "graphify-out", "wiki");
+    const records: PaperArtifactRecord[] = [];
+
+    const visit = async (directory: string): Promise<void> => {
+      let entries;
+      try {
+        entries = await readdir(directory, { withFileTypes: true });
+      } catch {
+        return;
+      }
+
+      for (const entry of entries) {
+        const entryPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) {
+          await visit(entryPath);
+          continue;
+        }
+
+        if (!entry.isFile() || !entry.name.toLowerCase().endsWith(".md")) {
+          continue;
+        }
+
+        try {
+          const relativePath = this.toRelativeSourcePath(entryPath);
+          const content = await readFile(entryPath, "utf8");
+          records.push({
+            artifactId: `wiki:${relativePath}`,
+            artifactKind: entry.name.toLowerCase() === "index.md" ? "graph" : "artifact",
+            title: titleFromMarkdown(content, path.basename(entry.name, ".md")),
+            sourceFile: relativePath,
+            artifactPath: relativePath,
+            preview: compactPreview(content),
+            llmFormat: "markdown"
+          });
+        } catch {
+          // Wiki exports are rebuildable.
+        }
+      }
+    };
+
+    await visit(root);
+    return records;
+  }
+
   private async getArtifactRecord(inputArtifactId: string): Promise<PaperArtifactRecord | null> {
-    const artifacts = await this.readPaperArtifactIndex();
+    const artifacts = await this.readArtifactIndex();
     return artifacts.find((artifact) => artifact.artifactId === inputArtifactId) ?? null;
   }
 
@@ -926,6 +1106,18 @@ export class ExplorerService {
   }
 
   private async readSourceComment(sourceFile: string): Promise<string> {
+    try {
+      const sourcePath = this.resolveRawPath(sourceFile);
+      if (canInlineSourceComment(sourcePath)) {
+        const inlineComment = readInlineSourceComment(await readFile(sourcePath, "utf8"));
+        if (inlineComment) {
+          return inlineComment;
+        }
+      }
+    } catch {
+      // Fall back to sidecar comments below.
+    }
+
     try {
       return await readFile(path.join(this.rawVaultPath, sourceCommentDirectoryName, sourceCommentFileName(sourceFile)), "utf8");
     } catch {

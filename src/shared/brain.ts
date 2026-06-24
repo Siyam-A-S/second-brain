@@ -132,6 +132,12 @@ export type GraphifyIngestionResult = {
   updatedAt: string;
 };
 
+export type GroupGraphNodesInput = {
+  label: string;
+  relation: string;
+  nodeIds: string[];
+};
+
 export type AiSettings = {
   endpoint: string;
   apiKey: string;
@@ -199,11 +205,26 @@ export type GraphifyContextResult = {
 
 export type ChatRole = "user" | "assistant" | "system";
 
+export type ChatArtifactSource = "assistant-text" | "proxy-attachment" | "local-tool";
+
+export type ChatArtifact = {
+  id: string;
+  messageId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  kind: "text" | "binary";
+  storagePath: string;
+  createdAt: string;
+  source: ChatArtifactSource;
+};
+
 export type ChatMessage = {
   id: string;
   role: ChatRole;
   content: string;
   createdAt: string;
+  artifacts?: ChatArtifact[] | undefined;
   grounding?: {
     graphify: GraphifyContextResult;
     api?: unknown;
@@ -228,6 +249,67 @@ export type ChatSendInput = {
 export type ChatResponse = {
   thread: ChatThread;
   message: ChatMessage;
+};
+
+export type ChatStreamEvent =
+  | {
+      type: "started";
+      generationId: string;
+      thread: ChatThread;
+      userMessage: ChatMessage;
+      assistantMessage: ChatMessage;
+    }
+  | {
+      type: "grounding";
+      generationId: string;
+      messageId: string;
+      grounding: GraphifyContextResult;
+    }
+  | {
+      type: "delta";
+      generationId: string;
+      messageId: string;
+      delta: string;
+      content: string;
+    }
+  | {
+      type: "artifact";
+      generationId: string;
+      messageId: string;
+      artifact: ChatArtifact;
+    }
+  | {
+      type: "done";
+      generationId: string;
+      thread: ChatThread;
+      message: ChatMessage;
+    }
+  | {
+      type: "error";
+      generationId: string;
+      thread?: ChatThread | undefined;
+      message?: ChatMessage | undefined;
+      error: string;
+    }
+  | {
+      type: "aborted";
+      generationId: string;
+      thread?: ChatThread | undefined;
+      message?: ChatMessage | undefined;
+    };
+
+export type SaveChatArtifactInput = {
+  messageId: string;
+  title?: string | undefined;
+  content?: string | undefined;
+};
+
+export type ChatArtifactActionResult = {
+  thread: ChatThread;
+  message: ChatMessage;
+  artifact: ChatArtifact;
+  ingestion?: GraphifyIngestionResult | undefined;
+  downloadedPath?: string | undefined;
 };
 
 export type RuntimeDependencyCheck = {
@@ -468,6 +550,11 @@ export type TrackerIngestionStatus = {
   stage: "idle" | "extracting" | "saved" | "skipped" | "error";
   message: string;
   error?: string | undefined;
+};
+
+export type ClipboardIngestibleItemsResult = {
+  items: ProcessDroppedItem[];
+  message: string;
 };
 
 export type ProcessDroppedItemsResult = {

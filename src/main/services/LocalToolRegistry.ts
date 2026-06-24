@@ -8,6 +8,7 @@ import type {
 } from "../../shared/brain";
 import type { GraphRagService } from "./GraphRagService";
 import type { GraphifyContextService } from "./GraphifyContextService";
+import type { ArtifactToolService, CreateToolArtifactInput } from "./ArtifactToolService";
 
 export type LocalToolName =
   | "search_board_topology"
@@ -16,7 +17,12 @@ export type LocalToolName =
   | "export_board_plaintext"
   | "query_graphify_context"
   | "explain_graph_node"
-  | "trace_graph_path";
+  | "trace_graph_path"
+  | "create_markdown_artifact"
+  | "create_pdf_artifact"
+  | "create_docx_artifact"
+  | "create_xlsx_artifact"
+  | "create_image_artifact";
 
 export type LocalToolSpec = {
   name: LocalToolName;
@@ -67,6 +73,14 @@ const traceGraphPathSchema = {
   to: z.string().min(1)
 };
 
+const createArtifactSchema = {
+  filename: z.string().optional(),
+  title: z.string().optional(),
+  text: z.string().optional(),
+  contentBase64: z.string().optional(),
+  mimeType: z.string().optional()
+};
+
 export function createGraphRagToolRegistry(graphRag: GraphRagService): LocalToolDefinition[] {
   return createLocalToolRegistry({ graphRag });
 }
@@ -74,6 +88,7 @@ export function createGraphRagToolRegistry(graphRag: GraphRagService): LocalTool
 export function createLocalToolRegistry(options: {
   graphRag: GraphRagService;
   graphifyContext?: GraphifyContextService | undefined;
+  artifactTools?: ArtifactToolService | undefined;
 }): LocalToolDefinition[] {
   const { graphRag } = options;
   const tools: LocalToolDefinition[] = [
@@ -196,6 +211,80 @@ export function createLocalToolRegistry(options: {
           return options.graphifyContext?.tracePath(parsed.from, parsed.to) as Promise<GraphifyContextResult>;
         }
       }
+    );
+  }
+
+  if (options.artifactTools) {
+    const artifactTools = options.artifactTools;
+    const artifactTool = (
+      name: LocalToolName,
+      title: string,
+      description: string,
+      extension: string,
+      mimeType: string
+    ): LocalToolDefinition => ({
+      name,
+      title,
+      description,
+      inputSchema: createArtifactSchema,
+      inputSchemaJson: {
+        type: "object",
+        properties: {
+          filename: { type: "string" },
+          title: { type: "string" },
+          text: { type: "string" },
+          contentBase64: { type: "string" },
+          mimeType: { type: "string" }
+        }
+      },
+      execute: async (input) =>
+        artifactTools.createArtifact(
+          z.object(createArtifactSchema).parse(input) as CreateToolArtifactInput,
+          {
+            extension,
+            mimeType,
+            fallbackText:
+              "This artifact was created by a local MCP tool. Provide contentBase64 for binary-specific output."
+          }
+        )
+    });
+
+    tools.push(
+      artifactTool(
+        "create_markdown_artifact",
+        "Create Markdown artifact",
+        "Create a Markdown chat artifact from text.",
+        ".md",
+        "text/markdown"
+      ),
+      artifactTool(
+        "create_pdf_artifact",
+        "Create PDF artifact",
+        "Create a PDF artifact. Prefer contentBase64 containing PDF bytes; text is saved as a fallback.",
+        ".pdf",
+        "application/pdf"
+      ),
+      artifactTool(
+        "create_docx_artifact",
+        "Create DOCX artifact",
+        "Create a DOCX artifact. Prefer contentBase64 containing DOCX bytes; text is saved as a fallback.",
+        ".docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ),
+      artifactTool(
+        "create_xlsx_artifact",
+        "Create XLSX artifact",
+        "Create an XLSX artifact. Prefer contentBase64 containing XLSX bytes; text is saved as a fallback.",
+        ".xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ),
+      artifactTool(
+        "create_image_artifact",
+        "Create image artifact",
+        "Create an SVG image artifact. Prefer contentBase64 containing image bytes when a different image format is required.",
+        ".svg",
+        "image/svg+xml"
+      )
     );
   }
 

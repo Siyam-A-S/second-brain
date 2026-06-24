@@ -225,8 +225,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1782239254.0330865,
-    "ast_hash": "d043b7bb31025277db4feda0289d6275",
+    "mtime": 1782192125.2952805,
+    "ast_hash": "22cf9ea9c583d654d71680499624f0f8",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -355,13 +355,13 @@
     "semantic_hash": ""
   },
   "proxy/main.py": {
-    "mtime": 1782239257.2391014,
-    "ast_hash": "0e8b26657d36add2bba140d6a48c4038",
+    "mtime": 1781849600.2669976,
+    "ast_hash": "94b06d1dc8a1ba53493bbf97bf857b00",
     "semantic_hash": ""
   },
   "proxy/README.md": {
-    "mtime": 1782239260.9351184,
-    "ast_hash": "b0d920889944dc8ead93f39212950f6b",
+    "mtime": 1781849626.6581402,
+    "ast_hash": "4a6e122009721adc6cf3bdab941b4404",
     "semantic_hash": ""
   },
   "proxy/requirements.txt": {

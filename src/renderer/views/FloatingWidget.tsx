@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { motion } from "framer-motion";
 import { createDropPayload } from "../lib/dropPayload";
-import type { FilesDroppedPayload, ProcessDroppedItem, WidgetMovePayload } from "../../shared/ipc";
+import type { FilesDroppedPayload, ProcessDroppedItem, TrackerIngestionStatus, WidgetMovePayload } from "../../shared/ipc";
 
 type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
 
@@ -93,6 +93,35 @@ export function FloatingWidget(): JSX.Element {
         window.cancelAnimationFrame(moveFrame.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    return window.api.tracker.onIngestionStatus((status: TrackerIngestionStatus) => {
+      if (status.stage === "extracting") {
+        setIsIngesting(true);
+        setTone("success");
+        return;
+      }
+
+      if (status.stage === "saved") {
+        setIsIngesting(false);
+        setTone("success");
+        window.setTimeout(() => setTone("idle"), 900);
+        return;
+      }
+
+      if (status.stage === "error") {
+        setIsIngesting(false);
+        setTone("error");
+        window.setTimeout(() => setTone("idle"), 1_500);
+        return;
+      }
+
+      if (status.stage === "skipped" || status.stage === "idle") {
+        setIsIngesting(false);
+        setTone("idle");
+      }
+    });
   }, []);
 
   const flushMove = (): void => {

@@ -181,6 +181,8 @@ async def chat(request: Request, authorization: str | None = Header(default=None
 @app.post("/chat/completions")
 @app.post("/v1/chat/completions")
 @app.post("/generate/chat/completions")
+@app.post("/generate/v1/chat/completions")
+@app.post("/chat/v1/chat/completions")
 async def chat_completions(request: Request, authorization: str | None = Header(default=None)) -> JSONResponse:
     raw_body = await request.body()
     enforce_request_limits(raw_body)

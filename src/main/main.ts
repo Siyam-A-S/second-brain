@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, ipcMain, screen } from "electron";
+import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell } from "electron";
 import path from "node:path";
 import {
   boardChannels,
@@ -18,13 +18,17 @@ import {
   windowChannels
 } from "../shared/ipc";
 import type {
+  ChatStreamEvent,
+  ClipboardIngestibleItemsResult,
   CreateProjectInput,
   CreateTrackerInput,
   ExportBoardPlaintextInput,
   ListBrainNodesInput,
   ProjectSelectionInput,
   RenameProjectInput,
+  SaveChatArtifactInput,
   SearchBrainNodesInput,
+  GroupGraphNodesInput,
   UpdateAiSettingsInput,
   UpdateAppSettingsInput,
   UpdateManagedProxySettingsInput,
@@ -38,6 +42,7 @@ import type { BoardRule, BoardSearchInput } from "../shared/types/board";
 import type { ExplorerSearchInput } from "../shared/types/explorer";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
+import { ArtifactToolService } from "./services/ArtifactToolService";
 import { ChatService } from "./services/ChatService";
 import { DependencyRuntimeService } from "./services/DependencyRuntimeService";
 import { EmbeddingService } from "./services/EmbeddingService";
@@ -213,6 +218,79 @@ function restoreMainWindow(): void {
   mainWindow.focus();
 }
 
+function clipboardFilePathsFromText(value: string): string[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      if (line.startsWith("file://")) {
+        try {
+          return decodeURIComponent(new URL(line).pathname);
+        } catch {
+          return "";
+        }
+      }
+
+      return path.isAbsolute(line) ? line : "";
+    })
+    .filter(Boolean);
+}
+
+function readClipboardIngestibleItems(): ClipboardIngestibleItemsResult {
+  const items: ClipboardIngestibleItemsResult["items"] = [];
+  const fileText = clipboard.read("FileNameW") || clipboard.read("FileName") || "";
+  const fileCandidates = clipboardFilePathsFromText(fileText || clipboard.readText("clipboard"));
+
+  for (const filePath of fileCandidates) {
+    items.push({
+      name: path.basename(filePath),
+      path: filePath
+    });
+  }
+
+  const image = clipboard.readImage();
+  if (!image.isEmpty()) {
+    items.push({
+      name: `clipboard-image-${Date.now()}.png`,
+      type: "image/png",
+      buffer: Array.from(image.toPNG())
+    });
+  }
+
+  const html = clipboard.readHTML();
+  if (html.trim()) {
+    items.push({
+      name: `clipboard-html-${Date.now()}.html`,
+      type: "text/html",
+      text: html
+    });
+  }
+
+  const text = clipboard.readText();
+  if (text.trim() && fileCandidates.length === 0) {
+    items.push({
+      name: `clipboard-text-${Date.now()}.txt`,
+      type: "text/plain",
+      text
+    });
+  }
+
+  const unique = new Map<string, ClipboardIngestibleItemsResult["items"][number]>();
+  for (const item of items) {
+    const key = item.path ? `path:${item.path}` : `${item.name}:${item.type}:${item.text?.slice(0, 80) ?? ""}`;
+    unique.set(key, item);
+  }
+
+  const normalized = Array.from(unique.values());
+  return {
+    items: normalized,
+    message: normalized.length
+      ? `Clipboard contains ${normalized.length} ingestible item${normalized.length === 1 ? "" : "s"}.`
+      : "Clipboard does not contain ingestible content."
+  };
+}
+
 function requireRuntime(): ProjectRuntime {
   if (!projectRuntime) {
     throw new Error("Project runtime has not initialized.");
@@ -234,13 +312,17 @@ async function createProjectRuntime(
   const graphExplorer = new ExplorerService(graphify.getRawVaultPath(), graphify.getGraphPath());
   const graphRag = new GraphRagService(storage, embeddings);
   const graphifyContext = new GraphifyContextService(graphify.getRawVaultPath());
+  const artifactTools = new ArtifactToolService(project.rootPath);
   const tracker = new TrackerService(project.trackerPath);
   const nextMcpServer = new LocalMcpServer({
     graphRag,
     graphifyContext,
+    artifactTools,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const chat = new ChatService(project.rootPath, nextMcpServer, () => aiSettings.getAppSettings());
+  const chat = new ChatService(project.rootPath, nextMcpServer, () => aiSettings.getAppSettings(), (items) =>
+    graphify.ingestDroppedItems(items)
+  );
 
   await aiSettings.initialize();
   await storage.initialize();
@@ -411,6 +493,9 @@ function registerIpc(
   ipcMain.handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
     requireRuntime().graphify.collapseSourceInto(sourceFile, targetSourceFile)
   );
+  ipcMain.handle(boardChannels.groupNodes, (_event, input: GroupGraphNodesInput) =>
+    requireRuntime().graphify.groupGraphNodes(input)
+  );
   ipcMain.handle(boardChannels.renameSource, (_event, sourceFile: string, newName: string) =>
     requireRuntime().graphify.renameSource(sourceFile, newName)
   );
@@ -428,7 +513,15 @@ function registerIpc(
   ipcMain.handle(explorerChannels.getArtifactContent, (_event, artifactId: string) =>
     requireRuntime().graphExplorer.getArtifactContent(artifactId)
   );
+  ipcMain.handle(explorerChannels.openNode, async (_event, nodeId: string) => {
+    const filePath = await requireRuntime().graphExplorer.getOpenPath(nodeId);
+    const error = await shell.openPath(filePath);
+    if (error) {
+      throw new Error(error);
+    }
+  });
   ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
+  ipcMain.handle(clipboardChannels.readIngestibleItems, () => readClipboardIngestibleItems());
   ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
     clipboard.writeText(text);
   });
@@ -444,8 +537,39 @@ function registerIpc(
     requireRuntime().chat.createThread(input)
   );
   ipcMain.handle(chatChannels.sendMessage, (_event, input) => requireRuntime().chat.sendMessage(input));
+  ipcMain.handle(chatChannels.sendMessageStream, (event, input) =>
+    requireRuntime().chat.sendMessageStream(input, (streamEvent: ChatStreamEvent) => {
+      event.sender.send(chatChannels.streamEvent, streamEvent);
+    })
+  );
+  ipcMain.handle(chatChannels.abortGeneration, (_event, generationId: string) =>
+    requireRuntime().chat.abortGeneration(generationId)
+  );
   ipcMain.handle(chatChannels.deleteThread, (_event, threadId: string) => requireRuntime().chat.deleteThread(threadId));
   ipcMain.handle(chatChannels.getGrounding, (_event, messageId: string) => requireRuntime().chat.getGrounding(messageId));
+  ipcMain.handle(chatChannels.saveMessageArtifact, (_event, input: SaveChatArtifactInput) =>
+    requireRuntime().chat.saveMessageArtifact(input)
+  );
+  ipcMain.handle(chatChannels.ingestArtifact, (_event, messageId: string, artifactId: string) =>
+    requireRuntime().chat.ingestArtifact(messageId, artifactId)
+  );
+  ipcMain.handle(chatChannels.downloadArtifact, async (_event, messageId: string, artifactId: string) => {
+    const saved = await requireRuntime().chat.saveMessageArtifact({ messageId });
+    const artifact = saved.message.artifacts?.find((candidate) => candidate.id === artifactId) ?? saved.artifact;
+    const options: Electron.SaveDialogOptions = {
+      defaultPath: artifact.filename,
+      properties: ["createDirectory"]
+    };
+    const result = mainWindow && !mainWindow.isDestroyed()
+      ? await dialog.showSaveDialog(mainWindow, options)
+      : await dialog.showSaveDialog(options);
+
+    if (result.canceled || !result.filePath) {
+      return saved;
+    }
+
+    return requireRuntime().chat.downloadArtifact(messageId, artifact.id, result.filePath);
+  });
   ipcMain.handle(runtimeChannels.getDependencyStatus, () => runtimeDependencies.getStatus());
   ipcMain.handle(runtimeChannels.installOrRepairDependencies, () => runtimeDependencies.installOrRepair());
 }

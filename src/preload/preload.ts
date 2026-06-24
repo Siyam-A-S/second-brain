@@ -1,16 +1,19 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
   BoardRule,
+  ChatStreamEvent,
   ChatSendInput,
   CreateProjectInput,
   CreateTrackerInput,
   FilesDroppedPayload,
   ExportBoardPlaintextInput,
   ExplorerSearchInput,
+  GroupGraphNodesInput,
   ListBrainNodesInput,
   ProcessDroppedItem,
   ProjectSelectionInput,
   RenameProjectInput,
+  SaveChatArtifactInput,
   SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   SecondBrainApi,
@@ -63,6 +66,7 @@ const boardChannels = {
   getGraphHtml: "get-graph-html",
   removeSource: "remove-board-source",
   collapseSource: "collapse-board-source",
+  groupNodes: "group-board-nodes",
   renameSource: "rename-board-source",
   commentSource: "comment-board-source",
   search: "search-board"
@@ -74,7 +78,8 @@ const explorerChannels = {
   getDetails: "explorer-get-details",
   search: "explorer-search",
   getSourceOptions: "explorer-get-source-options",
-  getArtifactContent: "explorer-get-artifact-content"
+  getArtifactContent: "explorer-get-artifact-content",
+  openNode: "explorer-open-node"
 } as const;
 
 const projectChannels = {
@@ -103,7 +108,8 @@ const researchChannels = {
 
 const clipboardChannels = {
   readText: "clipboard-read-text",
-  writeText: "clipboard-write-text"
+  writeText: "clipboard-write-text",
+  readIngestibleItems: "clipboard-read-ingestible-items"
 } as const;
 
 const settingsChannels = {
@@ -118,8 +124,14 @@ const chatChannels = {
   listThreads: "chat-list-threads",
   createThread: "chat-create-thread",
   sendMessage: "chat-send-message",
+  sendMessageStream: "chat-send-message-stream",
+  streamEvent: "chat-stream-event",
+  abortGeneration: "chat-abort-generation",
   deleteThread: "chat-delete-thread",
-  getGrounding: "chat-get-grounding"
+  getGrounding: "chat-get-grounding",
+  saveMessageArtifact: "chat-save-message-artifact",
+  ingestArtifact: "chat-ingest-artifact",
+  downloadArtifact: "chat-download-artifact"
 } as const;
 
 const runtimeChannels = {
@@ -194,6 +206,7 @@ const api: SecondBrainApi = {
     removeSource: (sourceFile: string) => ipcRenderer.invoke(boardChannels.removeSource, sourceFile),
     collapseSource: (sourceFile: string, targetSourceFile: string) =>
       ipcRenderer.invoke(boardChannels.collapseSource, sourceFile, targetSourceFile),
+    groupNodes: (input: GroupGraphNodesInput) => ipcRenderer.invoke(boardChannels.groupNodes, input),
     renameSource: (sourceFile: string, newName: string) =>
       ipcRenderer.invoke(boardChannels.renameSource, sourceFile, newName),
     commentSource: (sourceFile: string, comment: string) =>
@@ -206,10 +219,12 @@ const api: SecondBrainApi = {
     getDetails: (nodeId: string) => ipcRenderer.invoke(explorerChannels.getDetails, nodeId),
     search: (input: ExplorerSearchInput) => ipcRenderer.invoke(explorerChannels.search, input),
     getSourceOptions: () => ipcRenderer.invoke(explorerChannels.getSourceOptions),
-    getArtifactContent: (artifactId: string) => ipcRenderer.invoke(explorerChannels.getArtifactContent, artifactId)
+    getArtifactContent: (artifactId: string) => ipcRenderer.invoke(explorerChannels.getArtifactContent, artifactId),
+    openNode: (nodeId: string) => ipcRenderer.invoke(explorerChannels.openNode, nodeId)
   },
   clipboard: {
     readText: () => ipcRenderer.invoke(clipboardChannels.readText),
+    readIngestibleItems: () => ipcRenderer.invoke(clipboardChannels.readIngestibleItems),
     writeText: (text: string) => ipcRenderer.invoke(clipboardChannels.writeText, text)
   },
   settings: {
@@ -224,8 +239,25 @@ const api: SecondBrainApi = {
     listThreads: () => ipcRenderer.invoke(chatChannels.listThreads),
     createThread: (input?: { title?: string | undefined }) => ipcRenderer.invoke(chatChannels.createThread, input),
     sendMessage: (input: ChatSendInput) => ipcRenderer.invoke(chatChannels.sendMessage, input),
+    sendMessageStream: (input: ChatSendInput) => ipcRenderer.invoke(chatChannels.sendMessageStream, input),
+    onStreamEvent: (handler: (event: ChatStreamEvent) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, payload: ChatStreamEvent): void => {
+        handler(payload);
+      };
+
+      ipcRenderer.on(chatChannels.streamEvent, listener);
+      return () => {
+        ipcRenderer.removeListener(chatChannels.streamEvent, listener);
+      };
+    },
+    abortGeneration: (generationId: string) => ipcRenderer.invoke(chatChannels.abortGeneration, generationId),
     deleteThread: (threadId: string) => ipcRenderer.invoke(chatChannels.deleteThread, threadId),
-    getGrounding: (messageId: string) => ipcRenderer.invoke(chatChannels.getGrounding, messageId)
+    getGrounding: (messageId: string) => ipcRenderer.invoke(chatChannels.getGrounding, messageId),
+    saveMessageArtifact: (input: SaveChatArtifactInput) => ipcRenderer.invoke(chatChannels.saveMessageArtifact, input),
+    ingestArtifact: (messageId: string, artifactId: string) =>
+      ipcRenderer.invoke(chatChannels.ingestArtifact, messageId, artifactId),
+    downloadArtifact: (messageId: string, artifactId: string) =>
+      ipcRenderer.invoke(chatChannels.downloadArtifact, messageId, artifactId)
   },
   runtime: {
     getDependencyStatus: () => ipcRenderer.invoke(runtimeChannels.getDependencyStatus),

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import type { ExecFileOptions } from "node:child_process";
-import { readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import type { GraphifyContextCitation, GraphifyContextResult } from "../../shared/brain";
 
@@ -17,6 +17,9 @@ const defaultTimeoutMs = 90_000;
 const defaultBudget = 1800;
 const maxHydratedContextFiles = 8;
 const maxHydratedContextChars = 2800;
+const maxCardDefinitionCount = 10;
+const maxWikiArticleCount = 3;
+const maxWikiArticleChars = 2200;
 const maxReadableContextBytes = 2 * 1024 * 1024;
 const readableContextExtensions = new Set([
   ".c",
@@ -140,6 +143,18 @@ function excerptTitle(relativePath: string, sourceLocation: string | undefined):
   return sourceLocation ? `${relativePath} ${sourceLocation}` : relativePath;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function compact(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 export class GraphifyContextService {
   private readonly graphPath: string;
 
@@ -186,9 +201,18 @@ export class GraphifyContextService {
         const stdout = await this.runInvocation(invocation);
         const citations = extractCitations(stdout);
         const hydratedContext = await this.hydrateContext(stdout, citations);
+        const graphCards = await this.hydrateGraphCardDefinitions(stdout, citations);
+        const wikiContext = await this.hydrateWikiContext(stdout, graphCards.communityIds);
         return {
           query,
-          stdout: hydratedContext ? `${stdout}\n\nRelevant local excerpts:\n${hydratedContext}` : stdout,
+          stdout: [
+            stdout,
+            graphCards.text ? `Relevant card definitions:\n${graphCards.text}` : "",
+            wikiContext ? `Relevant community wiki:\n${wikiContext}` : "",
+            hydratedContext ? `Relevant local excerpts:\n${hydratedContext}` : ""
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
           budget,
           command: formatInvocation(invocation),
           graphPath: this.graphPath,
@@ -357,6 +381,117 @@ export class GraphifyContextService {
     }
 
     return hydrated.join("\n\n").slice(0, maxHydratedContextFiles * (maxHydratedContextChars + 120));
+  }
+
+  private async hydrateGraphCardDefinitions(
+    stdout: string,
+    citations: GraphifyContextCitation[]
+  ): Promise<{ text: string; communityIds: string[] }> {
+    try {
+      const graph = asRecord(JSON.parse(await readFile(this.graphPath, "utf8")));
+      const nodes = Array.isArray(graph?.nodes) ? graph.nodes.map(asRecord).filter((node): node is Record<string, unknown> => Boolean(node)) : [];
+      const haystack = stdout.toLowerCase();
+      const citationSources = new Set(citations.map((citation) => citation.sourceFile));
+      const selected: string[] = [];
+      const communityIds = new Set<string>();
+
+      for (const node of nodes) {
+        const id = asString(node.id);
+        const label = asString(node.label) || asString(node.title) || id;
+        const sourceFile = asString(node.source_file) || asString(node.sourceFile);
+        const definition = asString(node.contextual_definition) || asString(node.flashcard_definition);
+        const summary = definition || asString(node.summary) || asString(node.description);
+        const community = asString(node.community);
+        const matches =
+          Boolean(id && haystack.includes(id.toLowerCase())) ||
+          Boolean(label && haystack.includes(label.toLowerCase())) ||
+          Boolean(sourceFile && citationSources.has(sourceFile));
+
+        if (!matches) {
+          continue;
+        }
+
+        if (community) {
+          communityIds.add(community);
+        }
+
+        if (summary) {
+          selected.push(`- ${label}: ${compact(summary).slice(0, 520)}`);
+        }
+
+        if (selected.length >= maxCardDefinitionCount) {
+          break;
+        }
+      }
+
+      return {
+        text: selected.join("\n"),
+        communityIds: Array.from(communityIds).slice(0, maxWikiArticleCount)
+      };
+    } catch {
+      return { text: "", communityIds: [] };
+    }
+  }
+
+  private async hydrateWikiContext(stdout: string, communityIds: string[]): Promise<string> {
+    const wikiRoot = path.join(this.rawVaultPath, "graphify-out", "wiki");
+    let entries;
+
+    try {
+      entries = await readdir(wikiRoot, { withFileTypes: true });
+    } catch {
+      return "";
+    }
+
+    const files = entries
+      .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".md"))
+      .map((entry) => path.join(wikiRoot, entry.name));
+    const scored: Array<{ score: number; filePath: string }> = [];
+    const tokens = compact(stdout)
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((token) => token.length > 4)
+      .slice(0, 80);
+
+    for (const filePath of files) {
+      const fileName = path.basename(filePath).toLowerCase();
+      let score = fileName === "index.md" ? 1 : 0;
+      for (const communityId of communityIds) {
+        if (fileName.includes(communityId.toLowerCase())) {
+          score += 12;
+        }
+      }
+
+      try {
+        const content = (await readFile(filePath, "utf8")).slice(0, maxWikiArticleChars * 2).toLowerCase();
+        for (const token of tokens) {
+          if (content.includes(token)) {
+            score += 1;
+          }
+        }
+      } catch {
+        continue;
+      }
+
+      if (score > 0) {
+        scored.push({ score, filePath });
+      }
+    }
+
+    const excerpts: string[] = [];
+    for (const item of scored.sort((left, right) => right.score - left.score).slice(0, maxWikiArticleCount)) {
+      try {
+        const relativePath = path.relative(this.rawVaultPath, item.filePath).split(path.sep).join(path.posix.sep);
+        const content = (await readFile(item.filePath, "utf8")).trim();
+        if (content) {
+          excerpts.push([`--- ${relativePath} ---`, content.slice(0, maxWikiArticleChars)].join("\n"));
+        }
+      } catch {
+        // Wiki exports are rebuildable, so skip unreadable files.
+      }
+    }
+
+    return excerpts.join("\n\n");
   }
 
   private resolveContextPath(candidate: string): string {

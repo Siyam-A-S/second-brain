@@ -3,7 +3,14 @@ import {
   AlertCircle,
   Check,
   ChevronRight,
+  File,
+  FileArchive,
+  FileAudio,
+  FileCode,
+  FileImage,
+  FileSpreadsheet,
   FileText,
+  FileVideo,
   Folder,
   GitMerge,
   Loader2,
@@ -15,6 +22,7 @@ import {
   Trash2,
   X
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type {
   ExplorerArtifactContent,
   ExplorerNode,
@@ -29,16 +37,38 @@ type ExplorerWorkbenchProps = {
 
 type LoadState = "idle" | "loading" | "ready" | "error";
 
-function nodeIcon(node: ExplorerNode): typeof Folder {
+function nodeIcon(node: ExplorerNode): LucideIcon {
+  if (node.kind === "source" || node.kind === "artifact") {
+    const value = `${node.artifactPath ?? node.sourceFile ?? node.title ?? ""} ${node.type ?? ""} ${node.llmFormat ?? ""}`.toLowerCase();
+    if (/\.(png|jpe?g|gif|webp|svg|heic)$/.test(value)) {
+      return FileImage;
+    }
+    if (/\.(mp4|mov|webm|mkv|avi)$/.test(value)) {
+      return FileVideo;
+    }
+    if (/\.(mp3|wav|m4a|flac|ogg)$/.test(value)) {
+      return FileAudio;
+    }
+    if (/\.(csv|xlsx?|gsheet)$/.test(value)) {
+      return FileSpreadsheet;
+    }
+    if (/\.(ts|tsx|js|jsx|py|go|rs|java|c|cpp|h|cs|rb|php|css|html|json|yaml|yml|xml|sql)$/.test(value)) {
+      return FileCode;
+    }
+    if (/\.(zip|tar|gz|7z|rar)$/.test(value)) {
+      return FileArchive;
+    }
+    if (/\.(md|markdown|txt|pdf|docx?|gdoc)$/.test(value)) {
+      return FileText;
+    }
+    return File;
+  }
+
   switch (node.kind) {
     case "folder":
       return Folder;
-    case "source":
-      return FileText;
     case "related-group":
       return Network;
-    case "artifact":
-      return FileText;
     case "component":
     case "entity":
     default:
@@ -64,7 +94,8 @@ function formatDate(value?: string): string {
 }
 
 function displaySource(sourceFile: string): string {
-  return sourceFile.split(/[\\/]/).filter(Boolean).at(-1) ?? sourceFile;
+  const base = sourceFile.split(/[\\/]/).filter(Boolean).at(-1) ?? sourceFile;
+  return base.replace(/-\d{12,}-[a-f0-9]{8}(?=\.[^.]+$|$)/i, "");
 }
 
 function kindLabel(node: ExplorerNode): string {
@@ -93,7 +124,8 @@ function TreeRow({
   loadingIds,
   childrenById,
   onToggle,
-  onSelect
+  onSelect,
+  onOpen
 }: {
   node: ExplorerNode;
   depth: number;
@@ -103,6 +135,7 @@ function TreeRow({
   childrenById: Map<string, ExplorerNode[]>;
   onToggle: (node: ExplorerNode) => void;
   onSelect: (node: ExplorerNode) => void;
+  onOpen: (node: ExplorerNode) => void;
 }): JSX.Element {
   const Icon = nodeIcon(node);
   const isExpanded = expanded.has(node.id);
@@ -118,6 +151,7 @@ function TreeRow({
         style={{ paddingLeft: `${8 + depth * 18}px` }}
         type="button"
         onClick={() => onSelect(node)}
+        onDoubleClick={() => onOpen(node)}
       >
         <span
           className="grid h-6 w-6 shrink-0 place-items-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -133,7 +167,9 @@ function TreeRow({
           ) : null}
         </span>
         <Icon className="shrink-0 text-slate-400" size={16} />
-        <span className="min-w-0 flex-1 truncate font-medium">{node.title}</span>
+        <span className="min-w-0 flex-1 truncate font-medium">
+          {node.kind === "source" ? displaySource(node.sourceFile ?? node.title) : node.title}
+        </span>
         {node.childrenCount > 0 ? <span className="text-xs text-slate-400">{node.childrenCount}</span> : null}
       </button>
       {isExpanded && children.length > 0 ? (
@@ -149,6 +185,7 @@ function TreeRow({
               childrenById={childrenById}
               onToggle={onToggle}
               onSelect={onSelect}
+              onOpen={onOpen}
             />
           ))}
         </div>
@@ -175,17 +212,14 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
   const [renameDraft, setRenameDraft] = useState("");
   const [commenting, setCommenting] = useState(false);
   const [commentDraft, setCommentDraft] = useState("");
-  const [merging, setMerging] = useState(false);
-  const [targetSourceFile, setTargetSourceFile] = useState("");
+  const [grouping, setGrouping] = useState(false);
+  const [groupLabel, setGroupLabel] = useState("");
+  const [groupRelation, setGroupRelation] = useState("forms_request_pipeline");
+  const [groupNodeDraft, setGroupNodeDraft] = useState("");
   const [artifactContent, setArtifactContent] = useState<ExplorerArtifactContent | null>(null);
   const [artifactLoading, setArtifactLoading] = useState(false);
 
   const selectedNode = details?.node ?? emptyDetailsNode();
-  const sourceTargets = useMemo(
-    () => sourceOptions.filter((option) => option.sourceFile && option.sourceFile !== selectedNode.sourceFile),
-    [selectedNode.sourceFile, sourceOptions]
-  );
-
   useEffect(() => {
     void loadRoot();
   }, [refreshKey]);
@@ -212,15 +246,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
 
     return () => window.clearTimeout(timer);
   }, [searchQuery, refreshKey]);
-
-  useEffect(() => {
-    if (!merging) {
-      setTargetSourceFile("");
-      return;
-    }
-
-    setTargetSourceFile((current) => (current && sourceTargets.some((option) => option.sourceFile === current) ? current : sourceTargets[0]?.sourceFile ?? ""));
-  }, [merging, sourceTargets]);
 
   async function loadRoot(): Promise<void> {
     setLoadState("loading");
@@ -278,7 +303,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
     setActionError(null);
     setRenaming(false);
     setCommenting(false);
-    setMerging(false);
+    setGrouping(false);
     setArtifactContent(null);
 
     try {
@@ -297,6 +322,21 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
       const message = error instanceof Error ? error.message : "Unable to read node details.";
       setArtifactLoading(false);
       setActionError(message);
+    }
+  }
+
+  async function openNode(node: ExplorerNode): Promise<void> {
+    if (node.kind === "related-group" || node.kind === "entity" || node.kind === "component") {
+      if (!node.artifactPath && !node.sourceFile) {
+        return;
+      }
+    }
+
+    try {
+      setActionError(null);
+      await window.api.explorer.openNode(node.id);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Unable to open this Explorer item.");
     }
   }
 
@@ -370,18 +410,59 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
     }
   }
 
-  async function mergeSelectedSource(): Promise<void> {
-    if (!selectedNode.sourceFile || !targetSourceFile) {
+  async function startGroupingSelected(): Promise<void> {
+    const seedIds = new Set<string>();
+    if (selectedNode.graphNodeId) {
+      seedIds.add(selectedNode.graphNodeId);
+    }
+
+    if (selectedNode.sourceFile && selectedNode.isExpandable) {
+      try {
+        const children = await loadChildren(selectedNode);
+        for (const child of children) {
+          if (child.graphNodeId) {
+            seedIds.add(child.graphNodeId);
+          }
+        }
+      } catch {
+        // The editable text area below still lets the user paste graph node IDs.
+      }
+    }
+
+    setGroupLabel(selectedNode.title ? `${selectedNode.title} relationship` : "Group Relationship");
+    setGroupNodeDraft(Array.from(seedIds).join("\n"));
+    setGrouping((value) => !value);
+  }
+
+  function parsedGroupNodeIds(): string[] {
+    return Array.from(
+      new Set(
+        groupNodeDraft
+          .split(/[,\n]/)
+          .map((value) => value.trim())
+          .filter(Boolean)
+      )
+    );
+  }
+
+  async function groupSelectedNodes(): Promise<void> {
+    const nodeIds = parsedGroupNodeIds();
+    if (nodeIds.length < 3) {
+      setActionError("Add at least three graph node IDs for a group relationship.");
       return;
     }
 
     setActionError(null);
     try {
-      await window.api.board.collapseSource(selectedNode.sourceFile, targetSourceFile);
-      setMerging(false);
+      await window.api.board.groupNodes({
+        label: groupLabel,
+        relation: groupRelation,
+        nodeIds
+      });
+      setGrouping(false);
       await refreshAfterSourceAction();
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Unable to merge source.");
+      setActionError(error instanceof Error ? error.message : "Unable to group graph nodes.");
     }
   }
 
@@ -448,8 +529,12 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                   className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-slate-600 transition hover:bg-white/60 hover:text-slate-950"
                   type="button"
                   onClick={() => void selectNode(result)}
+                  onDoubleClick={() => void openNode(result)}
                 >
-                  <Search size={14} className="shrink-0 text-slate-400" />
+                  {(() => {
+                    const Icon = nodeIcon(result);
+                    return <Icon size={14} className="shrink-0 text-slate-400" />;
+                  })()}
                   <span className="min-w-0 flex-1 truncate">{result.title}</span>
                   <span className="text-xs text-slate-400">{kindLabel(result)}</span>
                 </button>
@@ -469,6 +554,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                   childrenById={childrenById}
                   onToggle={toggleNode}
                   onSelect={(node) => void selectNode(node)}
+                  onOpen={(node) => void openNode(node)}
                 />
               ))}
             </div>
@@ -486,18 +572,24 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                     onChange={(event) => setRenameDraft(event.target.value)}
                   />
                 ) : (
-                  <h2 className="truncate text-xl font-semibold text-slate-950">{selectedNode.title}</h2>
+                  <div className="flex min-w-0 items-center gap-2">
+                    {(() => {
+                      const Icon = nodeIcon(selectedNode);
+                      return <Icon className="shrink-0 text-slate-400" size={20} />;
+                    })()}
+                    <h2 className="truncate text-xl font-semibold text-slate-950">{selectedNode.title}</h2>
+                  </div>
                 )}
                 <p className="mt-1 text-sm text-slate-500">
                   {kindLabel(selectedNode)}
-                  {selectedNode.sourceFile ? ` · ${selectedNode.sourceFile}` : ""}
+                  {selectedNode.sourceFile ? ` · ${displaySource(selectedNode.sourceFile)}` : ""}
                   {selectedNode.page ? ` · page ${selectedNode.page}` : ""}
                   {selectedNode.modifiedAt ? ` · ${formatDate(selectedNode.modifiedAt)}` : ""}
                 </p>
               </div>
-              {selectedNode.kind === "source" && selectedNode.sourceFile ? (
+              {(selectedNode.kind === "source" && selectedNode.sourceFile) || selectedNode.graphNodeId ? (
                 <div className="flex shrink-0 items-center gap-1">
-                  {renaming ? (
+                  {renaming && selectedNode.sourceFile ? (
                     <>
                       <button
                         className="grid h-9 w-9 place-items-center rounded-md bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
@@ -541,22 +633,23 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                         <MessageSquare size={16} />
                       </button>
                       <button
-                        className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
-                        disabled={sourceTargets.length === 0}
-                        title="Merge source"
+                        className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-950"
+                        title="Group relationship"
                         type="button"
-                        onClick={() => setMerging((value) => !value)}
+                        onClick={() => void startGroupingSelected()}
                       >
                         <GitMerge size={16} />
                       </button>
-                      <button
-                        className="grid h-9 w-9 place-items-center rounded-md text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
-                        title="Delete source"
-                        type="button"
-                        onClick={() => void removeSelectedSource()}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {selectedNode.sourceFile ? (
+                        <button
+                          className="grid h-9 w-9 place-items-center rounded-md text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
+                          title="Delete source"
+                          type="button"
+                          onClick={() => void removeSelectedSource()}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      ) : null}
                     </>
                   )}
                 </div>
@@ -595,28 +688,52 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
             </div>
           ) : null}
 
-          {merging && selectedNode.sourceFile ? (
-            <div className="flex items-center gap-2 border-b border-slate-200/80 px-5 py-4">
-              <select
-                className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-slate-400"
-                value={targetSourceFile}
-                onChange={(event) => setTargetSourceFile(event.target.value)}
-              >
-                {sourceTargets.map((option) => (
-                  <option key={option.sourceFile} value={option.sourceFile}>
-                    {option.title}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!targetSourceFile}
-                type="button"
-                onClick={() => void mergeSelectedSource()}
-              >
-                <GitMerge size={15} />
-                Merge
-              </button>
+          {grouping ? (
+            <div className="space-y-3 border-b border-slate-200/80 px-5 py-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
+                <label className="min-w-0">
+                  <span className="text-xs font-semibold uppercase text-slate-500">Group Label</span>
+                  <input
+                    className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                    value={groupLabel}
+                    onChange={(event) => setGroupLabel(event.target.value)}
+                  />
+                </label>
+                <label className="min-w-0">
+                  <span className="text-xs font-semibold uppercase text-slate-500">Relation</span>
+                  <input
+                    className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                    value={groupRelation}
+                    onChange={(event) => setGroupRelation(event.target.value)}
+                  />
+                </label>
+              </div>
+              <label className="block">
+                <span className="text-xs font-semibold uppercase text-slate-500">Graph Node IDs</span>
+                <textarea
+                  className="mt-1 h-28 w-full resize-none rounded-md border border-slate-200 bg-white/80 px-3 py-2 font-mono text-xs leading-5 text-slate-800 outline-none transition focus:border-slate-400"
+                  value={groupNodeDraft}
+                  onChange={(event) => setGroupNodeDraft(event.target.value)}
+                />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="h-8 rounded-md px-3 text-xs font-semibold text-slate-500 transition hover:bg-white hover:text-slate-950"
+                  type="button"
+                  onClick={() => setGrouping(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="inline-flex h-8 items-center gap-2 rounded-md bg-slate-950 px-3 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={parsedGroupNodeIds().length < 3}
+                  type="button"
+                  onClick={() => void groupSelectedNodes()}
+                >
+                  <GitMerge size={14} />
+                  Group Relationship
+                </button>
+              </div>
             </div>
           ) : null}
 
@@ -669,7 +786,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-950">{item.title}</p>
                           <p className="truncate text-xs text-slate-500">
-                            {item.type} · {item.sourceFile}
+                            {item.type} · {displaySource(item.sourceFile)}
                           </p>
                         </div>
                         <span className="rounded-full border border-slate-200 bg-white/70 px-2 py-1 text-xs text-slate-500">

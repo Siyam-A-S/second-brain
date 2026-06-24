@@ -58,6 +58,25 @@ type ChatCompletionResponse = {
   };
 };
 
+type ChatCompletionChunk = {
+  choices?: Array<{
+    delta?: {
+      content?:
+        | string
+        | Array<{
+            text?: string | undefined;
+            content?: string | undefined;
+          }>
+        | null
+        | undefined;
+    };
+    text?: string | null | undefined;
+  }>;
+  error?: {
+    message?: string | undefined;
+  };
+};
+
 const defaultEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultModel = "local-model";
 const requestTimeoutMs = Number(process.env.SECOND_BRAIN_LLM_TIMEOUT_MS ?? 120_000);
@@ -172,6 +191,37 @@ function extractChatContent(payload: ChatCompletionResponse): string {
     normalizeOptionalLine(choice?.text) ||
     normalizeOptionalLine(payload.output_text)
   );
+}
+
+function extractChunkDelta(payload: ChatCompletionChunk): string {
+  const choice = payload.choices?.[0];
+  const content = choice?.delta?.content;
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => part.text ?? part.content ?? "")
+      .filter(Boolean)
+      .join("");
+  }
+
+  return typeof choice?.text === "string" ? choice.text : "";
+}
+
+function parseSseLines(raw: string): Array<string> {
+  return raw
+    .split(/\r?\n\r?\n/)
+    .map((event) =>
+      event
+        .split(/\r?\n/)
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.replace(/^data:\s?/, ""))
+        .join("\n")
+        .trim()
+    )
+    .filter(Boolean);
 }
 
 export class LlmService {
@@ -309,6 +359,17 @@ export class LlmService {
     method?: AgentMethodConfig | undefined;
   }): Promise<string> {
     return this.enqueue(() => this.completeTextWithRetry(input));
+  }
+
+  async streamText(
+    input: {
+      messages: ChatMessage[];
+      method?: AgentMethodConfig | undefined;
+    },
+    onDelta: (delta: string, content: string) => void,
+    abortSignal?: AbortSignal
+  ): Promise<string> {
+    return this.enqueue(() => this.streamTextAttempt(input, onDelta, abortSignal));
   }
 
   private async completeTextWithRetry(input: {
@@ -456,6 +517,135 @@ export class LlmService {
 
       throw new Error(`AI endpoint is unavailable. ${detail}`);
     } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async streamTextAttempt(
+    input: {
+      messages: ChatMessage[];
+      method?: AgentMethodConfig | undefined;
+    },
+    onDelta: (delta: string, content: string) => void,
+    abortSignal?: AbortSignal
+  ): Promise<string> {
+    const settings = await this.settingsProvider();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
+    const forwardAbort = (): void => controller.abort();
+    abortSignal?.addEventListener("abort", forwardAbort, { once: true });
+
+    try {
+      const body: Record<string, unknown> = {
+        model: settings.model || defaultModel,
+        max_tokens: input.method?.maxTokens ?? 1024,
+        stream: true,
+        messages: input.messages
+      };
+
+      if (input.method?.temperature !== undefined) {
+        body.temperature = input.method.temperature;
+      }
+
+      const response = await fetch(normalizeChatCompletionsEndpoint(settings.endpoint), {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
+          "Content-Type": "application/json",
+          "Accept": "text/event-stream"
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(
+          `AI endpoint responded with ${response.status} ${response.statusText}: ${sanitizeErrorText(detail)}`
+        );
+      }
+
+      if (!response.body) {
+        throw new Error("AI endpoint did not return a streaming response body.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let content = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const splitIndex = Math.max(buffer.lastIndexOf("\n\n"), buffer.lastIndexOf("\r\n\r\n"));
+        if (splitIndex < 0) {
+          continue;
+        }
+
+        const ready = buffer.slice(0, splitIndex);
+        buffer = buffer.slice(splitIndex).replace(/^\r?\n\r?\n/, "");
+
+        for (const data of parseSseLines(ready)) {
+          if (data === "[DONE]") {
+            return content;
+          }
+
+          let payload: ChatCompletionChunk;
+          try {
+            payload = JSON.parse(data) as ChatCompletionChunk;
+          } catch {
+            continue;
+          }
+
+          if (payload.error?.message) {
+            throw new Error(`AI endpoint returned an error: ${sanitizeErrorText(payload.error.message)}`);
+          }
+
+          const delta = extractChunkDelta(payload);
+          if (delta) {
+            content += delta;
+            onDelta(delta, content);
+          }
+        }
+      }
+
+      for (const data of parseSseLines(buffer)) {
+        if (data === "[DONE]") {
+          break;
+        }
+        try {
+          const delta = extractChunkDelta(JSON.parse(data) as ChatCompletionChunk);
+          if (delta) {
+            content += delta;
+            onDelta(delta, content);
+          }
+        } catch {
+          // Ignore trailing malformed chunks from providers that close abruptly.
+        }
+      }
+
+      if (!content) {
+        throw new Error("AI endpoint returned an empty streaming response.");
+      }
+
+      return content;
+    } catch (error) {
+      const detail = errorText(error);
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(`AI endpoint stream was aborted. ${detail}`);
+      }
+
+      if (detail.startsWith("AI endpoint")) {
+        throw new Error(detail);
+      }
+
+      throw new Error(`AI endpoint stream is unavailable. ${detail}`);
+    } finally {
+      abortSignal?.removeEventListener("abort", forwardAbort);
       clearTimeout(timeout);
     }
   }

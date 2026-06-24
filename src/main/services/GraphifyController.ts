@@ -13,6 +13,7 @@ import type {
   GraphDefinitionStatus,
   GraphHtmlDocument,
   GraphifyIngestionResult,
+  GroupGraphNodesInput,
   ProcessDroppedItem,
   ResearchDependencyReport
 } from "../../shared/ipc";
@@ -23,6 +24,8 @@ type GraphifyGraph = {
   nodes?: unknown[];
   links?: unknown[];
   edges?: unknown[];
+  graph?: Record<string, unknown>;
+  hyperedges?: unknown[];
 };
 type GraphifyNodeRecord = Record<string, unknown> & {
   id?: unknown;
@@ -42,6 +45,8 @@ type GraphifyNodeRecord = Record<string, unknown> & {
 type GraphifyLinkRecord = {
   source?: unknown;
   target?: unknown;
+  relation?: unknown;
+  hyperedge_id?: unknown;
 };
 type GraphifyProviderConfig = {
   base_url: string;
@@ -110,6 +115,20 @@ const collapsibleTextExtensions = new Set([
   ".yaml",
   ".yml"
 ]);
+const inlineCommentExtensions = new Set([
+  ".css",
+  ".html",
+  ".log",
+  ".md",
+  ".markdown",
+  ".mdx",
+  ".txt",
+  ".xml",
+  ".yaml",
+  ".yml"
+]);
+const inlineCommentStartPattern = "<!-- second-brain:comment";
+const inlineCommentEnd = "<!-- /second-brain:comment -->";
 
 function safeFilePart(value: string): string {
   const parsed = path.parse(value);
@@ -196,10 +215,33 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
+function normalizeOpenAiBasePath(pathname: string): string {
+  let normalized = pathname.replace(/\/+$/, "");
+
+  normalized = normalized.replace(/\/(?:generate|chat)\/v1\/chat\/completions$/i, "/v1");
+  normalized = normalized.replace(/\/(?:generate|chat)\/chat\/completions$/i, "/v1");
+  normalized = normalized.replace(/\/(?:generate|chat)$/i, "/v1");
+  normalized = normalized.replace(/\/v1\/chat\/completions$/i, "/v1");
+  normalized = normalized.replace(/\/chat\/completions$/i, "");
+
+  return normalized || "";
+}
+
 function normalizeOpenAiBaseUrl(endpoint: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
+  if (!trimmed) {
+    return "";
+  }
 
-  return trimmed.replace(/\/chat\/completions$/i, "");
+  try {
+    const parsed = new URL(trimmed);
+    parsed.pathname = normalizeOpenAiBasePath(parsed.pathname);
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().replace(/\/+$/, "");
+  } catch {
+    return normalizeOpenAiBasePath(trimmed).replace(/\/+$/, "");
+  }
 }
 
 function numberFromEnv(value: string | undefined, fallback: number, minimum = 0): number {
@@ -254,6 +296,41 @@ function asString(value: unknown): string {
 function isCollapsibleTextSource(filePath: string): boolean {
   const extension = path.extname(filePath).toLowerCase();
   return collapsibleTextExtensions.has(extension);
+}
+
+function canInlineSourceComment(filePath: string): boolean {
+  return inlineCommentExtensions.has(path.extname(filePath).toLowerCase());
+}
+
+function sanitizeInlineCommentBody(value: string): string {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/-->/g, "- ->")
+    .trim();
+}
+
+function stripInlineSourceComment(content: string): string {
+  const pattern = /(?:\n{0,2})<!-- second-brain:comment[\s\S]*?<!-- \/second-brain:comment -->\n*/g;
+  return content.replace(pattern, "\n").replace(/\n{3,}/g, "\n\n").trimStart();
+}
+
+function writeInlineSourceComment(content: string, comment: string): string {
+  const withoutExisting = stripInlineSourceComment(content);
+  const block = [
+    `${inlineCommentStartPattern} id="${randomUUID()}" updated="${new Date().toISOString()}" -->`,
+    sanitizeInlineCommentBody(comment),
+    inlineCommentEnd,
+    ""
+  ].join("\n");
+
+  return `${block}\n${withoutExisting.trimStart()}`;
+}
+
+function readInlineSourceComment(content: string): string {
+  const pattern = /<!-- second-brain:comment[\s\S]*?-->\s*([\s\S]*?)\s*<!-- \/second-brain:comment -->/;
+  const match = content.match(pattern);
+  return match?.[1]?.trim() ?? "";
 }
 
 function isSpreadsheetSource(filePath: string): boolean {
@@ -775,6 +852,10 @@ function normalizeGraphLinks(value: unknown): GraphifyLinkRecord[] {
     : [];
 }
 
+function normalizeSourceReference(value: string): string {
+  return value.split(/[\\/]/).join(path.posix.sep).replace(/^\.?\//, "");
+}
+
 export class GraphifyController {
   private readonly graphOutPath: string;
   private readonly graphPath: string;
@@ -1022,6 +1103,118 @@ export class GraphifyController {
     return this.queueUpdate(0);
   }
 
+  async groupGraphNodes(input: GroupGraphNodesInput): Promise<GraphifyIngestionResult> {
+    await this.initialize();
+
+    const nodeIds = Array.from(new Set(input.nodeIds.map((nodeId) => nodeId.trim()).filter(Boolean)));
+    if (nodeIds.length < 3) {
+      throw new Error("Choose at least three graph nodes for a group relationship.");
+    }
+
+    const label = input.label.trim() || "Group Relationship";
+    const relation =
+      input.relation
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, "_")
+        .replace(/^_+|_+$/g, "") || "grouped_with";
+    const graph = JSON.parse(await readFile(this.graphPath, "utf8")) as GraphifyGraph;
+    const knownNodeIds = new Set(normalizeGraphNodes(graph.nodes).map((node) => asString(node.id)).filter(Boolean));
+    const missing = nodeIds.filter((nodeId) => !knownNodeIds.has(nodeId));
+    if (missing.length > 0) {
+      throw new Error(`Graph nodes were not found: ${missing.slice(0, 6).join(", ")}`);
+    }
+
+    const backupPath = path.join(this.graphOutPath, `graph.backup-${Date.now()}-${randomUUID().slice(0, 8)}.json`);
+    await copyFile(this.graphPath, backupPath);
+
+    const hyperedgeId = `manual_group_${createHash("sha1")
+      .update(`${label}:${relation}:${nodeIds.join("|")}:${Date.now()}`)
+      .digest("hex")
+      .slice(0, 12)}`;
+    const now = new Date().toISOString();
+    const hyperedge = {
+      id: hyperedgeId,
+      label,
+      nodes: nodeIds,
+      relation,
+      confidence: "EXTRACTED",
+      confidence_score: 1,
+      source_file: `manual-hyperedge:${hyperedgeId}`,
+      captured_at: now
+    };
+
+    const existingHyperedges = this.mergeHyperedges(graph, hyperedge);
+    graph.hyperedges = existingHyperedges;
+    graph.graph = {
+      ...(asRecord(graph.graph) ?? {}),
+      hyperedges: existingHyperedges
+    };
+
+    const linkKey = graph.links ? "links" : "edges";
+    const links = normalizeGraphLinks(graph[linkKey]);
+    for (let leftIndex = 0; leftIndex < nodeIds.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < nodeIds.length; rightIndex += 1) {
+        const source = nodeIds[leftIndex];
+        const target = nodeIds[rightIndex];
+        const exists = links.some(
+          (link) =>
+            linkEndpointId(link.source) === source &&
+            linkEndpointId(link.target) === target &&
+            asString(link.hyperedge_id) === hyperedgeId
+        );
+
+        if (!exists) {
+          links.push({
+            source,
+            target,
+            relation: "grouped_with",
+            hyperedge_id: hyperedgeId,
+            label,
+            weight: 0.35,
+            confidence: "EXTRACTED",
+            confidence_score: 1,
+            source_file: `manual-hyperedge:${hyperedgeId}`,
+            captured_at: now
+          } as GraphifyLinkRecord);
+        }
+      }
+    }
+    graph[linkKey] = links;
+
+    try {
+      await writeFile(this.graphPath, `${JSON.stringify(graph, null, 2)}\n`, "utf8");
+      const settings = this.getGraphifyLocalModelSettings();
+      const aiSettings = await this.getAiSettings();
+      const clusterStdout = await this.runGraphifyCli(["cluster-only", "."], settings, "Graphify cluster-only failed", aiSettings);
+      const htmlStdout = await this.ensureGraphHtml(settings, aiSettings);
+      const wikiStdout = await this.refreshWikiExport(settings, aiSettings);
+      await this.stopMcp();
+
+      const counts = await this.readGraphCounts();
+      return {
+        completed: true,
+        writtenFileCount: 0,
+        graphPath: this.graphPath,
+        reportPath: this.reportPath,
+        ...counts,
+        stdout: [
+          `Added group relationship "${label}" over ${nodeIds.length} graph nodes.`,
+          `Graph backup: ${backupPath}`,
+          clusterStdout ? `Graphify cluster-only:\n${clusterStdout}` : "",
+          htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",
+          wikiStdout ? `Graphify wiki export:\n${wikiStdout}` : ""
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+        updatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      await copyFile(backupPath, this.graphPath);
+      throw error;
+    }
+  }
+
   async renameSource(sourceFile: string, newName: string): Promise<GraphifyIngestionResult> {
     await this.initialize();
     const sourcePath = this.resolveRemovableSourcePath(sourceFile);
@@ -1049,12 +1242,24 @@ export class GraphifyController {
       }
     }
 
-    await rename(sourcePath, nextPath);
-    await this.renameSourceComment(sourceFile, path.relative(this.rawVaultPath, nextPath));
-    await this.removeGeneratedComponentsForSource(sourceFile);
-    await this.resetGraphifyOutputs();
+    const nextSourceFile = path.relative(this.rawVaultPath, nextPath).split(path.sep).join(path.posix.sep);
+    const graph = JSON.parse(await readFile(this.graphPath, "utf8")) as GraphifyGraph;
+    const patchedGraph = this.patchGraphSourceReferences(graph, sourceFile, nextSourceFile) as GraphifyGraph;
 
-    return this.queueUpdate(0);
+    await rename(sourcePath, nextPath);
+    try {
+      await this.renameSourceComment(sourceFile, nextSourceFile);
+      return await this.writeGraphWithOrganizationRefresh(patchedGraph, [
+        `Renamed source "${sourceFile}" to "${nextSourceFile}" without re-extracting the vault.`
+      ]);
+    } catch (error) {
+      try {
+        await rename(nextPath, sourcePath);
+      } catch {
+        // Leave the original error visible; the graph backup was restored by the refresh helper.
+      }
+      throw error;
+    }
   }
 
   async commentSource(sourceFile: string, comment: string): Promise<GraphifyIngestionResult> {
@@ -1062,7 +1267,11 @@ export class GraphifyController {
     const sourcePath = this.resolveRemovableSourcePath(sourceFile);
     const trimmed = comment.trim();
 
-    if (!trimmed) {
+    if (canInlineSourceComment(sourcePath)) {
+      const current = await readFile(sourcePath, "utf8");
+      await writeFile(sourcePath, trimmed ? writeInlineSourceComment(current, trimmed) : stripInlineSourceComment(current), "utf8");
+      await this.removeSourceComment(sourceFile);
+    } else if (!trimmed) {
       await this.removeSourceComment(sourceFile);
     } else {
       const commentPath = this.resolveSourceCommentPath(sourceFile);
@@ -1082,8 +1291,13 @@ export class GraphifyController {
       );
     }
 
-    await this.resetGraphifyOutputs();
-    return this.queueUpdate(0);
+    const graph = JSON.parse(await readFile(this.graphPath, "utf8")) as GraphifyGraph;
+    this.addGraphSourceComment(graph, sourceFile, trimmed);
+    return this.writeGraphWithOrganizationRefresh(graph, [
+      trimmed
+        ? `Saved source comment for "${sourceFile}" and attached it to matching graph nodes without re-extracting the vault.`
+        : `Removed source comment for "${sourceFile}" without re-extracting the vault.`
+    ]);
   }
 
   async ingestDroppedItems(items: ProcessDroppedItem[]): Promise<GraphifyIngestionResult> {
@@ -1421,12 +1635,14 @@ export class GraphifyController {
     }
 
     const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
+    const wikiStdout = await this.refreshWikiExport(primarySettings, aiSettings);
     const combinedStdout = [
       spreadsheetStdout,
       paperStdout,
       stdout,
       process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
-      htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : ""
+      htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",
+      wikiStdout ? `Graphify wiki export:\n${wikiStdout}` : ""
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -1482,6 +1698,203 @@ export class GraphifyController {
     }
 
     return stdout;
+  }
+
+  private async refreshWikiExport(
+    settings = this.getGraphifyLocalModelSettings(),
+    aiSettings?: AiSettings
+  ): Promise<string> {
+    if (process.env.SECOND_BRAIN_GRAPHIFY_WIKI === "0") {
+      return "";
+    }
+
+    const effectiveAiSettings = aiSettings ?? (await this.getAiSettings());
+    try {
+      return await this.runGraphifyCli(["export", "wiki", "--graph", "graphify-out/graph.json"], settings, "Graphify wiki export failed", effectiveAiSettings);
+    } catch (firstError) {
+      try {
+        const clusterStdout = await this.runGraphifyCli(["cluster-only", "."], settings, "Graphify cluster-only failed before wiki export", effectiveAiSettings);
+        const wikiStdout = await this.runGraphifyCli(["export", "wiki", "--graph", "graphify-out/graph.json"], settings, "Graphify wiki export failed", effectiveAiSettings);
+        return [clusterStdout ? `Graphify cluster-only before wiki export:\n${clusterStdout}` : "", wikiStdout]
+          .filter(Boolean)
+          .join("\n\n");
+      } catch (secondError) {
+        return [
+          "Graphify wiki export skipped.",
+          `Initial failure: ${errorMessage(firstError)}`,
+          `Retry failure: ${errorMessage(secondError)}`
+        ].join("\n");
+      }
+    }
+  }
+
+  private mergeHyperedges(graph: GraphifyGraph, nextHyperedge: Record<string, unknown>): Array<Record<string, unknown>> {
+    const existing = [
+      ...(Array.isArray(graph.hyperedges) ? graph.hyperedges : []),
+      ...(Array.isArray(asRecord(graph.graph)?.hyperedges) ? (asRecord(graph.graph)?.hyperedges as unknown[]) : [])
+    ];
+    const byId = new Map<string, Record<string, unknown>>();
+
+    for (const item of existing) {
+      const record = asRecord(item);
+      const id = asString(record?.id);
+      if (record && id) {
+        byId.set(id, record);
+      }
+    }
+
+    byId.set(asString(nextHyperedge.id), nextHyperedge);
+    return Array.from(byId.values());
+  }
+
+  private patchGraphSourceReferences(value: unknown, previousSourceFile: string, nextSourceFile: string): unknown {
+    const previous = normalizeSourceReference(previousSourceFile);
+    const next = normalizeSourceReference(nextSourceFile);
+
+    if (Array.isArray(value)) {
+      return value.map((item) => this.patchGraphSourceReferences(item, previous, next));
+    }
+
+    const record = asRecord(value);
+    if (!record) {
+      return value;
+    }
+
+    const patched: Record<string, unknown> = {};
+    for (const [key, raw] of Object.entries(record)) {
+      if (typeof raw === "string") {
+        const normalized = normalizeSourceReference(raw);
+        if ((key === "source_file" || key === "sourceFile") && normalized === previous) {
+          patched[key] = next;
+          continue;
+        }
+
+        if ((key === "artifact_path" || key === "artifactPath") && normalized === previous) {
+          patched[key] = next;
+          continue;
+        }
+
+        if ((key === "source_location" || key === "sourceLocation") && normalized.startsWith(previous)) {
+          patched[key] = `${next}${raw.slice(previousSourceFile.length)}`;
+          continue;
+        }
+      }
+
+      patched[key] = this.patchGraphSourceReferences(raw, previous, next);
+    }
+
+    return patched;
+  }
+
+  private addGraphSourceComment(graph: GraphifyGraph, sourceFile: string, comment: string): void {
+    const normalizedSource = normalizeSourceReference(sourceFile);
+    const nodes = normalizeGraphNodes(graph.nodes);
+    const links = normalizeGraphLinks(graph.links ?? graph.edges);
+    const now = new Date().toISOString();
+    const matchingNodes = nodes.filter((node) => {
+      const nodeSource = normalizeSourceReference(asString(node.source_file) || asString(node.sourceFile));
+      return nodeSource === normalizedSource;
+    });
+
+    for (const node of matchingNodes) {
+      node.user_comment = comment || undefined;
+      node.user_comment_updated_at = comment ? now : undefined;
+    }
+
+    const sourceComments = asRecord(graph.graph)?.source_comments;
+    graph.graph = {
+      ...(asRecord(graph.graph) ?? {}),
+      source_comments: {
+        ...(asRecord(sourceComments) ?? {}),
+        [normalizedSource]: comment
+          ? {
+              comment,
+              updated_at: now
+            }
+          : undefined
+      }
+    };
+
+    const commentNodeId = `source_comment:${createHash("sha1").update(normalizedSource).digest("hex").slice(0, 12)}`;
+    const remainingNodes = nodes.filter((node) => asString(node.id) !== commentNodeId);
+    const remainingLinks = links.filter((link) => {
+      const source = linkEndpointId(link.source);
+      const target = linkEndpointId(link.target);
+      return source !== commentNodeId && target !== commentNodeId;
+    });
+
+    if (comment) {
+      remainingNodes.push({
+        id: commentNodeId,
+        label: `Comment: ${path.basename(normalizedSource)}`,
+        type: "source_comment",
+        summary: comment,
+        source_file: normalizedSource,
+        source_location: normalizedSource,
+        confidence: "EXTRACTED",
+        confidence_score: 1,
+        updated_at: now
+      });
+
+      for (const node of matchingNodes.slice(0, 24)) {
+        remainingLinks.push({
+          source: commentNodeId,
+          target: asString(node.id),
+          relation: "comments_on",
+          confidence: "EXTRACTED",
+          confidence_score: 1,
+          source_file: normalizedSource,
+          updated_at: now
+        } as GraphifyLinkRecord);
+      }
+    }
+
+    graph.nodes = remainingNodes;
+    if (graph.links) {
+      graph.links = remainingLinks;
+    } else {
+      graph.edges = remainingLinks;
+    }
+  }
+
+  private async writeGraphWithOrganizationRefresh(
+    graph: GraphifyGraph,
+    successLines: string[]
+  ): Promise<GraphifyIngestionResult> {
+    const backupPath = path.join(this.graphOutPath, `graph.backup-${Date.now()}-${randomUUID().slice(0, 8)}.json`);
+    await copyFile(this.graphPath, backupPath);
+
+    try {
+      await writeFile(this.graphPath, `${JSON.stringify(graph, null, 2)}\n`, "utf8");
+      const settings = this.getGraphifyLocalModelSettings();
+      const aiSettings = await this.getAiSettings();
+      const clusterStdout = await this.runGraphifyCli(["cluster-only", "."], settings, "Graphify cluster-only failed", aiSettings);
+      const htmlStdout = await this.ensureGraphHtml(settings, aiSettings);
+      const wikiStdout = await this.refreshWikiExport(settings, aiSettings);
+      await this.stopMcp();
+      const counts = await this.readGraphCounts();
+
+      return {
+        completed: true,
+        writtenFileCount: 0,
+        graphPath: this.graphPath,
+        reportPath: this.reportPath,
+        ...counts,
+        stdout: [
+          ...successLines,
+          `Graph backup: ${backupPath}`,
+          clusterStdout ? `Graphify cluster-only:\n${clusterStdout}` : "",
+          htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",
+          wikiStdout ? `Graphify wiki export:\n${wikiStdout}` : ""
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+        updatedAt: new Date().toISOString()
+      };
+    } catch (error) {
+      await copyFile(backupPath, this.graphPath);
+      throw error;
+    }
   }
 
   private async enrichGraphCardDefinitions(): Promise<string> {
@@ -1607,6 +2020,9 @@ export class GraphifyController {
     }
 
     await writeFile(this.graphPath, `${JSON.stringify(graph, null, 2)}\n`, "utf8");
+    void this.refreshWikiExport(this.getGraphifyLocalModelSettings(), aiSettings).catch((error) => {
+      console.warn("Graphify wiki export after card definitions failed.", error);
+    });
     this.updateDefinitionStatus({
       running: false,
       pendingCount: Math.max(0, cards.length - updatedCount),
@@ -2351,6 +2767,18 @@ export class GraphifyController {
   }
 
   private async readSourceComment(sourceFile: string): Promise<string> {
+    try {
+      const sourcePath = this.resolveSourcePath(sourceFile);
+      if (canInlineSourceComment(sourcePath)) {
+        const inlineComment = readInlineSourceComment(await readFile(sourcePath, "utf8"));
+        if (inlineComment) {
+          return inlineComment;
+        }
+      }
+    } catch {
+      // Fall back to sidecar comments below.
+    }
+
     try {
       return await readFile(this.resolveSourceCommentPath(sourceFile), "utf8");
     } catch {

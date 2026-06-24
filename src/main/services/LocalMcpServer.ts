@@ -5,10 +5,12 @@ import type { McpServerStatus } from "../../shared/brain";
 import type { GraphifyContextService } from "./GraphifyContextService";
 import { GraphRagService } from "./GraphRagService";
 import { createLocalToolRegistry, filterLocalToolSpecs, type LocalToolDefinition, type LocalToolName, type LocalToolSpec } from "./LocalToolRegistry";
+import type { ArtifactToolService } from "./ArtifactToolService";
 
 type LocalMcpServerOptions = {
   graphRag: GraphRagService;
   graphifyContext?: GraphifyContextService | undefined;
+  artifactTools?: ArtifactToolService | undefined;
   port?: number;
   host?: string;
   tools?: LocalToolDefinition[] | undefined;
@@ -47,7 +49,8 @@ export class LocalMcpServer {
     this.actualPort = options.port ?? 4127;
     this.tools = options.tools ?? createLocalToolRegistry({
       graphRag: options.graphRag,
-      graphifyContext: options.graphifyContext
+      graphifyContext: options.graphifyContext,
+      artifactTools: options.artifactTools
     });
   }
 
