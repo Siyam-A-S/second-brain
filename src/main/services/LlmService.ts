@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { AiSettings } from "../../shared/brain";
 import { parseLocalModelJsonObject } from "../../shared/jsonObject";
 import { agentMethods, type AgentMethodConfig } from "./AgentRuntimeConfig";
@@ -56,6 +57,15 @@ type ChatCompletionResponse = {
     type?: string | undefined;
     code?: string | undefined;
   };
+};
+
+type ProxyChatResponse = ChatCompletionResponse & {
+  text?: string | null | undefined;
+  groundingMetadata?: unknown;
+  grounding_metadata?: unknown;
+  usage?: unknown;
+  model?: string | undefined;
+  requestId?: string | undefined;
 };
 
 type ChatCompletionChunk = {
@@ -120,25 +130,6 @@ function sanitizeErrorText(value: string): string {
   return value.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/g, "Bearer [redacted]").replace(/\s+/g, " ").trim().slice(0, maxErrorBodyLength);
 }
 
-function normalizeChatCompletionsEndpoint(endpoint: string): string {
-  const trimmed = endpoint.trim() || defaultEndpoint;
-  const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
-
-  if (/\/chat\/completions$/i.test(withoutTrailingSlash)) {
-    return withoutTrailingSlash;
-  }
-
-  if (/\/openapi$/i.test(withoutTrailingSlash) || /\/v1$/i.test(withoutTrailingSlash)) {
-    return `${withoutTrailingSlash}/chat/completions`;
-  }
-
-  if (/\/generate$/i.test(withoutTrailingSlash)) {
-    return `${withoutTrailingSlash}/chat/completions`;
-  }
-
-  return trimmed;
-}
-
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -193,6 +184,10 @@ function extractChatContent(payload: ChatCompletionResponse): string {
   );
 }
 
+function extractProxyChatContent(payload: ProxyChatResponse): string {
+  return normalizeOptionalLine(payload.text) || extractChatContent(payload);
+}
+
 function extractChunkDelta(payload: ChatCompletionChunk): string {
   const choice = payload.choices?.[0];
   const content = choice?.delta?.content;
@@ -229,6 +224,7 @@ export class LlmService {
 
   constructor(
     private readonly settingsProvider: AiSettingsProvider = async () => ({
+      mode: "local",
       endpoint: process.env.SECOND_BRAIN_LLM_ENDPOINT ?? defaultEndpoint,
       apiKey: process.env.SECOND_BRAIN_LLM_API_KEY ?? placeholderApiKey,
       model: process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL ?? defaultModel,
@@ -456,6 +452,10 @@ export class LlmService {
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
 
     try {
+      if (settings.mode === "proxy") {
+        return await this.requestProxyChat(input, settings, controller.signal);
+      }
+
       const body: Record<string, unknown> = {
         model: settings.model || defaultModel,
         [options.tokenParameter]: options.maxTokens,
@@ -471,7 +471,7 @@ export class LlmService {
         body.response_format = { type: "json_object" };
       }
 
-      const response = await fetch(normalizeChatCompletionsEndpoint(settings.endpoint), {
+      const response = await fetch(settings.endpoint.trim() || defaultEndpoint, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
@@ -536,6 +536,14 @@ export class LlmService {
     abortSignal?.addEventListener("abort", forwardAbort, { once: true });
 
     try {
+      if (settings.mode === "proxy") {
+        const content = await this.requestProxyChat(input, settings, controller.signal);
+        if (content) {
+          onDelta(content, content);
+        }
+        return content;
+      }
+
       const body: Record<string, unknown> = {
         model: settings.model || defaultModel,
         max_tokens: input.method?.maxTokens ?? 1024,
@@ -547,7 +555,7 @@ export class LlmService {
         body.temperature = input.method.temperature;
       }
 
-      const response = await fetch(normalizeChatCompletionsEndpoint(settings.endpoint), {
+      const response = await fetch(settings.endpoint.trim() || defaultEndpoint, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
@@ -648,6 +656,61 @@ export class LlmService {
       abortSignal?.removeEventListener("abort", forwardAbort);
       clearTimeout(timeout);
     }
+  }
+
+  private async requestProxyChat(
+    input: {
+      messages: ChatMessage[];
+      method?: AgentMethodConfig | undefined;
+    },
+    settings: AiSettings,
+    abortSignal?: AbortSignal
+  ): Promise<string> {
+    const requestId = randomUUID();
+    const requestInit: RequestInit = {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
+        "Content-Type": "application/json",
+        "X-Second-Brain-Request-Id": requestId
+      },
+      body: JSON.stringify({
+        userIdOrKey: settings.apiKey || placeholderApiKey,
+        model: settings.model || defaultModel,
+        groundingEnabled: true,
+        requestId,
+        messages: input.messages
+      })
+    };
+
+    if (abortSignal) {
+      requestInit.signal = abortSignal;
+    }
+
+    const response = await fetch(settings.endpoint.trim() || defaultEndpoint, requestInit);
+
+    const responseText = await response.text();
+    if (!response.ok) {
+      throw new Error(`AI endpoint responded with ${response.status} ${response.statusText}: ${sanitizeErrorText(responseText)}`);
+    }
+
+    let payload: ProxyChatResponse;
+    try {
+      payload = JSON.parse(responseText) as ProxyChatResponse;
+    } catch {
+      throw new Error(`AI endpoint returned non-JSON response: ${sanitizeErrorText(responseText)}`);
+    }
+
+    if (payload.error?.message) {
+      throw new Error(`AI endpoint returned an error: ${sanitizeErrorText(payload.error.message)}`);
+    }
+
+    const content = extractProxyChatContent(payload);
+    if (!content) {
+      throw new Error(`AI endpoint returned an empty response: ${sanitizeErrorText(responseText)}`);
+    }
+
+    return content;
   }
 
   private enqueue<T>(task: () => Promise<T>): Promise<T> {

@@ -65,6 +65,28 @@ type ProxyAttachment = {
   url?: string | undefined;
 };
 
+function proxySecret(settings: AppSettings): string {
+  return process.env.OPENAI_API_KEY?.trim() || settings.managedProxy.secretKey.trim();
+}
+
+function proxyModel(settings: AppSettings): string {
+  return process.env.OPENAI_MODEL?.trim() || settings.managedProxy.model.trim();
+}
+
+function proxyResponseMetadata(response: ProxyResponse, model: string): Record<string, unknown> {
+  return {
+    ...(response.groundingMetadata && typeof response.groundingMetadata === "object"
+      ? (response.groundingMetadata as Record<string, unknown>)
+      : {}),
+    ...(response.grounding_metadata && typeof response.grounding_metadata === "object"
+      ? (response.grounding_metadata as Record<string, unknown>)
+      : {}),
+    model: response.model ?? model,
+    requestId: response.requestId,
+    usage: response.usage
+  };
+}
+
 type RequestedArtifact = {
   tool: string;
   extension: string;
@@ -438,8 +460,9 @@ export class ChatService {
         assistant.error = graphify.error;
       } else {
         const settings = await this.settingsProvider();
-        if (settings.managedProxy.enabled) {
+        if (settings.aiMode === "proxy") {
           const response = await this.requestProxy(thread, text, graphify, settings);
+          const model = proxyModel(settings);
           const content = extractProxyText(response);
           if (!content) {
             throw new Error("Managed proxy returned an empty answer.");
@@ -448,7 +471,7 @@ export class ChatService {
           assistant.content = content;
           assistant.grounding = {
             graphify,
-            api: response.groundingMetadata ?? response.grounding_metadata
+            api: proxyResponseMetadata(response, model)
           };
           assistant.artifacts = await this.createProxyArtifacts(thread.id, assistant.id, response);
           const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, content);
@@ -545,7 +568,7 @@ export class ChatService {
     graphify: GraphifyContextResult
   ): Promise<ChatMessage> {
     const settings = await this.settingsProvider();
-    if (!settings.managedProxy.enabled) {
+    if (settings.aiMode !== "proxy") {
       return this.completeWithLocalEndpoint(thread, question, graphify, settings);
     }
 
@@ -610,9 +633,10 @@ export class ChatService {
     settings: AppSettings
   ): Promise<ChatMessage> {
     const proxy = settings.managedProxy;
+    const secret = proxySecret(settings);
     const createdAt = new Date().toISOString();
 
-    if (!proxy.enabled || !proxy.endpoint.trim()) {
+    if (settings.aiMode !== "proxy" || !proxy.endpoint.trim()) {
       return {
         id: randomUUID(),
         role: "assistant",
@@ -624,11 +648,11 @@ export class ChatService {
       };
     }
 
-    if (!proxy.secretKey.trim()) {
+    if (!secret) {
       return {
         id: randomUUID(),
         role: "assistant",
-        content: "Managed proxy secret key is missing. Add the beta key in Settings to enable chat answers.",
+        content: "Managed proxy secret key is missing. Add the beta key in Settings or set OPENAI_API_KEY to enable chat answers.",
         createdAt,
         grounding: { graphify },
         error: "Managed proxy secret key is missing."
@@ -648,6 +672,7 @@ export class ChatService {
 
     try {
       const response = await this.requestProxy(thread, question, graphify, settings);
+      const model = proxyModel(settings);
       const text = extractProxyText(response);
 
       if (!text) {
@@ -667,7 +692,7 @@ export class ChatService {
         artifacts: allArtifacts,
         grounding: {
           graphify,
-          api: response.groundingMetadata ?? response.grounding_metadata
+          api: proxyResponseMetadata(response, model)
         }
       };
     } catch (error) {
@@ -691,19 +716,21 @@ export class ChatService {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
     const proxy = settings.managedProxy;
+    const secret = proxySecret(settings);
+    const model = proxyModel(settings);
     const requestId = randomUUID();
 
     try {
       const response = await fetch(proxy.endpoint, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${proxy.secretKey}`,
+          "Authorization": `Bearer ${secret}`,
           "Content-Type": "application/json",
           "X-Second-Brain-Request-Id": requestId
         },
         body: JSON.stringify({
-          userIdOrKey: proxy.secretKey,
-          model: proxy.model,
+          userIdOrKey: secret,
+          model,
           groundingEnabled: proxy.groundingEnabled,
           requestId,
           messages: this.buildGroundedMessages(thread, question, graphify)

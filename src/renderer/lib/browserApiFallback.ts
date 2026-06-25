@@ -30,6 +30,8 @@ import type {
 const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
 const chatStreamHandlers = new Set<(event: ChatStreamEvent) => void>();
 const browserTrackers: TrackerRecord[] = [];
+const browserProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
+const browserProxyChatEndpoint = `${browserProxyOrigin}/chat`;
 let activeProjectId = "browser-default";
 const browserProjects: ProjectRecord[] = [
   {
@@ -58,18 +60,20 @@ const browserExplorerTree: ExplorerNode[] = [
   }
 ];
 let browserAiSettings = {
+  mode: "local" as const,
   endpoint: "http://localhost:8080/v1/chat/completions",
   apiKey: "local-dev-placeholder",
   model: "local-model",
   updatedAt: new Date().toISOString()
 };
 let browserAppSettings: AppSettings = {
+  aiMode: "proxy",
   ai: browserAiSettings,
   managedProxy: {
-    enabled: false,
-    endpoint: "",
+    enabled: true,
+    endpoint: browserProxyChatEndpoint,
     secretKey: "",
-    model: "gemini-3.1-flash",
+    model: "google/gemini-3.5-flash",
     groundingEnabled: true,
     updatedAt: new Date().toISOString()
   },
@@ -85,6 +89,20 @@ let browserAppSettings: AppSettings = {
   updatedAt: new Date().toISOString()
 };
 const browserThreads: ChatThread[] = [];
+
+function browserEffectiveAiSettings() {
+  if (browserAppSettings.aiMode === "proxy") {
+    return {
+      mode: "proxy" as const,
+      endpoint: browserProxyChatEndpoint,
+      apiKey: browserAppSettings.managedProxy.secretKey || "local-dev-placeholder",
+      model: browserAppSettings.managedProxy.model || "google/gemini-3.5-flash",
+      updatedAt: browserAppSettings.managedProxy.updatedAt
+    };
+  }
+
+  return browserAiSettings;
+}
 
 const browserResearchDependencyReport: ResearchDependencyReport = {
   available: true,
@@ -641,9 +659,10 @@ const browserApiFallback: SecondBrainApi = {
     }
   },
   settings: {
-    getAi: async () => browserAiSettings,
+    getAi: async () => browserEffectiveAiSettings(),
     updateAi: async (input: UpdateAiSettingsInput) => {
       browserAiSettings = {
+        mode: "local",
         endpoint: input.endpoint ?? browserAiSettings.endpoint,
         apiKey: input.apiKey ?? browserAiSettings.apiKey,
         model: input.model ?? browserAiSettings.model,
@@ -659,12 +678,14 @@ const browserApiFallback: SecondBrainApi = {
     getApp: async () => browserAppSettings,
     updateApp: async (input: UpdateAppSettingsInput) => {
       browserAiSettings = {
+        mode: "local",
         endpoint: input.ai?.endpoint ?? browserAiSettings.endpoint,
         apiKey: input.ai?.apiKey ?? browserAiSettings.apiKey,
         model: input.ai?.model ?? browserAiSettings.model,
         updatedAt: new Date().toISOString()
       };
       browserAppSettings = {
+        aiMode: input.aiMode ?? browserAppSettings.aiMode,
         ai: browserAiSettings,
         graphify: {
           ...browserAppSettings.graphify,
@@ -673,6 +694,7 @@ const browserApiFallback: SecondBrainApi = {
         managedProxy: {
           ...browserAppSettings.managedProxy,
           ...input.managedProxy,
+          endpoint: browserAppSettings.managedProxy.endpoint,
           updatedAt: new Date().toISOString()
         },
         updatedAt: new Date().toISOString()
@@ -685,6 +707,7 @@ const browserApiFallback: SecondBrainApi = {
         managedProxy: {
           ...browserAppSettings.managedProxy,
           ...input,
+          endpoint: browserAppSettings.managedProxy.endpoint,
           updatedAt: new Date().toISOString()
         },
         updatedAt: new Date().toISOString()

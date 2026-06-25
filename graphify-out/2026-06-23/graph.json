@@ -899,7 +899,7 @@
       "label": "chat_completions()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L184",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "proxy_main_chat_completions",
       "community": 24,
@@ -1102,7 +1102,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller",
-      "community": 43,
+      "community": 32,
       "norm_label": "agentcontroller"
     },
     {
@@ -1112,7 +1112,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_constructor",
-      "community": 43,
+      "community": 32,
       "norm_label": ".constructor()"
     },
     {
@@ -1122,7 +1122,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_registeripc",
-      "community": 43,
+      "community": 32,
       "norm_label": ".registeripc()"
     },
     {
@@ -1132,7 +1132,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_processdroppeditems",
-      "community": 43,
+      "community": 32,
       "norm_label": ".processdroppeditems()"
     },
     {
@@ -1142,7 +1142,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_sendstatus",
-      "community": 43,
+      "community": 32,
       "norm_label": ".sendstatus()"
     },
     {
@@ -1189,7 +1189,7 @@
       "label": "defaultGraphifySettings",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L18",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "services_aisettingsservice_defaultgraphifysettings",
       "community": 35,
@@ -1199,7 +1199,7 @@
       "label": "normalizeEndpoint()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizeendpoint",
       "community": 35,
@@ -1209,7 +1209,7 @@
       "label": "normalizeApiKey()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L33",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizeapikey",
       "community": 35,
@@ -1219,7 +1219,7 @@
       "label": "normalizeModel()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L37",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizemodel",
       "community": 35,
@@ -1229,17 +1229,27 @@
       "label": "normalizeManagedProxyModel()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L41",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizemanagedproxymodel",
       "community": 35,
       "norm_label": "normalizemanagedproxymodel()"
     },
     {
+      "label": "normalizeAiMode()",
+      "file_type": "code",
+      "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L46",
+      "_origin": "ast",
+      "id": "services_aisettingsservice_normalizeaimode",
+      "community": 35,
+      "norm_label": "normalizeaimode()"
+    },
+    {
       "label": "numberSetting()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L45",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "services_aisettingsservice_numbersetting",
       "community": 35,
@@ -1249,7 +1259,7 @@
       "label": "booleanSetting()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L50",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "services_aisettingsservice_booleansetting",
       "community": 35,
@@ -1259,7 +1269,7 @@
       "label": "asRecord()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L68",
+      "source_location": "L73",
       "_origin": "ast",
       "id": "services_aisettingsservice_asrecord",
       "community": 35,
@@ -1269,7 +1279,7 @@
       "label": "normalizeManagedProxySettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L72",
+      "source_location": "L77",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizemanagedproxysettings",
       "community": 35,
@@ -1279,7 +1289,7 @@
       "label": "normalizeGraphifySettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L85",
+      "source_location": "L90",
       "_origin": "ast",
       "id": "services_aisettingsservice_normalizegraphifysettings",
       "community": 35,
@@ -1289,7 +1299,7 @@
       "label": "AiSettingsService",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L125",
+      "source_location": "L130",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice",
       "community": 35,
@@ -1299,7 +1309,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L128",
+      "source_location": "L133",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_constructor",
       "community": 35,
@@ -1309,7 +1319,7 @@
       "label": ".initialize()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L132",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_initialize",
       "community": 35,
@@ -1319,7 +1329,7 @@
       "label": ".getSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L150",
+      "source_location": "L155",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_getsettings",
       "community": 35,
@@ -1329,7 +1339,7 @@
       "label": ".getEffectiveSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L154",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_geteffectivesettings",
       "community": 35,
@@ -1339,7 +1349,7 @@
       "label": ".getAppSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L170",
+      "source_location": "L176",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_getappsettings",
       "community": 35,
@@ -1349,7 +1359,7 @@
       "label": ".updateSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L198",
+      "source_location": "L208",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_updatesettings",
       "community": 35,
@@ -1359,7 +1369,7 @@
       "label": ".updateManagedProxy()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L202",
+      "source_location": "L212",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_updatemanagedproxy",
       "community": 35,
@@ -1369,7 +1379,7 @@
       "label": ".updateAppSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L206",
+      "source_location": "L216",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_updateappsettings",
       "community": 35,
@@ -1379,7 +1389,7 @@
       "label": ".defaultAppSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L241",
+      "source_location": "L251",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_defaultappsettings",
       "community": 35,
@@ -1389,7 +1399,7 @@
       "label": ".applyRuntimeSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L255",
+      "source_location": "L267",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_applyruntimesettings",
       "community": 35,
@@ -1399,7 +1409,7 @@
       "label": ".saveAppSettings()",
       "file_type": "code",
       "source_file": "src/main/services/AiSettingsService.ts",
-      "source_location": "L271",
+      "source_location": "L295",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_saveappsettings",
       "community": 35,
@@ -2242,7 +2252,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_embeddingservice",
-      "community": 5,
+      "community": 10,
       "norm_label": "embeddingservice.ts"
     },
     {
@@ -2252,7 +2262,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_embeddingservice_transformersmodule",
-      "community": 5,
+      "community": 10,
       "norm_label": "transformersmodule"
     },
     {
@@ -2262,7 +2272,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_embeddingservice_cachedembedding",
-      "community": 5,
+      "community": 10,
       "norm_label": "cachedembedding"
     },
     {
@@ -2272,7 +2282,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_embeddingservice_dynamicimport",
-      "community": 5,
+      "community": 10,
       "norm_label": "dynamicimport()"
     },
     {
@@ -2282,7 +2292,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "services_embeddingservice_dotproduct",
-      "community": 5,
+      "community": 10,
       "norm_label": "dotproduct()"
     },
     {
@@ -2292,7 +2302,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "services_embeddingservice_searchabletext",
-      "community": 5,
+      "community": 10,
       "norm_label": "searchabletext()"
     },
     {
@@ -2302,7 +2312,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_embeddingservice_fingerprintnode",
-      "community": 5,
+      "community": 10,
       "norm_label": "fingerprintnode()"
     },
     {
@@ -2312,7 +2322,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice",
-      "community": 5,
+      "community": 10,
       "norm_label": "embeddingservice"
     },
     {
@@ -2322,7 +2332,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_constructor",
-      "community": 5,
+      "community": 10,
       "norm_label": ".constructor()"
     },
     {
@@ -2332,7 +2342,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_generateembedding",
-      "community": 5,
+      "community": 10,
       "norm_label": ".generateembedding()"
     },
     {
@@ -2342,7 +2352,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embed",
-      "community": 5,
+      "community": 10,
       "norm_label": ".embed()"
     },
     {
@@ -2352,7 +2362,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_search",
-      "community": 5,
+      "community": 10,
       "norm_label": ".search()"
     },
     {
@@ -2362,7 +2372,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embeddingfornode",
-      "community": 5,
+      "community": 10,
       "norm_label": ".embeddingfornode()"
     },
     {
@@ -2372,7 +2382,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_getextractor",
-      "community": 5,
+      "community": 10,
       "norm_label": ".getextractor()"
     },
     {
@@ -2382,7 +2392,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_loadextractor",
-      "community": 5,
+      "community": 10,
       "norm_label": ".loadextractor()"
     },
     {
@@ -3472,7 +3482,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_constructor",
-      "community": 5,
+      "community": 10,
       "norm_label": ".constructor()"
     },
     {
@@ -3482,7 +3492,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_searchboardtopology",
-      "community": 5,
+      "community": 0,
       "norm_label": ".searchboardtopology()"
     },
     {
@@ -3532,7 +3542,7 @@
       "source_location": "L241",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_totopologynode",
-      "community": 5,
+      "community": 0,
       "norm_label": ".totopologynode()"
     },
     {
@@ -4422,7 +4432,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "services_graphifycontroller_spreadsheetcomponentfilename",
-      "community": 28,
+      "community": 3,
       "norm_label": "spreadsheetcomponentfilename()"
     },
     {
@@ -4432,7 +4442,7 @@
       "source_location": "L166",
       "_origin": "ast",
       "id": "services_graphifycontroller_papercomponentdirectorynameforsource",
-      "community": 28,
+      "community": 3,
       "norm_label": "papercomponentdirectorynameforsource()"
     },
     {
@@ -4472,14 +4482,24 @@
       "source_location": "L208",
       "_origin": "ast",
       "id": "services_graphifycontroller_chunkarray",
-      "community": 45,
+      "community": 3,
       "norm_label": "chunkarray()"
+    },
+    {
+      "label": "normalizeOpenAiBasePath()",
+      "file_type": "code",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L218",
+      "_origin": "ast",
+      "id": "services_graphifycontroller_normalizeopenaibasepath",
+      "community": 3,
+      "norm_label": "normalizeopenaibasepath()"
     },
     {
       "label": "normalizeOpenAiBaseUrl()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L218",
+      "source_location": "L230",
       "_origin": "ast",
       "id": "services_graphifycontroller_normalizeopenaibaseurl",
       "community": 3,
@@ -4489,47 +4509,57 @@
       "label": "numberFromEnv()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L224",
+      "source_location": "L247",
       "_origin": "ast",
       "id": "services_graphifycontroller_numberfromenv",
-      "community": 3,
+      "community": 45,
       "norm_label": "numberfromenv()"
     },
     {
       "label": "errorMessage()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L234",
+      "source_location": "L257",
       "_origin": "ast",
       "id": "services_graphifycontroller_errormessage",
-      "community": 0,
+      "community": 45,
       "norm_label": "errormessage()"
     },
     {
       "label": "endpointHostLabel()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L238",
+      "source_location": "L261",
       "_origin": "ast",
       "id": "services_graphifycontroller_endpointhostlabel",
-      "community": 45,
+      "community": 3,
       "norm_label": "endpointhostlabel()"
     },
     {
-      "label": "defaultIngestCommand()",
+      "label": "isProxyAiSettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L246",
+      "source_location": "L269",
       "_origin": "ast",
-      "id": "services_graphifycontroller_defaultingestcommand",
-      "community": 3,
-      "norm_label": "defaultingestcommand()"
+      "id": "services_graphifycontroller_isproxyaisettings",
+      "community": 45,
+      "norm_label": "isproxyaisettings()"
+    },
+    {
+      "label": "defaultUpdateCommand()",
+      "file_type": "code",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L273",
+      "_origin": "ast",
+      "id": "services_graphifycontroller_defaultupdatecommand",
+      "community": 45,
+      "norm_label": "defaultupdatecommand()"
     },
     {
       "label": "quoteCommandPart()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L253",
+      "source_location": "L284",
       "_origin": "ast",
       "id": "services_graphifycontroller_quotecommandpart",
       "community": 3,
@@ -4539,7 +4569,7 @@
       "label": "formatInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L257",
+      "source_location": "L288",
       "_origin": "ast",
       "id": "services_graphifycontroller_formatinvocation",
       "community": 3,
@@ -4549,37 +4579,37 @@
       "label": "isCmdShim()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L261",
+      "source_location": "L292",
       "_origin": "ast",
       "id": "services_graphifycontroller_iscmdshim",
-      "community": 28,
+      "community": 25,
       "norm_label": "iscmdshim()"
     },
     {
       "label": "asRecord()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L265",
+      "source_location": "L296",
       "_origin": "ast",
       "id": "services_graphifycontroller_asrecord",
-      "community": 45,
+      "community": 48,
       "norm_label": "asrecord()"
     },
     {
       "label": "asString()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L269",
+      "source_location": "L300",
       "_origin": "ast",
       "id": "services_graphifycontroller_asstring",
-      "community": 45,
+      "community": 48,
       "norm_label": "asstring()"
     },
     {
       "label": "isCollapsibleTextSource()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L273",
+      "source_location": "L304",
       "_origin": "ast",
       "id": "services_graphifycontroller_iscollapsibletextsource",
       "community": 3,
@@ -4589,7 +4619,7 @@
       "label": "canInlineSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L278",
+      "source_location": "L309",
       "_origin": "ast",
       "id": "services_graphifycontroller_caninlinesourcecomment",
       "community": 26,
@@ -4599,7 +4629,7 @@
       "label": "sanitizeInlineCommentBody()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L282",
+      "source_location": "L313",
       "_origin": "ast",
       "id": "services_graphifycontroller_sanitizeinlinecommentbody",
       "community": 3,
@@ -4609,7 +4639,7 @@
       "label": "stripInlineSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L290",
+      "source_location": "L321",
       "_origin": "ast",
       "id": "services_graphifycontroller_stripinlinesourcecomment",
       "community": 3,
@@ -4619,7 +4649,7 @@
       "label": "writeInlineSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L295",
+      "source_location": "L326",
       "_origin": "ast",
       "id": "services_graphifycontroller_writeinlinesourcecomment",
       "community": 3,
@@ -4629,77 +4659,37 @@
       "label": "readInlineSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L307",
+      "source_location": "L338",
       "_origin": "ast",
       "id": "services_graphifycontroller_readinlinesourcecomment",
       "community": 26,
       "norm_label": "readinlinesourcecomment()"
     },
     {
-      "label": "isSpreadsheetSource()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L313",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_isspreadsheetsource",
-      "community": 25,
-      "norm_label": "isspreadsheetsource()"
-    },
-    {
-      "label": "isPaperSource()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L317",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_ispapersource",
-      "community": 25,
-      "norm_label": "ispapersource()"
-    },
-    {
-      "label": "spreadsheetComponentScript()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L321",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_spreadsheetcomponentscript",
-      "community": 28,
-      "norm_label": "spreadsheetcomponentscript()"
-    },
-    {
-      "label": "paperComponentScript()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L453",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_papercomponentscript",
-      "community": 28,
-      "norm_label": "papercomponentscript()"
-    },
-    {
       "label": "researchDependencyStatusScript()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L778",
+      "source_location": "L344",
       "_origin": "ast",
       "id": "services_graphifycontroller_researchdependencystatusscript",
-      "community": 28,
+      "community": 25,
       "norm_label": "researchdependencystatusscript()"
     },
     {
       "label": "linkEndpointId()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L811",
+      "source_location": "L377",
       "_origin": "ast",
       "id": "services_graphifycontroller_linkendpointid",
-      "community": 45,
+      "community": 48,
       "norm_label": "linkendpointid()"
     },
     {
       "label": "normalizeGraphNodes()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L820",
+      "source_location": "L386",
       "_origin": "ast",
       "id": "services_graphifycontroller_normalizegraphnodes",
       "community": 45,
@@ -4709,7 +4699,7 @@
       "label": "normalizeGraphLinks()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L826",
+      "source_location": "L392",
       "_origin": "ast",
       "id": "services_graphifycontroller_normalizegraphlinks",
       "community": 45,
@@ -4719,17 +4709,17 @@
       "label": "normalizeSourceReference()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L832",
+      "source_location": "L398",
       "_origin": "ast",
       "id": "services_graphifycontroller_normalizesourcereference",
-      "community": 45,
+      "community": 48,
       "norm_label": "normalizesourcereference()"
     },
     {
       "label": "GraphifyController",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L836",
+      "source_location": "L402",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller",
       "community": 25,
@@ -4739,7 +4729,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L863",
+      "source_location": "L429",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_constructor",
       "community": 25,
@@ -4749,7 +4739,7 @@
       "label": ".getRawVaultPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L883",
+      "source_location": "L450",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getrawvaultpath",
       "community": 25,
@@ -4759,7 +4749,7 @@
       "label": ".getGraphPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L887",
+      "source_location": "L454",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphpath",
       "community": 25,
@@ -4769,7 +4759,7 @@
       "label": ".getGraphHtmlPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L891",
+      "source_location": "L458",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphhtmlpath",
       "community": 25,
@@ -4779,7 +4769,7 @@
       "label": ".getDefinitionStatus()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L895",
+      "source_location": "L462",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getdefinitionstatus",
       "community": 25,
@@ -4789,7 +4779,7 @@
       "label": ".getMcpServerCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L899",
+      "source_location": "L466",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getmcpservercommand",
       "community": 25,
@@ -4799,27 +4789,27 @@
       "label": ".readGraphHtml()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L903",
+      "source_location": "L470",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readgraphhtml",
-      "community": 25,
+      "community": 3,
       "norm_label": ".readgraphhtml()"
     },
     {
       "label": ".generateCallflowHtml()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L915",
+      "source_location": "L482",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_generatecallflowhtml",
-      "community": 0,
+      "community": 45,
       "norm_label": ".generatecallflowhtml()"
     },
     {
       "label": ".initialize()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L957",
+      "source_location": "L524",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_initialize",
       "community": 26,
@@ -4829,17 +4819,17 @@
       "label": ".getResearchDependencyStatus()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L962",
+      "source_location": "L529",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getresearchdependencystatus",
-      "community": 28,
+      "community": 25,
       "norm_label": ".getresearchdependencystatus()"
     },
     {
       "label": ".ingestFilesDrop()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1009",
+      "source_location": "L576",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ingestfilesdrop",
       "community": 26,
@@ -4849,7 +4839,7 @@
       "label": ".removeSource()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1029",
+      "source_location": "L596",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_removesource",
       "community": 26,
@@ -4859,7 +4849,7 @@
       "label": ".collapseSourceInto()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1044",
+      "source_location": "L609",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_collapsesourceinto",
       "community": 26,
@@ -4869,17 +4859,17 @@
       "label": ".groupGraphNodes()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1083",
+      "source_location": "L646",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_groupgraphnodes",
-      "community": 0,
+      "community": 45,
       "norm_label": ".groupgraphnodes()"
     },
     {
       "label": ".renameSource()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1195",
+      "source_location": "L758",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_renamesource",
       "community": 26,
@@ -4889,7 +4879,7 @@
       "label": ".commentSource()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1242",
+      "source_location": "L805",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_commentsource",
       "community": 26,
@@ -4899,7 +4889,7 @@
       "label": ".ingestDroppedItems()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1280",
+      "source_location": "L843",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ingestdroppeditems",
       "community": 26,
@@ -4909,7 +4899,7 @@
       "label": ".listMcpTools()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1291",
+      "source_location": "L854",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listmcptools",
       "community": 25,
@@ -4919,127 +4909,37 @@
       "label": ".stopMcp()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1302",
+      "source_location": "L865",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_stopmcp",
-      "community": 0,
+      "community": 45,
       "norm_label": ".stopmcp()"
     },
     {
       "label": ".writeRawItems()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1316",
+      "source_location": "L879",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_writerawitems",
       "community": 3,
       "norm_label": ".writerawitems()"
     },
     {
-      "label": ".prepareSpreadsheetComponents()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1352",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents",
-      "community": 25,
-      "norm_label": ".preparespreadsheetcomponents()"
-    },
-    {
-      "label": ".preparePaperComponents()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1372",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_preparepapercomponents",
-      "community": 25,
-      "norm_label": ".preparepapercomponents()"
-    },
-    {
-      "label": ".preparePaperComponent()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1392",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "community": 28,
-      "norm_label": ".preparepapercomponent()"
-    },
-    {
-      "label": ".listPaperSources()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1426",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_listpapersources",
-      "community": 25,
-      "norm_label": ".listpapersources()"
-    },
-    {
-      "label": ".resetPaperComponentSidecars()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1461",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_resetpapercomponentsidecars",
-      "community": 25,
-      "norm_label": ".resetpapercomponentsidecars()"
-    },
-    {
-      "label": ".prepareSpreadsheetComponent()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1465",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "community": 28,
-      "norm_label": ".preparespreadsheetcomponent()"
-    },
-    {
-      "label": ".listSpreadsheetSources()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1496",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_listspreadsheetsources",
-      "community": 25,
-      "norm_label": ".listspreadsheetsources()"
-    },
-    {
-      "label": ".resetSpreadsheetComponentSidecars()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1531",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_resetspreadsheetcomponentsidecars",
-      "community": 25,
-      "norm_label": ".resetspreadsheetcomponentsidecars()"
-    },
-    {
-      "label": ".removeGeneratedComponentsForSource()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1535",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource",
-      "community": 26,
-      "norm_label": ".removegeneratedcomponentsforsource()"
-    },
-    {
       "label": ".isGeneratedOutputFresh()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1547",
+      "source_location": "L915",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_isgeneratedoutputfresh",
-      "community": 28,
+      "community": 25,
       "norm_label": ".isgeneratedoutputfresh()"
     },
     {
       "label": ".createRawDestination()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1556",
+      "source_location": "L924",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_createrawdestination",
       "community": 3,
@@ -5049,7 +4949,7 @@
       "label": ".queueUpdate()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1565",
+      "source_location": "L933",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_queueupdate",
       "community": 26,
@@ -5059,77 +4959,77 @@
       "label": ".runGraphifyUpdate()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1580",
+      "source_location": "L948",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifyupdate",
-      "community": 0,
+      "community": 45,
       "norm_label": ".rungraphifyupdate()"
     },
     {
       "label": ".ensureGraphHtml()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1643",
+      "source_location": "L1007",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuregraphhtml",
-      "community": 0,
+      "community": 45,
       "norm_label": ".ensuregraphhtml()"
     },
     {
       "label": ".refreshWikiExport()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1680",
+      "source_location": "L1044",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_refreshwikiexport",
-      "community": 0,
+      "community": 45,
       "norm_label": ".refreshwikiexport()"
     },
     {
       "label": ".mergeHyperedges()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1708",
+      "source_location": "L1072",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_mergehyperedges",
-      "community": 45,
+      "community": 48,
       "norm_label": ".mergehyperedges()"
     },
     {
       "label": ".patchGraphSourceReferences()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1727",
+      "source_location": "L1091",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_patchgraphsourcereferences",
-      "community": 45,
+      "community": 48,
       "norm_label": ".patchgraphsourcereferences()"
     },
     {
       "label": ".addGraphSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1766",
+      "source_location": "L1130",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_addgraphsourcecomment",
-      "community": 45,
+      "community": 48,
       "norm_label": ".addgraphsourcecomment()"
     },
     {
       "label": ".writeGraphWithOrganizationRefresh()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1837",
+      "source_location": "L1201",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_writegraphwithorganizationrefresh",
-      "community": 0,
+      "community": 45,
       "norm_label": ".writegraphwithorganizationrefresh()"
     },
     {
       "label": ".enrichGraphCardDefinitions()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1877",
+      "source_location": "L1241",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_enrichgraphcarddefinitions",
       "community": 45,
@@ -5139,7 +5039,7 @@
       "label": ".scheduleGraphCardDefinitions()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2021",
+      "source_location": "L1385",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions",
       "community": 45,
@@ -5149,7 +5049,7 @@
       "label": ".updateDefinitionStatus()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2056",
+      "source_location": "L1420",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_updatedefinitionstatus",
       "community": 25,
@@ -5159,27 +5059,27 @@
       "label": ".buildRelatedNodeMap()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2064",
+      "source_location": "L1428",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_buildrelatednodemap",
-      "community": 45,
+      "community": 48,
       "norm_label": ".buildrelatednodemap()"
     },
     {
       "label": ".toDefinitionInput()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2085",
+      "source_location": "L1449",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_todefinitioninput",
-      "community": 45,
+      "community": 48,
       "norm_label": ".todefinitioninput()"
     },
     {
       "label": ".shouldExportGraphHtml()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2109",
+      "source_location": "L1473",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldexportgraphhtml",
       "community": 25,
@@ -5189,247 +5089,247 @@
       "label": ".runGraphifyCommandWithRetry()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2118",
+      "source_location": "L1482",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycommandwithretry",
-      "community": 0,
+      "community": 25,
       "norm_label": ".rungraphifycommandwithretry()"
     },
     {
       "label": ".runGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2163",
+      "source_location": "L1527",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycommand",
-      "community": 0,
+      "community": 45,
       "norm_label": ".rungraphifycommand()"
     },
     {
       "label": ".runGraphifyCli()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2206",
+      "source_location": "L1570",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycli",
-      "community": 0,
+      "community": 45,
       "norm_label": ".rungraphifycli()"
     },
     {
       "label": ".getGraphifyInvocations()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2232",
+      "source_location": "L1596",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyinvocations",
-      "community": 28,
+      "community": 25,
       "norm_label": ".getgraphifyinvocations()"
     },
     {
       "label": ".getGraphifyPythonInvocations()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2291",
+      "source_location": "L1655",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifypythoninvocations",
-      "community": 28,
+      "community": 25,
       "norm_label": ".getgraphifypythoninvocations()"
     },
     {
       "label": ".findUvToolGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2345",
+      "source_location": "L1709",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_finduvtoolgraphifycommand",
-      "community": 28,
+      "community": 25,
       "norm_label": ".finduvtoolgraphifycommand()"
     },
     {
       "label": ".findUvToolGraphifyPythonCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2378",
+      "source_location": "L1742",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_finduvtoolgraphifypythoncommand",
-      "community": 28,
+      "community": 25,
       "norm_label": ".finduvtoolgraphifypythoncommand()"
     },
     {
       "label": ".findBundledGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2410",
+      "source_location": "L1774",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_findbundledgraphifycommand",
-      "community": 28,
+      "community": 25,
       "norm_label": ".findbundledgraphifycommand()"
     },
     {
       "label": ".findBundledGraphifyPythonCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2428",
+      "source_location": "L1792",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_findbundledgraphifypythoncommand",
-      "community": 28,
+      "community": 25,
       "norm_label": ".findbundledgraphifypythoncommand()"
     },
     {
       "label": ".runGraphifyInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2445",
+      "source_location": "L1809",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifyinvocation",
-      "community": 0,
+      "community": 45,
       "norm_label": ".rungraphifyinvocation()"
     },
     {
       "label": ".runGraphifyUtilityInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2483",
+      "source_location": "L1847",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifyutilityinvocation",
-      "community": 28,
+      "community": 25,
       "norm_label": ".rungraphifyutilityinvocation()"
     },
     {
       "label": ".ensureGraphifyProviderConfig()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2517",
+      "source_location": "L1881",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuregraphifyproviderconfig",
-      "community": 0,
+      "community": 45,
       "norm_label": ".ensuregraphifyproviderconfig()"
     },
     {
       "label": ".buildGraphifyEnvironment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2543",
+      "source_location": "L1910",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_buildgraphifyenvironment",
-      "community": 0,
+      "community": 45,
       "norm_label": ".buildgraphifyenvironment()"
     },
     {
       "label": ".getGraphifyLlmEndpoint()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2562",
+      "source_location": "L1943",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyllmendpoint",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getgraphifyllmendpoint()"
     },
     {
       "label": ".getGraphifyLlmModel()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2570",
+      "source_location": "L1951",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyllmmodel",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getgraphifyllmmodel()"
     },
     {
       "label": ".getAiSettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2578",
+      "source_location": "L1959",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getaisettings",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getaisettings()"
     },
     {
       "label": ".getGraphifyTemperature()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2582",
+      "source_location": "L1963",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifytemperature",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getgraphifytemperature()"
     },
     {
       "label": ".getGraphifyMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2586",
+      "source_location": "L1967",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifymaxtokens",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getgraphifymaxtokens()"
     },
     {
       "label": ".getGraphifyRetryMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2594",
+      "source_location": "L1975",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyretrymaxtokens",
-      "community": 3,
+      "community": 25,
       "norm_label": ".getgraphifyretrymaxtokens()"
     },
     {
       "label": ".getGraphifyLocalModelSettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2598",
+      "source_location": "L1979",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifylocalmodelsettings",
-      "community": 0,
+      "community": 45,
       "norm_label": ".getgraphifylocalmodelsettings()"
     },
     {
       "label": ".getStrictRetrySettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2605",
+      "source_location": "L1986",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getstrictretrysettings",
-      "community": 3,
+      "community": 25,
       "norm_label": ".getstrictretrysettings()"
     },
     {
       "label": ".canRetryGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2612",
+      "source_location": "L1993",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canretrygraphifycommand",
-      "community": 0,
+      "community": 25,
       "norm_label": ".canretrygraphifycommand()"
     },
     {
       "label": ".shouldRetryWithStrictJson()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2619",
+      "source_location": "L2000",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldretrywithstrictjson",
-      "community": 0,
+      "community": 25,
       "norm_label": ".shouldretrywithstrictjson()"
     },
     {
       "label": ".enrichGraphifyError()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2625",
+      "source_location": "L2006",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_enrichgraphifyerror",
-      "community": 0,
+      "community": 25,
       "norm_label": ".enrichgraphifyerror()"
     },
     {
       "label": ".ensureMcpClient()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2645",
+      "source_location": "L2026",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuremcpclient",
       "community": 25,
@@ -5439,7 +5339,7 @@
       "label": ".resolveMcpCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2681",
+      "source_location": "L2062",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolvemcpcommand",
       "community": 25,
@@ -5449,7 +5349,7 @@
       "label": ".resolveSourcePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2717",
+      "source_location": "L2098",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolvesourcepath",
       "community": 26,
@@ -5459,7 +5359,7 @@
       "label": ".resolveRemovableSourcePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2721",
+      "source_location": "L2102",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolveremovablesourcepath",
       "community": 26,
@@ -5469,7 +5369,7 @@
       "label": ".resolveSourceCommentPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2742",
+      "source_location": "L2123",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolvesourcecommentpath",
       "community": 26,
@@ -5479,7 +5379,7 @@
       "label": ".readSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2746",
+      "source_location": "L2127",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readsourcecomment",
       "community": 26,
@@ -5489,7 +5389,7 @@
       "label": ".listCallflowHtmlCandidates()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2766",
+      "source_location": "L2147",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listcallflowhtmlcandidates",
       "community": 25,
@@ -5499,7 +5399,7 @@
       "label": ".removeSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2800",
+      "source_location": "L2181",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_removesourcecomment",
       "community": 26,
@@ -5509,7 +5409,7 @@
       "label": ".renameSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2804",
+      "source_location": "L2185",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_renamesourcecomment",
       "community": 26,
@@ -5519,37 +5419,27 @@
       "label": ".mergeSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2820",
+      "source_location": "L2201",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_mergesourcecomment",
       "community": 26,
       "norm_label": ".mergesourcecomment()"
     },
     {
-      "label": ".resetGraphifyOutputs()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2843",
-      "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs",
-      "community": 26,
-      "norm_label": ".resetgraphifyoutputs()"
-    },
-    {
       "label": ".hasRawSourceFiles()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2848",
+      "source_location": "L2224",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_hasrawsourcefiles",
-      "community": 25,
+      "community": 26,
       "norm_label": ".hasrawsourcefiles()"
     },
     {
       "label": ".writeEmptyGraphResult()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2882",
+      "source_location": "L2258",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_writeemptygraphresult",
       "community": 26,
@@ -5559,17 +5449,17 @@
       "label": ".fileExists()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2912",
+      "source_location": "L2288",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_fileexists",
-      "community": 28,
+      "community": 25,
       "norm_label": ".fileexists()"
     },
     {
       "label": ".fileMtimeMs()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2921",
+      "source_location": "L2297",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_filemtimems",
       "community": 25,
@@ -5579,7 +5469,7 @@
       "label": ".canUsePartialGraphifyResult()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2929",
+      "source_location": "L2305",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canusepartialgraphifyresult",
       "community": 25,
@@ -5589,10 +5479,10 @@
       "label": ".readGraphCounts()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2942",
+      "source_location": "L2318",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readgraphcounts",
-      "community": 0,
+      "community": 45,
       "norm_label": ".readgraphcounts()"
     },
     {
@@ -5642,7 +5532,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "services_llmservice_chatmessage",
-      "community": 4,
+      "community": 32,
       "norm_label": "chatmessage"
     },
     {
@@ -5769,7 +5659,7 @@
       "label": "errorText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L142",
+      "source_location": "L150",
       "_origin": "ast",
       "id": "services_llmservice_errortext",
       "community": 32,
@@ -5779,7 +5669,7 @@
       "label": "providerRejectsMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L146",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectsmaxtokens",
       "community": 32,
@@ -5789,7 +5679,7 @@
       "label": "providerRejectsTemperature()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L150",
+      "source_location": "L158",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectstemperature",
       "community": 32,
@@ -5799,7 +5689,7 @@
       "label": "providerRejectsJsonMode()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L154",
+      "source_location": "L162",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectsjsonmode",
       "community": 32,
@@ -5809,7 +5699,7 @@
       "label": "extractContentPart()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L158",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "services_llmservice_extractcontentpart",
       "community": 32,
@@ -5819,7 +5709,7 @@
       "label": "extractChatContent()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L185",
+      "source_location": "L193",
       "_origin": "ast",
       "id": "services_llmservice_extractchatcontent",
       "community": 32,
@@ -5829,7 +5719,7 @@
       "label": "extractChunkDelta()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L196",
+      "source_location": "L204",
       "_origin": "ast",
       "id": "services_llmservice_extractchunkdelta",
       "community": 32,
@@ -5839,7 +5729,7 @@
       "label": "parseSseLines()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L213",
+      "source_location": "L221",
       "_origin": "ast",
       "id": "services_llmservice_parsesselines",
       "community": 32,
@@ -5849,7 +5739,7 @@
       "label": "LlmService",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L227",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "services_llmservice_llmservice",
       "community": 32,
@@ -5859,7 +5749,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L230",
+      "source_location": "L238",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_constructor",
       "community": 32,
@@ -5869,7 +5759,7 @@
       "label": ".completeJsonObject()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L239",
+      "source_location": "L248",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completejsonobject",
       "community": 32,
@@ -5879,7 +5769,7 @@
       "label": ".planLocalToolCall()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L266",
+      "source_location": "L275",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_planlocaltoolcall",
       "community": 32,
@@ -5889,7 +5779,7 @@
       "label": ".defineGraphCards()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L314",
+      "source_location": "L323",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_definegraphcards",
       "community": 32,
@@ -5899,7 +5789,7 @@
       "label": ".completeText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L357",
+      "source_location": "L366",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetext",
       "community": 32,
@@ -5909,7 +5799,7 @@
       "label": ".streamText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L364",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_streamtext",
       "community": 32,
@@ -5919,7 +5809,7 @@
       "label": ".completeTextWithRetry()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L375",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetextwithretry",
       "community": 32,
@@ -5929,7 +5819,7 @@
       "label": ".completeTextAttempt()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L395",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetextattempt",
       "community": 32,
@@ -5939,7 +5829,7 @@
       "label": ".requestChatCompletion()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L447",
+      "source_location": "L456",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_requestchatcompletion",
       "community": 32,
@@ -5949,7 +5839,7 @@
       "label": ".streamTextAttempt()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L524",
+      "source_location": "L533",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_streamtextattempt",
       "community": 32,
@@ -5959,7 +5849,7 @@
       "label": ".enqueue()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L653",
+      "source_location": "L662",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_enqueue",
       "community": 32,
@@ -6822,7 +6712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_storageservice",
-      "community": 5,
+      "community": 46,
       "norm_label": "storageservice.ts"
     },
     {
@@ -6832,7 +6722,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_storageservice_uuidmodule",
-      "community": 5,
+      "community": 46,
       "norm_label": "uuidmodule"
     },
     {
@@ -6842,7 +6732,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "services_storageservice_createuuid",
-      "community": 5,
+      "community": 46,
       "norm_label": "createuuid()"
     },
     {
@@ -6852,7 +6742,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "services_storageservice_wordsin",
-      "community": 5,
+      "community": 46,
       "norm_label": "wordsin()"
     },
     {
@@ -6862,7 +6752,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "services_storageservice_stringarray",
-      "community": 5,
+      "community": 46,
       "norm_label": "stringarray()"
     },
     {
@@ -6872,7 +6762,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "services_storageservice_optionalstringarray",
-      "community": 5,
+      "community": 46,
       "norm_label": "optionalstringarray()"
     },
     {
@@ -6882,7 +6772,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "services_storageservice_clampimportance",
-      "community": 5,
+      "community": 46,
       "norm_label": "clampimportance()"
     },
     {
@@ -6892,7 +6782,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "services_storageservice_isuservalidationstate",
-      "community": 5,
+      "community": 46,
       "norm_label": "isuservalidationstate()"
     },
     {
@@ -6902,7 +6792,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "services_storageservice_slugifyfilepart",
-      "community": 5,
+      "community": 46,
       "norm_label": "slugifyfilepart()"
     },
     {
@@ -6912,7 +6802,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "services_storageservice_storageservice",
-      "community": 5,
+      "community": 50,
       "norm_label": "storageservice"
     },
     {
@@ -6922,7 +6812,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_constructor",
-      "community": 5,
+      "community": 50,
       "norm_label": ".constructor()"
     },
     {
@@ -6932,7 +6822,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_getvaultpath",
-      "community": 5,
+      "community": 50,
       "norm_label": ".getvaultpath()"
     },
     {
@@ -6942,7 +6832,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_initialize",
-      "community": 5,
+      "community": 50,
       "norm_label": ".initialize()"
     },
     {
@@ -6952,7 +6842,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_writenode",
-      "community": 5,
+      "community": 50,
       "norm_label": ".writenode()"
     },
     {
@@ -6962,7 +6852,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnode",
-      "community": 5,
+      "community": 50,
       "norm_label": ".readnode()"
     },
     {
@@ -6972,7 +6862,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_ingestfragment",
-      "community": 5,
+      "community": 50,
       "norm_label": ".ingestfragment()"
     },
     {
@@ -6982,7 +6872,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_addconnection",
-      "community": 5,
+      "community": 50,
       "norm_label": ".addconnection()"
     },
     {
@@ -6992,7 +6882,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_updatenodesignals",
-      "community": 5,
+      "community": 50,
       "norm_label": ".updatenodesignals()"
     },
     {
@@ -7002,7 +6892,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_fetchfilesegments",
-      "community": 5,
+      "community": 50,
       "norm_label": ".fetchfilesegments()"
     },
     {
@@ -7012,7 +6902,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listnodes",
-      "community": 5,
+      "community": 50,
       "norm_label": ".listnodes()"
     },
     {
@@ -7022,7 +6912,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_normalizeinput",
-      "community": 5,
+      "community": 46,
       "norm_label": ".normalizeinput()"
     },
     {
@@ -7032,7 +6922,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_validatefrontmatter",
-      "community": 5,
+      "community": 46,
       "norm_label": ".validatefrontmatter()"
     },
     {
@@ -7042,7 +6932,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnodefile",
-      "community": 5,
+      "community": 50,
       "norm_label": ".readnodefile()"
     },
     {
@@ -7052,7 +6942,7 @@
       "source_location": "L295",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_findnodepath",
-      "community": 5,
+      "community": 50,
       "norm_label": ".findnodepath()"
     },
     {
@@ -7062,7 +6952,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_parsemarkdownsections",
-      "community": 5,
+      "community": 50,
       "norm_label": ".parsemarkdownsections()"
     },
     {
@@ -7072,7 +6962,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listmarkdownfiles",
-      "community": 5,
+      "community": 50,
       "norm_label": ".listmarkdownfiles()"
     },
     {
@@ -7192,7 +7082,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice",
-      "community": 50,
+      "community": 29,
       "norm_label": "trackerservice"
     },
     {
@@ -7202,7 +7092,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_constructor",
-      "community": 50,
+      "community": 29,
       "norm_label": ".constructor()"
     },
     {
@@ -7212,7 +7102,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_initialize",
-      "community": 50,
+      "community": 29,
       "norm_label": ".initialize()"
     },
     {
@@ -7222,7 +7112,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_listtrackers",
-      "community": 50,
+      "community": 29,
       "norm_label": ".listtrackers()"
     },
     {
@@ -7252,7 +7142,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_removetracker",
-      "community": 50,
+      "community": 29,
       "norm_label": ".removetracker()"
     },
     {
@@ -7262,7 +7152,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_clear",
-      "community": 50,
+      "community": 29,
       "norm_label": ".clear()"
     },
     {
@@ -7272,7 +7162,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_importlegacytrackers",
-      "community": 50,
+      "community": 29,
       "norm_label": ".importlegacytrackers()"
     },
     {
@@ -7292,7 +7182,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_persist",
-      "community": 50,
+      "community": 29,
       "norm_label": ".persist()"
     },
     {
@@ -7452,7 +7342,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_boardrenderer",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardrenderer.tsx"
     },
     {
@@ -7462,7 +7352,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "components_boardrenderer_boardrendererprops",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardrendererprops"
     },
     {
@@ -7472,7 +7362,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_boardrenderer_boardtab",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardtab"
     },
     {
@@ -7482,7 +7372,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "components_boardrenderer_boardtabs",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardtabs"
     },
     {
@@ -7492,7 +7382,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "components_boardrenderer_formatdate",
-      "community": 1,
+      "community": 28,
       "norm_label": "formatdate()"
     },
     {
@@ -7502,7 +7392,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_boardrenderer_rawstring",
-      "community": 1,
+      "community": 28,
       "norm_label": "rawstring()"
     },
     {
@@ -7512,7 +7402,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "components_boardrenderer_rawnumber",
-      "community": 1,
+      "community": 28,
       "norm_label": "rawnumber()"
     },
     {
@@ -7522,7 +7412,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "components_boardrenderer_displaysource",
-      "community": 1,
+      "community": 28,
       "norm_label": "displaysource()"
     },
     {
@@ -7532,7 +7422,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "components_boardrenderer_foldername",
-      "community": 1,
+      "community": 28,
       "norm_label": "foldername()"
     },
     {
@@ -7542,7 +7432,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "components_boardrenderer_sourcecomment",
-      "community": 1,
+      "community": 28,
       "norm_label": "sourcecomment()"
     },
     {
@@ -7552,7 +7442,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "components_boardrenderer_masonrygrid",
-      "community": 1,
+      "community": 28,
       "norm_label": "masonrygrid()"
     },
     {
@@ -7562,7 +7452,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "components_boardrenderer_entitytable",
-      "community": 1,
+      "community": 28,
       "norm_label": "entitytable()"
     },
     {
@@ -7572,7 +7462,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "components_boardrenderer_sourceexplorer",
-      "community": 1,
+      "community": 28,
       "norm_label": "sourceexplorer()"
     },
     {
@@ -7582,7 +7472,7 @@
       "source_location": "L379",
       "_origin": "ast",
       "id": "components_boardrenderer_sourcelist",
-      "community": 1,
+      "community": 28,
       "norm_label": "sourcelist()"
     },
     {
@@ -7592,7 +7482,7 @@
       "source_location": "L406",
       "_origin": "ast",
       "id": "components_boardrenderer_topicview",
-      "community": 1,
+      "community": 28,
       "norm_label": "topicview()"
     },
     {
@@ -7602,7 +7492,7 @@
       "source_location": "L441",
       "_origin": "ast",
       "id": "components_boardrenderer_graphhtmlviewer",
-      "community": 1,
+      "community": 28,
       "norm_label": "graphhtmlviewer()"
     },
     {
@@ -7612,7 +7502,7 @@
       "source_location": "L486",
       "_origin": "ast",
       "id": "components_boardrenderer_searchresultspanel",
-      "community": 1,
+      "community": 28,
       "norm_label": "searchresultspanel()"
     },
     {
@@ -7622,7 +7512,7 @@
       "source_location": "L528",
       "_origin": "ast",
       "id": "components_boardrenderer_boardrenderer",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardrenderer()"
     },
     {
@@ -8052,7 +7942,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projectlist",
-      "community": 48,
+      "community": 36,
       "norm_label": "projectlist.tsx"
     },
     {
@@ -8062,7 +7952,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_projectlist_projectlistprops",
-      "community": 48,
+      "community": 36,
       "norm_label": "projectlistprops"
     },
     {
@@ -8072,7 +7962,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_projectlist_projectlist",
-      "community": 48,
+      "community": 36,
       "norm_label": "projectlist()"
     },
     {
@@ -8182,7 +8072,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_topiccanvas",
-      "community": 49,
+      "community": 43,
       "norm_label": "topiccanvas.tsx"
     },
     {
@@ -8192,7 +8082,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_topiccanvas_topiccanvasprops",
-      "community": 49,
+      "community": 43,
       "norm_label": "topiccanvasprops"
     },
     {
@@ -8202,7 +8092,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "components_topiccanvas_loadstate",
-      "community": 49,
+      "community": 43,
       "norm_label": "loadstate"
     },
     {
@@ -8212,7 +8102,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_topiccanvas_exportstate",
-      "community": 49,
+      "community": 43,
       "norm_label": "exportstate"
     },
     {
@@ -8222,7 +8112,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "components_topiccanvas_formatrelativetime",
-      "community": 49,
+      "community": 43,
       "norm_label": "formatrelativetime()"
     },
     {
@@ -8232,7 +8122,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_topiccanvas_validationlabel",
-      "community": 49,
+      "community": 43,
       "norm_label": "validationlabel()"
     },
     {
@@ -8242,7 +8132,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "components_topiccanvas_validationclass",
-      "community": 49,
+      "community": 43,
       "norm_label": "validationclass()"
     },
     {
@@ -8252,7 +8142,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "components_topiccanvas_topiccanvas",
-      "community": 49,
+      "community": 43,
       "norm_label": "topiccanvas()"
     },
     {
@@ -8262,7 +8152,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_trackertable",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackertable.tsx"
     },
     {
@@ -8272,7 +8162,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_trackertable_trackertableprops",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackertableprops"
     },
     {
@@ -8282,7 +8172,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_trackertable_loadstate",
-      "community": 46,
+      "community": 29,
       "norm_label": "loadstate"
     },
     {
@@ -8292,7 +8182,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_trackertable_statusoptions",
-      "community": 46,
+      "community": 29,
       "norm_label": "statusoptions"
     },
     {
@@ -8302,7 +8192,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "components_trackertable_priorityoptions",
-      "community": 46,
+      "community": 29,
       "norm_label": "priorityoptions"
     },
     {
@@ -8312,7 +8202,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_trackertable_titlecase",
-      "community": 46,
+      "community": 29,
       "norm_label": "titlecase()"
     },
     {
@@ -8322,7 +8212,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "components_trackertable_csvcell",
-      "community": 46,
+      "community": 29,
       "norm_label": "csvcell()"
     },
     {
@@ -8332,7 +8222,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_trackertable_ticketstocsv",
-      "community": 46,
+      "community": 29,
       "norm_label": "ticketstocsv()"
     },
     {
@@ -8342,7 +8232,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_trackertable_trackertable",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackertable()"
     },
     {
@@ -8352,7 +8242,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_browserapifallback",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserapifallback.ts"
     },
     {
@@ -8362,7 +8252,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "lib_browserapifallback_trackerstatushandlers",
-      "community": 10,
+      "community": 29,
       "norm_label": "trackerstatushandlers"
     },
     {
@@ -8372,7 +8262,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "lib_browserapifallback_chatstreamhandlers",
-      "community": 10,
+      "community": 29,
       "norm_label": "chatstreamhandlers"
     },
     {
@@ -8382,7 +8272,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "lib_browserapifallback_browsertrackers",
-      "community": 10,
+      "community": 29,
       "norm_label": "browsertrackers"
     },
     {
@@ -8392,7 +8282,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserprojects",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserprojects"
     },
     {
@@ -8402,7 +8292,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorertree",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserexplorertree"
     },
     {
@@ -8412,177 +8302,177 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "lib_browserapifallback_browseraisettings",
-      "community": 10,
+      "community": 29,
       "norm_label": "browseraisettings"
     },
     {
       "label": "browserAppSettings",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L66",
+      "source_location": "L67",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserappsettings",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserappsettings"
     },
     {
       "label": "browserThreads",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L87",
+      "source_location": "L89",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserthreads",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserthreads"
     },
     {
       "label": "browserResearchDependencyReport",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L89",
+      "source_location": "L91",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserresearchdependencyreport",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserresearchdependencyreport"
     },
     {
       "label": "browserRuntimeStatus",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L107",
+      "source_location": "L109",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserruntimestatus",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserruntimestatus"
     },
     {
       "label": "browserPaper",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L137",
+      "source_location": "L139",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaper",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserpaper"
     },
     {
       "label": "browserDefinitionStatus",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L146",
+      "source_location": "L148",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserdefinitionstatus",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserdefinitionstatus"
     },
     {
       "label": "browserPaperDetails",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L155",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaperdetails",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserpaperdetails"
     },
     {
       "label": "compact()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L171",
+      "source_location": "L173",
       "_origin": "ast",
       "id": "lib_browserapifallback_compact",
-      "community": 10,
+      "community": 29,
       "norm_label": "compact()"
     },
     {
       "label": "normalizeLine()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L175",
+      "source_location": "L177",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizeline",
-      "community": 10,
+      "community": 29,
       "norm_label": "normalizeline()"
     },
     {
       "label": "normalizeTrackerStatus()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L179",
+      "source_location": "L181",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerstatus",
-      "community": 10,
+      "community": 29,
       "norm_label": "normalizetrackerstatus()"
     },
     {
       "label": "normalizeTrackerPriority()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L189",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerpriority",
-      "community": 10,
+      "community": 29,
       "norm_label": "normalizetrackerpriority()"
     },
     {
       "label": "emitTrackerStatus()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L193",
+      "source_location": "L195",
       "_origin": "ast",
       "id": "lib_browserapifallback_emittrackerstatus",
-      "community": 10,
+      "community": 29,
       "norm_label": "emittrackerstatus()"
     },
     {
       "label": "emitChatStreamEvent()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L199",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "lib_browserapifallback_emitchatstreamevent",
-      "community": 10,
+      "community": 29,
       "norm_label": "emitchatstreamevent()"
     },
     {
       "label": "readDroppedContent()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L205",
+      "source_location": "L207",
       "_origin": "ast",
       "id": "lib_browserapifallback_readdroppedcontent",
-      "community": 10,
+      "community": 29,
       "norm_label": "readdroppedcontent()"
     },
     {
       "label": "processDroppedItemsInBrowser()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L213",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "lib_browserapifallback_processdroppeditemsinbrowser",
-      "community": 10,
+      "community": 29,
       "norm_label": "processdroppeditemsinbrowser()"
     },
     {
       "label": "browserApiFallback",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L252",
+      "source_location": "L254",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserapifallback",
-      "community": 10,
+      "community": 29,
       "norm_label": "browserapifallback"
     },
     {
       "label": "installBrowserApiFallback()",
       "file_type": "code",
       "source_file": "src/renderer/lib/browserApiFallback.ts",
-      "source_location": "L868",
+      "source_location": "L875",
       "_origin": "ast",
       "id": "lib_browserapifallback_installbrowserapifallback",
-      "community": 51,
+      "community": 31,
       "norm_label": "installbrowserapifallback()"
     },
     {
@@ -8632,7 +8522,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_main",
-      "community": 51,
+      "community": 31,
       "norm_label": "main.tsx"
     },
     {
@@ -8642,7 +8532,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "renderer_main_params",
-      "community": 51,
+      "community": 31,
       "norm_label": "params"
     },
     {
@@ -8652,7 +8542,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_main_windowname",
-      "community": 51,
+      "community": 31,
       "norm_label": "windowname"
     },
     {
@@ -8662,7 +8552,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "stores_useboardstore",
-      "community": 1,
+      "community": 28,
       "norm_label": "useboardstore.ts"
     },
     {
@@ -8672,7 +8562,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "stores_useboardstore_loadstate",
-      "community": 1,
+      "community": 28,
       "norm_label": "loadstate"
     },
     {
@@ -8682,7 +8572,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "stores_useboardstore_boardstate",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardstate"
     },
     {
@@ -8692,7 +8582,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "stores_useboardstore_useboardstore",
-      "community": 1,
+      "community": 28,
       "norm_label": "useboardstore"
     },
     {
@@ -8702,7 +8592,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "stores_useprojectstore",
-      "community": 48,
+      "community": 27,
       "norm_label": "useprojectstore.ts"
     },
     {
@@ -8712,7 +8602,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "stores_useprojectstore_projectstate",
-      "community": 48,
+      "community": 27,
       "norm_label": "projectstate"
     },
     {
@@ -8722,7 +8612,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "stores_useprojectstore_activefrom",
-      "community": 48,
+      "community": 27,
       "norm_label": "activefrom()"
     },
     {
@@ -8732,7 +8622,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "stores_useprojectstore_useprojectstore",
-      "community": 48,
+      "community": 36,
       "norm_label": "useprojectstore"
     },
     {
@@ -8742,7 +8632,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "stores_usetrackerstore",
-      "community": 46,
+      "community": 29,
       "norm_label": "usetrackerstore.ts"
     },
     {
@@ -8752,7 +8642,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "stores_usetrackerstore_trackerstate",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackerstate"
     },
     {
@@ -8762,7 +8652,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "stores_usetrackerstore_usetrackerstore",
-      "community": 46,
+      "community": 29,
       "norm_label": "usetrackerstore"
     },
     {
@@ -8832,7 +8722,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "views_floatingwidget_floatingwidget",
-      "community": 51,
+      "community": 31,
       "norm_label": "floatingwidget()"
     },
     {
@@ -8862,7 +8752,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "views_mainapp_mainapp",
-      "community": 51,
+      "community": 31,
       "norm_label": "mainapp()"
     },
     {
@@ -8872,7 +8762,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain",
-      "community": 5,
+      "community": 0,
       "norm_label": "brain.ts"
     },
     {
@@ -8882,7 +8772,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain_brainnodefrontmatter",
-      "community": 5,
+      "community": 46,
       "norm_label": "brainnodefrontmatter"
     },
     {
@@ -8892,7 +8782,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "shared_brain_uservalidationstate",
-      "community": 49,
+      "community": 43,
       "norm_label": "uservalidationstate"
     },
     {
@@ -8902,7 +8792,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "shared_brain_brainnode",
-      "community": 5,
+      "community": 50,
       "norm_label": "brainnode"
     },
     {
@@ -8912,7 +8802,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "shared_brain_writebrainnodeinput",
-      "community": 5,
+      "community": 46,
       "norm_label": "writebrainnodeinput"
     },
     {
@@ -8922,7 +8812,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "shared_brain_listbrainnodesinput",
-      "community": 5,
+      "community": 0,
       "norm_label": "listbrainnodesinput"
     },
     {
@@ -8932,7 +8822,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "shared_brain_searchbrainnodesinput",
-      "community": 5,
+      "community": 10,
       "norm_label": "searchbrainnodesinput"
     },
     {
@@ -8942,7 +8832,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "shared_brain_brainsearchresult",
-      "community": 5,
+      "community": 10,
       "norm_label": "brainsearchresult"
     },
     {
@@ -8952,7 +8842,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "shared_brain_boardtopologynode",
-      "community": 5,
+      "community": 0,
       "norm_label": "boardtopologynode"
     },
     {
@@ -8962,7 +8852,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "shared_brain_searchboardtopologyinput",
-      "community": 5,
+      "community": 0,
       "norm_label": "searchboardtopologyinput"
     },
     {
@@ -9082,14 +8972,24 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "shared_brain_aisettings",
-      "community": 0,
+      "community": 45,
       "norm_label": "aisettings"
+    },
+    {
+      "label": "AiMode",
+      "file_type": "code",
+      "source_file": "src/shared/brain.ts",
+      "source_location": "L149",
+      "_origin": "ast",
+      "id": "shared_brain_aimode",
+      "community": 0,
+      "norm_label": "aimode"
     },
     {
       "label": "ManagedProxySettings",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L148",
+      "source_location": "L151",
       "_origin": "ast",
       "id": "shared_brain_managedproxysettings",
       "community": 35,
@@ -9099,7 +8999,7 @@
       "label": "UpdateAiSettingsInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L157",
+      "source_location": "L160",
       "_origin": "ast",
       "id": "shared_brain_updateaisettingsinput",
       "community": 35,
@@ -9109,7 +9009,7 @@
       "label": "UpdateManagedProxySettingsInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L163",
+      "source_location": "L166",
       "_origin": "ast",
       "id": "shared_brain_updatemanagedproxysettingsinput",
       "community": 35,
@@ -9119,17 +9019,17 @@
       "label": "GraphifyRuntimeSettings",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L165",
+      "source_location": "L168",
       "_origin": "ast",
       "id": "shared_brain_graphifyruntimesettings",
-      "community": 35,
+      "community": 0,
       "norm_label": "graphifyruntimesettings"
     },
     {
       "label": "AppSettings",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L175",
+      "source_location": "L178",
       "_origin": "ast",
       "id": "shared_brain_appsettings",
       "community": 35,
@@ -9139,17 +9039,17 @@
       "label": "UpdateGraphifyRuntimeSettingsInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L182",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "shared_brain_updategraphifyruntimesettingsinput",
-      "community": 5,
+      "community": 0,
       "norm_label": "updategraphifyruntimesettingsinput"
     },
     {
       "label": "UpdateAppSettingsInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L184",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "shared_brain_updateappsettingsinput",
       "community": 35,
@@ -9159,7 +9059,7 @@
       "label": "GraphifyContextCitation",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L190",
+      "source_location": "L195",
       "_origin": "ast",
       "id": "shared_brain_graphifycontextcitation",
       "community": 8,
@@ -9169,7 +9069,7 @@
       "label": "GraphifyContextResult",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L196",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "shared_brain_graphifycontextresult",
       "community": 4,
@@ -9179,27 +9079,27 @@
       "label": "ChatRole",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L206",
+      "source_location": "L211",
       "_origin": "ast",
       "id": "shared_brain_chatrole",
-      "community": 5,
+      "community": 0,
       "norm_label": "chatrole"
     },
     {
       "label": "ChatArtifactSource",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L208",
+      "source_location": "L213",
       "_origin": "ast",
       "id": "shared_brain_chatartifactsource",
-      "community": 5,
+      "community": 0,
       "norm_label": "chatartifactsource"
     },
     {
       "label": "ChatArtifact",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L210",
+      "source_location": "L215",
       "_origin": "ast",
       "id": "shared_brain_chatartifact",
       "community": 4,
@@ -9209,7 +9109,7 @@
       "label": "ChatMessage",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L222",
+      "source_location": "L227",
       "_origin": "ast",
       "id": "shared_brain_chatmessage",
       "community": 4,
@@ -9219,7 +9119,7 @@
       "label": "ChatThread",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L235",
+      "source_location": "L240",
       "_origin": "ast",
       "id": "shared_brain_chatthread",
       "community": 4,
@@ -9229,7 +9129,7 @@
       "label": "ChatSendInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L243",
+      "source_location": "L248",
       "_origin": "ast",
       "id": "shared_brain_chatsendinput",
       "community": 4,
@@ -9239,7 +9139,7 @@
       "label": "ChatResponse",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L249",
+      "source_location": "L254",
       "_origin": "ast",
       "id": "shared_brain_chatresponse",
       "community": 4,
@@ -9249,7 +9149,7 @@
       "label": "ChatStreamEvent",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L254",
+      "source_location": "L259",
       "_origin": "ast",
       "id": "shared_brain_chatstreamevent",
       "community": 4,
@@ -9259,7 +9159,7 @@
       "label": "SaveChatArtifactInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L301",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "shared_brain_savechatartifactinput",
       "community": 4,
@@ -9269,7 +9169,7 @@
       "label": "ChatArtifactActionResult",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L307",
+      "source_location": "L312",
       "_origin": "ast",
       "id": "shared_brain_chatartifactactionresult",
       "community": 4,
@@ -9279,7 +9179,7 @@
       "label": "RuntimeDependencyCheck",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L315",
+      "source_location": "L320",
       "_origin": "ast",
       "id": "shared_brain_runtimedependencycheck",
       "community": 37,
@@ -9289,7 +9189,7 @@
       "label": "DependencyRuntimeStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L324",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "shared_brain_dependencyruntimestatus",
       "community": 37,
@@ -9299,7 +9199,7 @@
       "label": "ProjectRecord",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L333",
+      "source_location": "L338",
       "_origin": "ast",
       "id": "shared_brain_projectrecord",
       "community": 27,
@@ -9309,27 +9209,27 @@
       "label": "CreateProjectInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L347",
+      "source_location": "L352",
       "_origin": "ast",
       "id": "shared_brain_createprojectinput",
-      "community": 48,
+      "community": 27,
       "norm_label": "createprojectinput"
     },
     {
       "label": "RenameProjectInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L351",
+      "source_location": "L356",
       "_origin": "ast",
       "id": "shared_brain_renameprojectinput",
-      "community": 48,
+      "community": 27,
       "norm_label": "renameprojectinput"
     },
     {
       "label": "ProjectSelectionInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L356",
+      "source_location": "L361",
       "_origin": "ast",
       "id": "shared_brain_projectselectioninput",
       "community": 27,
@@ -9339,7 +9239,7 @@
       "label": "GraphBoardNode",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L360",
+      "source_location": "L365",
       "_origin": "ast",
       "id": "shared_brain_graphboardnode",
       "community": 12,
@@ -9349,7 +9249,7 @@
       "label": "GraphBoardLink",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L371",
+      "source_location": "L376",
       "_origin": "ast",
       "id": "shared_brain_graphboardlink",
       "community": 12,
@@ -9359,7 +9259,7 @@
       "label": "GraphBoardState",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L379",
+      "source_location": "L384",
       "_origin": "ast",
       "id": "shared_brain_graphboardstate",
       "community": 12,
@@ -9369,7 +9269,7 @@
       "label": "GraphDefinitionStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L386",
+      "source_location": "L391",
       "_origin": "ast",
       "id": "shared_brain_graphdefinitionstatus",
       "community": 25,
@@ -9379,17 +9279,17 @@
       "label": "GraphBoardNeighbor",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L398",
+      "source_location": "L403",
       "_origin": "ast",
       "id": "shared_brain_graphboardneighbor",
-      "community": 5,
+      "community": 0,
       "norm_label": "graphboardneighbor"
     },
     {
       "label": "ResearchPaperStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L407",
+      "source_location": "L412",
       "_origin": "ast",
       "id": "shared_brain_researchpaperstatus",
       "community": 12,
@@ -9399,37 +9299,37 @@
       "label": "ResearchPaperComponentType",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L409",
+      "source_location": "L414",
       "_origin": "ast",
       "id": "shared_brain_researchpapercomponenttype",
-      "community": 5,
+      "community": 0,
       "norm_label": "researchpapercomponenttype"
     },
     {
       "label": "ResearchDependencyStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L421",
+      "source_location": "L426",
       "_origin": "ast",
       "id": "shared_brain_researchdependencystatus",
-      "community": 5,
+      "community": 0,
       "norm_label": "researchdependencystatus"
     },
     {
       "label": "ResearchDependencyReport",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L431",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "shared_brain_researchdependencyreport",
-      "community": 36,
+      "community": 25,
       "norm_label": "researchdependencyreport"
     },
     {
       "label": "ResearchPaperSummary",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L439",
+      "source_location": "L444",
       "_origin": "ast",
       "id": "shared_brain_researchpapersummary",
       "community": 33,
@@ -9439,7 +9339,7 @@
       "label": "ResearchPaperNote",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L449",
+      "source_location": "L454",
       "_origin": "ast",
       "id": "shared_brain_researchpapernote",
       "community": 33,
@@ -9449,7 +9349,7 @@
       "label": "ResearchLiteratureMatrix",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L455",
+      "source_location": "L460",
       "_origin": "ast",
       "id": "shared_brain_researchliteraturematrix",
       "community": 33,
@@ -9459,7 +9359,7 @@
       "label": "ResearchThesisLink",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L464",
+      "source_location": "L469",
       "_origin": "ast",
       "id": "shared_brain_researchthesislink",
       "community": 33,
@@ -9469,7 +9369,7 @@
       "label": "ResearchPaperDetails",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L471",
+      "source_location": "L476",
       "_origin": "ast",
       "id": "shared_brain_researchpaperdetails",
       "community": 33,
@@ -9479,7 +9379,7 @@
       "label": "UpdateResearchPaperStatusInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L486",
+      "source_location": "L491",
       "_origin": "ast",
       "id": "shared_brain_updateresearchpaperstatusinput",
       "community": 33,
@@ -9489,7 +9389,7 @@
       "label": "SaveResearchNodeNoteInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L491",
+      "source_location": "L496",
       "_origin": "ast",
       "id": "shared_brain_saveresearchnodenoteinput",
       "community": 33,
@@ -9499,7 +9399,7 @@
       "label": "GraphBoardNodeDetails",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L496",
+      "source_location": "L501",
       "_origin": "ast",
       "id": "shared_brain_graphboardnodedetails",
       "community": 12,
@@ -9509,7 +9409,7 @@
       "label": "CallflowHtmlDocument",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L501",
+      "source_location": "L506",
       "_origin": "ast",
       "id": "shared_brain_callflowhtmldocument",
       "community": 12,
@@ -9519,27 +9419,27 @@
       "label": "TrackerStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L508",
+      "source_location": "L513",
       "_origin": "ast",
       "id": "shared_brain_trackerstatus",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackerstatus"
     },
     {
       "label": "TrackerPriority",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L510",
+      "source_location": "L515",
       "_origin": "ast",
       "id": "shared_brain_trackerpriority",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackerpriority"
     },
     {
       "label": "TrackerRecord",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L512",
+      "source_location": "L517",
       "_origin": "ast",
       "id": "shared_brain_trackerrecord",
       "community": 29,
@@ -9549,7 +9449,7 @@
       "label": "CreateTrackerInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L526",
+      "source_location": "L531",
       "_origin": "ast",
       "id": "shared_brain_createtrackerinput",
       "community": 29,
@@ -9559,7 +9459,7 @@
       "label": "UpdateTrackerInput",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L537",
+      "source_location": "L542",
       "_origin": "ast",
       "id": "shared_brain_updatetrackerinput",
       "community": 29,
@@ -9569,27 +9469,27 @@
       "label": "TrackerIngestionStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L549",
+      "source_location": "L554",
       "_origin": "ast",
       "id": "shared_brain_trackeringestionstatus",
-      "community": 46,
+      "community": 29,
       "norm_label": "trackeringestionstatus"
     },
     {
       "label": "ClipboardIngestibleItemsResult",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L555",
+      "source_location": "L560",
       "_origin": "ast",
       "id": "shared_brain_clipboardingestibleitemsresult",
-      "community": 5,
+      "community": 0,
       "norm_label": "clipboardingestibleitemsresult"
     },
     {
       "label": "ProcessDroppedItemsResult",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L560",
+      "source_location": "L565",
       "_origin": "ast",
       "id": "shared_brain_processdroppeditemsresult",
       "community": 36,
@@ -9599,7 +9499,7 @@
       "label": "McpServerStatus",
       "file_type": "code",
       "source_file": "src/shared/brain.ts",
-      "source_location": "L567",
+      "source_location": "L572",
       "_origin": "ast",
       "id": "shared_brain_mcpserverstatus",
       "community": 41,
@@ -9619,7 +9519,7 @@
       "label": "windowChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L153",
+      "source_location": "L155",
       "_origin": "ast",
       "id": "shared_ipc_windowchannels",
       "community": 11,
@@ -9629,7 +9529,7 @@
       "label": "fileChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L162",
+      "source_location": "L164",
       "_origin": "ast",
       "id": "shared_ipc_filechannels",
       "community": 11,
@@ -9639,7 +9539,7 @@
       "label": "brainChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L166",
+      "source_location": "L168",
       "_origin": "ast",
       "id": "shared_ipc_brainchannels",
       "community": 32,
@@ -9649,7 +9549,7 @@
       "label": "trackerChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L178",
+      "source_location": "L180",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannels",
       "community": 32,
@@ -9659,7 +9559,7 @@
       "label": "boardChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L186",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "shared_ipc_boardchannels",
       "community": 11,
@@ -9669,7 +9569,7 @@
       "label": "explorerChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L197",
+      "source_location": "L199",
       "_origin": "ast",
       "id": "shared_ipc_explorerchannels",
       "community": 11,
@@ -9679,7 +9579,7 @@
       "label": "projectChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L207",
+      "source_location": "L209",
       "_origin": "ast",
       "id": "shared_ipc_projectchannels",
       "community": 11,
@@ -9689,7 +9589,7 @@
       "label": "graphBoardChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L216",
+      "source_location": "L218",
       "_origin": "ast",
       "id": "shared_ipc_graphboardchannels",
       "community": 11,
@@ -9699,7 +9599,7 @@
       "label": "researchChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L223",
+      "source_location": "L225",
       "_origin": "ast",
       "id": "shared_ipc_researchchannels",
       "community": 11,
@@ -9709,7 +9609,7 @@
       "label": "clipboardChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L231",
+      "source_location": "L233",
       "_origin": "ast",
       "id": "shared_ipc_clipboardchannels",
       "community": 11,
@@ -9719,7 +9619,7 @@
       "label": "settingsChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L237",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "shared_ipc_settingschannels",
       "community": 11,
@@ -9729,7 +9629,7 @@
       "label": "chatChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L245",
+      "source_location": "L247",
       "_origin": "ast",
       "id": "shared_ipc_chatchannels",
       "community": 11,
@@ -9739,7 +9639,7 @@
       "label": "runtimeChannels",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L259",
+      "source_location": "L261",
       "_origin": "ast",
       "id": "shared_ipc_runtimechannels",
       "community": 11,
@@ -9749,7 +9649,7 @@
       "label": "WindowChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L264",
+      "source_location": "L266",
       "_origin": "ast",
       "id": "shared_ipc_windowchannel",
       "community": 20,
@@ -9759,7 +9659,7 @@
       "label": "FileChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L265",
+      "source_location": "L267",
       "_origin": "ast",
       "id": "shared_ipc_filechannel",
       "community": 20,
@@ -9769,7 +9669,7 @@
       "label": "BrainChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L266",
+      "source_location": "L268",
       "_origin": "ast",
       "id": "shared_ipc_brainchannel",
       "community": 20,
@@ -9779,7 +9679,7 @@
       "label": "TrackerChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L267",
+      "source_location": "L269",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannel",
       "community": 20,
@@ -9789,7 +9689,7 @@
       "label": "BoardChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L268",
+      "source_location": "L270",
       "_origin": "ast",
       "id": "shared_ipc_boardchannel",
       "community": 20,
@@ -9799,7 +9699,7 @@
       "label": "ExplorerChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L269",
+      "source_location": "L271",
       "_origin": "ast",
       "id": "shared_ipc_explorerchannel",
       "community": 20,
@@ -9809,7 +9709,7 @@
       "label": "ProjectChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L270",
+      "source_location": "L272",
       "_origin": "ast",
       "id": "shared_ipc_projectchannel",
       "community": 20,
@@ -9819,7 +9719,7 @@
       "label": "GraphBoardChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L271",
+      "source_location": "L273",
       "_origin": "ast",
       "id": "shared_ipc_graphboardchannel",
       "community": 20,
@@ -9829,7 +9729,7 @@
       "label": "ResearchChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L272",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "shared_ipc_researchchannel",
       "community": 20,
@@ -9839,7 +9739,7 @@
       "label": "ClipboardChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L273",
+      "source_location": "L275",
       "_origin": "ast",
       "id": "shared_ipc_clipboardchannel",
       "community": 20,
@@ -9849,7 +9749,7 @@
       "label": "SettingsChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L274",
+      "source_location": "L276",
       "_origin": "ast",
       "id": "shared_ipc_settingschannel",
       "community": 20,
@@ -9859,7 +9759,7 @@
       "label": "ChatChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L275",
+      "source_location": "L277",
       "_origin": "ast",
       "id": "shared_ipc_chatchannel",
       "community": 20,
@@ -9869,7 +9769,7 @@
       "label": "RuntimeChannel",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L276",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "shared_ipc_runtimechannel",
       "community": 20,
@@ -9879,7 +9779,7 @@
       "label": "DroppedFile",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L278",
+      "source_location": "L280",
       "_origin": "ast",
       "id": "shared_ipc_droppedfile",
       "community": 31,
@@ -9889,7 +9789,7 @@
       "label": "FilesDroppedPayload",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L286",
+      "source_location": "L288",
       "_origin": "ast",
       "id": "shared_ipc_filesdroppedpayload",
       "community": 31,
@@ -9899,7 +9799,7 @@
       "label": "WidgetBounds",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L292",
+      "source_location": "L294",
       "_origin": "ast",
       "id": "shared_ipc_widgetbounds",
       "community": 20,
@@ -9909,7 +9809,7 @@
       "label": "WidgetMovePayload",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L299",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "shared_ipc_widgetmovepayload",
       "community": 31,
@@ -9919,17 +9819,17 @@
       "label": "GraphHtmlDocument",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L304",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "shared_ipc_graphhtmldocument",
-      "community": 1,
+      "community": 3,
       "norm_label": "graphhtmldocument"
     },
     {
       "label": "SecondBrainApi",
       "file_type": "code",
       "source_file": "src/shared/ipc.ts",
-      "source_location": "L310",
+      "source_location": "L312",
       "_origin": "ast",
       "id": "shared_ipc_secondbrainapi",
       "community": 20,
@@ -10032,7 +9932,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_board",
-      "community": 1,
+      "community": 20,
       "norm_label": "board.ts"
     },
     {
@@ -10042,7 +9942,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_board_boardlayouttype",
-      "community": 1,
+      "community": 20,
       "norm_label": "boardlayouttype"
     },
     {
@@ -10052,7 +9952,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "types_board_boardrule",
-      "community": 1,
+      "community": 28,
       "norm_label": "boardrule"
     },
     {
@@ -10062,7 +9962,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "types_board_boardsearchkind",
-      "community": 1,
+      "community": 20,
       "norm_label": "boardsearchkind"
     },
     {
@@ -10072,7 +9972,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "types_board_boarditem",
-      "community": 1,
+      "community": 20,
       "norm_label": "boarditem"
     },
     {
@@ -10092,7 +9992,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "types_board_boardsearchinput",
-      "community": 1,
+      "community": 20,
       "norm_label": "boardsearchinput"
     },
     {
@@ -10102,7 +10002,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "types_board_boardsearchresult",
-      "community": 1,
+      "community": 20,
       "norm_label": "boardsearchresult"
     },
     {
@@ -13883,6 +13783,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_aisettingsservice",
+      "target": "services_aisettingsservice_normalizeaimode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/AiSettingsService.ts",
       "source_location": "L14",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -13959,6 +13869,17 @@
       "confidence_score": 1.0,
       "source": "services_aisettingsservice",
       "target": "shared_brain"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_aisettingsservice",
+      "target": "shared_brain_aimode"
     },
     {
       "relation": "imports",
@@ -14234,6 +14155,28 @@
       "confidence_score": 1.0,
       "source": "services_aisettingsservice_normalizemanagedproxysettings",
       "target": "services_aisettingsservice_normalizemanagedproxymodel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L181",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_aisettingsservice_aisettingsservice_getappsettings",
+      "target": "services_aisettingsservice_normalizeaimode"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L218",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_aisettingsservice_aisettingsservice_updateappsettings",
+      "target": "services_aisettingsservice_normalizeaimode"
     },
     {
       "relation": "calls",
@@ -14533,6 +14476,17 @@
       "target": "services_aisettingsservice_aisettingsservice_getappsettings"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/AiSettingsService.ts",
+      "source_location": "L156",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_aisettingsservice_aisettingsservice_getsettings",
+      "target": "services_aisettingsservice_aisettingsservice_geteffectivesettings"
+    },
+    {
       "relation": "references",
       "context": "generic_arg",
       "confidence": "EXTRACTED",
@@ -14800,9 +14754,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L52",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_crc32",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_crc32"
     },
     {
       "relation": "contains",
@@ -14820,9 +14774,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_dosdatetime",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_dosdatetime"
     },
     {
       "relation": "contains",
@@ -14840,9 +14794,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L44",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_escapexml",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_escapexml"
     },
     {
       "relation": "contains",
@@ -14850,9 +14804,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L133",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_pdfescape",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_pdfescape"
     },
     {
       "relation": "contains",
@@ -14860,9 +14814,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L193",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_renderdocx",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderdocx"
     },
     {
       "relation": "contains",
@@ -14870,9 +14824,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L156",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_renderpdf",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderpdf"
     },
     {
       "relation": "contains",
@@ -14880,9 +14834,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L251",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_rendersvg",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_rendersvg"
     },
     {
       "relation": "contains",
@@ -14890,9 +14844,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L216",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_renderxlsx",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderxlsx"
     },
     {
       "relation": "contains",
@@ -14920,9 +14874,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_wraplines",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_wraplines"
     },
     {
       "relation": "contains",
@@ -14930,9 +14884,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L71",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice",
-      "target": "services_artifacttoolservice_zipstore",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_zipstore"
     },
     {
       "relation": "imports_from",
@@ -15007,9 +14961,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L257",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_rendersvg",
-      "target": "services_artifacttoolservice_escapexml",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_escapexml"
     },
     {
       "relation": "calls",
@@ -15018,9 +14972,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L80",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_zipstore",
-      "target": "services_artifacttoolservice_crc32",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_crc32"
     },
     {
       "relation": "calls",
@@ -15029,9 +14983,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L75",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_zipstore",
-      "target": "services_artifacttoolservice_dosdatetime",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_dosdatetime"
     },
     {
       "relation": "calls",
@@ -15040,9 +14994,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L198",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_renderdocx",
-      "target": "services_artifacttoolservice_zipstore",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_zipstore"
     },
     {
       "relation": "calls",
@@ -15051,9 +15005,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L223",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_renderxlsx",
-      "target": "services_artifacttoolservice_zipstore",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_zipstore"
     },
     {
       "relation": "calls",
@@ -15062,9 +15016,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L157",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_renderpdf",
-      "target": "services_artifacttoolservice_wraplines",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_wraplines"
     },
     {
       "relation": "calls",
@@ -15073,9 +15027,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L252",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_rendersvg",
-      "target": "services_artifacttoolservice_wraplines",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_wraplines"
     },
     {
       "relation": "calls",
@@ -15084,9 +15038,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L285",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_artifacttoolservice_createartifact",
-      "target": "services_artifacttoolservice_renderpdf",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderpdf"
     },
     {
       "relation": "calls",
@@ -15095,9 +15049,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L287",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_artifacttoolservice_createartifact",
-      "target": "services_artifacttoolservice_renderdocx",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderdocx"
     },
     {
       "relation": "calls",
@@ -15106,9 +15060,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L289",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_artifacttoolservice_createartifact",
-      "target": "services_artifacttoolservice_renderxlsx",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_renderxlsx"
     },
     {
       "relation": "calls",
@@ -15117,9 +15071,9 @@
       "source_file": "src/main/services/ArtifactToolService.ts",
       "source_location": "L291",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_artifacttoolservice_artifacttoolservice_createartifact",
-      "target": "services_artifacttoolservice_rendersvg",
-      "confidence_score": 1.0
+      "target": "services_artifacttoolservice_rendersvg"
     },
     {
       "relation": "method",
@@ -15179,9 +15133,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L227",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice",
-      "target": "services_chatservice_artifactfilename",
-      "confidence_score": 1.0
+      "target": "services_chatservice_artifactfilename"
     },
     {
       "relation": "contains",
@@ -15209,9 +15163,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L216",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice",
-      "target": "services_chatservice_artifacttitlefromquestion",
-      "confidence_score": 1.0
+      "target": "services_chatservice_artifacttitlefromquestion"
     },
     {
       "relation": "contains",
@@ -15319,9 +15273,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L68",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice",
-      "target": "services_chatservice_requestedartifact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_requestedartifact"
     },
     {
       "relation": "contains",
@@ -15329,9 +15283,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L187",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice",
-      "target": "services_chatservice_requestedartifactfor",
-      "confidence_score": 1.0
+      "target": "services_chatservice_requestedartifactfor"
     },
     {
       "relation": "contains",
@@ -15369,9 +15323,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L74",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice",
-      "target": "services_chatservice_toolartifactresultlike",
-      "confidence_score": 1.0
+      "target": "services_chatservice_toolartifactresultlike"
     },
     {
       "relation": "imports_from",
@@ -15578,9 +15532,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L218",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_artifacttitlefromquestion",
-      "target": "services_chatservice_compact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_compact"
     },
     {
       "relation": "calls",
@@ -15688,9 +15642,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L228",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_artifactfilename",
-      "target": "services_chatservice_safefilepart",
-      "confidence_score": 1.0
+      "target": "services_chatservice_safefilepart"
     },
     {
       "relation": "calls",
@@ -15765,9 +15719,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L840",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifact",
-      "target": "services_chatservice_requestedartifactfor",
-      "confidence_score": 1.0
+      "target": "services_chatservice_requestedartifactfor"
     },
     {
       "relation": "calls",
@@ -15776,9 +15730,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L850",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifact",
-      "target": "services_chatservice_artifacttitlefromquestion",
-      "confidence_score": 1.0
+      "target": "services_chatservice_artifacttitlefromquestion"
     },
     {
       "relation": "calls",
@@ -15787,9 +15741,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L853",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifact",
-      "target": "services_chatservice_artifactfilename",
-      "confidence_score": 1.0
+      "target": "services_chatservice_artifactfilename"
     },
     {
       "relation": "method",
@@ -15867,9 +15821,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L834",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice",
-      "target": "services_chatservice_chatservice_createrequestedartifact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifact"
     },
     {
       "relation": "method",
@@ -15877,9 +15831,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L824",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice",
-      "target": "services_chatservice_chatservice_createrequestedartifactlist",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifactlist"
     },
     {
       "relation": "method",
@@ -16430,9 +16384,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L454",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_sendmessagestream",
-      "target": "services_chatservice_chatservice_createrequestedartifact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifact"
     },
     {
       "relation": "calls",
@@ -16595,9 +16549,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L584",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_completewithlocalendpoint",
-      "target": "services_chatservice_chatservice_createrequestedartifactlist",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifactlist"
     },
     {
       "relation": "references",
@@ -16661,9 +16615,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L659",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_completewithmanagedproxy",
-      "target": "services_chatservice_chatservice_createrequestedartifact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifact"
     },
     {
       "relation": "calls",
@@ -16892,9 +16846,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L830",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifactlist",
-      "target": "services_chatservice_chatservice_createrequestedartifact",
-      "confidence_score": 1.0
+      "target": "services_chatservice_chatservice_createrequestedartifact"
     },
     {
       "relation": "references",
@@ -16903,9 +16857,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L824",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifactlist",
-      "target": "shared_brain_chatartifact",
-      "confidence_score": 1.0
+      "target": "shared_brain_chatartifact"
     },
     {
       "relation": "references",
@@ -16914,9 +16868,9 @@
       "source_file": "src/main/services/ChatService.ts",
       "source_location": "L834",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_chatservice_chatservice_createrequestedartifact",
-      "target": "shared_brain_chatartifact",
-      "confidence_score": 1.0
+      "target": "shared_brain_chatartifact"
     },
     {
       "relation": "calls",
@@ -18194,9 +18148,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L493",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_asstring",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_asstring"
     },
     {
       "relation": "calls",
@@ -18458,9 +18412,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L467",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_parsetreeid",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_parsetreeid"
     },
     {
       "relation": "calls",
@@ -18810,9 +18764,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L466",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice",
-      "target": "services_explorerservice_explorerservice_getopenpath",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_explorerservice_getopenpath"
     },
     {
       "relation": "method",
@@ -19435,9 +19389,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L478",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_explorerservice_getartifactrecord",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_explorerservice_getartifactrecord"
     },
     {
       "relation": "calls",
@@ -19446,9 +19400,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L493",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_explorerservice_normalizesourcefile",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_explorerservice_normalizesourcefile"
     },
     {
       "relation": "calls",
@@ -19457,9 +19411,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L487",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_explorerservice_readgraphindex",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_explorerservice_readgraphindex"
     },
     {
       "relation": "calls",
@@ -19468,9 +19422,9 @@
       "source_file": "src/main/services/ExplorerService.ts",
       "source_location": "L474",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_explorerservice_explorerservice_getopenpath",
-      "target": "services_explorerservice_explorerservice_resolverawpath",
-      "confidence_score": 1.0
+      "target": "services_explorerservice_explorerservice_resolverawpath"
     },
     {
       "relation": "calls",
@@ -23302,11 +23256,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L227",
+      "source_location": "L273",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller",
-      "target": "services_graphifycontroller_defaultingestcommand"
+      "target": "services_graphifycontroller_defaultupdatecommand"
     },
     {
       "relation": "contains",
@@ -23442,21 +23396,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L248",
+      "source_location": "L269",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller",
-      "target": "services_graphifycontroller_ispapersource"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L229",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller",
-      "target": "services_graphifycontroller_isspreadsheetsource"
+      "target": "services_graphifycontroller_isproxyaisettings"
     },
     {
       "relation": "contains",
@@ -23502,6 +23446,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L218",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller",
+      "target": "services_graphifycontroller_normalizeopenaibasepath"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L103",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23537,16 +23491,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller",
       "target": "services_graphifycontroller_papercomponentdirectorynameforsource"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L384",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller",
-      "target": "services_graphifycontroller_papercomponentscript"
     },
     {
       "relation": "contains",
@@ -23627,16 +23571,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller",
       "target": "services_graphifycontroller_spreadsheetcomponentfilename"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L233",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller",
-      "target": "services_graphifycontroller_spreadsheetcomponentscript"
     },
     {
       "relation": "contains",
@@ -23861,50 +23795,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L691",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_spreadsheetcomponentfilename"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1346",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource",
-      "target": "services_graphifycontroller_spreadsheetcomponentfilename"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1199",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_papercomponentdirectorynameforsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1349",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource",
-      "target": "services_graphifycontroller_papercomponentdirectorynameforsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L242",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23960,6 +23850,28 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L238",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_normalizeopenaibaseurl",
+      "target": "services_graphifycontroller_normalizeopenaibasepath"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L1912",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_graphifycontroller_buildgraphifyenvironment",
+      "target": "services_graphifycontroller_normalizeopenaibaseurl"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L394",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23971,10 +23883,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L228",
+      "source_location": "L278",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontroller_defaultingestcommand",
+      "source": "services_graphifycontroller_defaultupdatecommand",
       "target": "services_graphifycontroller_numberfromenv"
     },
     {
@@ -24048,28 +23960,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1096",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_errormessage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L701",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_errormessage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L1680",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24125,11 +24015,55 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1384",
+      "source_location": "L274",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_defaultupdatecommand",
+      "target": "services_graphifycontroller_isproxyaisettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L1930",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_graphifycontroller_buildgraphifyenvironment",
+      "target": "services_graphifycontroller_isproxyaisettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L1899",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_graphifycontroller_ensuregraphifyproviderconfig",
+      "target": "services_graphifycontroller_isproxyaisettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L1492",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_graphifycontroller_rungraphifycommandwithretry",
+      "target": "services_graphifycontroller_isproxyaisettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L956",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_rungraphifyupdate",
-      "target": "services_graphifycontroller_defaultingestcommand"
+      "target": "services_graphifycontroller_defaultupdatecommand"
     },
     {
       "relation": "calls",
@@ -24361,50 +24295,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_readsourcecomment",
       "target": "services_graphifycontroller_readinlinesourcecomment"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L739",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_listspreadsheetsources",
-      "target": "services_graphifycontroller_isspreadsheetsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1136",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_listpapersources",
-      "target": "services_graphifycontroller_ispapersource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L693",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_spreadsheetcomponentscript"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1088",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_papercomponentscript"
     },
     {
       "relation": "calls",
@@ -24970,26 +24860,6 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1109",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_listpapersources"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L713",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_listspreadsheetsources"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L1687",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25015,46 +24885,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller",
       "target": "services_graphifycontroller_graphifycontroller_patchgraphsourcereferences"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1081",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_preparepapercomponent"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1060",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_preparepapercomponents"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L686",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L665",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents"
     },
     {
       "relation": "method",
@@ -25110,16 +24940,6 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1344",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L254",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25155,36 +24975,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller",
       "target": "services_graphifycontroller_graphifycontroller_renamesourcecomment"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L758",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1144",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_resetpapercomponentsidecars"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L747",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_resetspreadsheetcomponentsidecars"
     },
     {
       "relation": "method",
@@ -25700,33 +25490,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L976",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_removesource",
-      "target": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L333",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_removesource",
       "target": "services_graphifycontroller_graphifycontroller_removesourcecomment"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L240",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_removesource",
-      "target": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs"
     },
     {
       "relation": "calls",
@@ -25782,28 +25550,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_collapsesourceinto",
       "target": "services_graphifycontroller_graphifycontroller_queueupdate"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1019",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_collapsesourceinto",
-      "target": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L281",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_collapsesourceinto",
-      "target": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs"
     },
     {
       "relation": "calls",
@@ -25964,33 +25710,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1054",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_renamesource",
-      "target": "services_graphifycontroller_graphifycontroller_removegeneratedcomponentsforsource"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L409",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_renamesource",
       "target": "services_graphifycontroller_graphifycontroller_renamesourcecomment"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L410",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_renamesource",
-      "target": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs"
     },
     {
       "relation": "calls",
@@ -26057,17 +25781,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_commentsource",
       "target": "services_graphifycontroller_graphifycontroller_removesourcecomment"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L440",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_commentsource",
-      "target": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs"
     },
     {
       "relation": "calls",
@@ -26184,17 +25897,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L759",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_resetgraphifyoutputs",
-      "target": "services_graphifycontroller_graphifycontroller_stopmcp"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L323",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -26233,160 +25935,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_writerawitems",
       "target": "shared_brain_processdroppeditem"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L672",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents",
-      "target": "services_graphifycontroller_graphifycontroller_listspreadsheetsources"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L680",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents",
-      "target": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L667",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents",
-      "target": "services_graphifycontroller_graphifycontroller_resetspreadsheetcomponentsidecars"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L779",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_rungraphifyupdate",
-      "target": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponents"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1067",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponents",
-      "target": "services_graphifycontroller_graphifycontroller_listpapersources"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1075",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponents",
-      "target": "services_graphifycontroller_graphifycontroller_preparepapercomponent"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1062",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponents",
-      "target": "services_graphifycontroller_graphifycontroller_resetpapercomponentsidecars"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1243",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_rungraphifyupdate",
-      "target": "services_graphifycontroller_graphifycontroller_preparepapercomponents"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1089",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_graphifycontroller_getgraphifypythoninvocations"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1206",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_graphifycontroller_isgeneratedoutputfresh"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1094",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparepapercomponent",
-      "target": "services_graphifycontroller_graphifycontroller_rungraphifyutilityinvocation"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L694",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_graphifycontroller_getgraphifypythoninvocations"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1278",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_graphifycontroller_isgeneratedoutputfresh"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L699",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_preparespreadsheetcomponent",
-      "target": "services_graphifycontroller_graphifycontroller_rungraphifyutilityinvocation"
     },
     {
       "relation": "references",
@@ -35453,6 +35001,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/shared/brain.ts",
+      "source_location": "L149",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "shared_brain",
+      "target": "shared_brain_aimode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/shared/brain.ts",
       "source_location": "L135",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -36343,6 +35901,17 @@
       "confidence_score": 1.0,
       "source": "shared_ipc",
       "target": "shared_brain_aisettings"
+    },
+    {
+      "relation": "re_exports",
+      "context": "re-export",
+      "confidence": "EXTRACTED",
+      "source_file": "src/shared/ipc.ts",
+      "source_location": "L69",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "shared_ipc",
+      "target": "shared_brain_aimode"
     },
     {
       "relation": "re_exports",
@@ -38520,5 +38089,5 @@
       "source_file": "mockups/second-brain-live-demo/assets/vault-constellation.svg"
     }
   ],
-  "built_at_commit": "b3d63a9c314c6617ef6d80f56aff20f296abd4e7"
+  "built_at_commit": "1699503e67c8f7ce85075327381ac66fd4731216"
 }

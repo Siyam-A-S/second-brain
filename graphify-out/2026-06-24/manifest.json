@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1782267376.7240515,
-    "ast_hash": "b558a4945d0312c981829cf0a7060b71",
+    "mtime": 1782359327.879252,
+    "ast_hash": "7fbba33730740380b1a9cc6c8a6e59f7",
     "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
@@ -85,8 +85,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1782267257.5905151,
-    "ast_hash": "8b13a35398dadb0d53240574fd1b8f0f",
+    "mtime": 1782359308.4082277,
+    "ast_hash": "7d25301db68f8c900452db567d96590a",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -225,8 +225,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1782267439.1483264,
-    "ast_hash": "2403ab6dfe5a1468abe6f1f985684951",
+    "mtime": 1782359150.0680623,
+    "ast_hash": "78ebbebe4a6d6aea8868834c3e1863ba",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -250,8 +250,8 @@
     "semantic_hash": ""
   },
   "src/main/services/AiSettingsService.ts": {
-    "mtime": 1782267350.2539337,
-    "ast_hash": "a4e2f1897d82e2a8906101d67693fbe1",
+    "mtime": 1782359252.9881632,
+    "ast_hash": "f67c25cccae38ef1d3361a5a68095c99",
     "semantic_hash": ""
   },
   "src/main/services/TrackerService.ts": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1782267094.0427492,
-    "ast_hash": "8008c071f5cb56234989a7b1b5bf137e",
+    "mtime": 1782268934.8922217,
+    "ast_hash": "9f2b9c885d63e1896842a4797e9a741e",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782236649.8339422,
-    "ast_hash": "13dd652e7c82be3c08e10aa3a42c32b8",
+    "mtime": 1782269067.4060473,
+    "ast_hash": "7265afe38b8c8611a98bf7569d22366c",
     "semantic_hash": ""
   },
   "proxy/main.py": {

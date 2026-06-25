@@ -54,6 +54,15 @@ function formatTime(value: string): string {
   }).format(date);
 }
 
+function apiModelName(api: unknown): string {
+  if (!api || typeof api !== "object" || Array.isArray(api)) {
+    return "";
+  }
+
+  const model = (api as Record<string, unknown>).model;
+  return typeof model === "string" ? model.trim() : "";
+}
+
 function slug(value: string): string {
   return value
     .toLowerCase()
@@ -732,68 +741,92 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
           </div>
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-          {activeThread?.messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-              {message.role !== "user" ? (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-sm">
-                  <BrainCircuit className="-rotate-90" size={15} />
-                </span>
-              ) : null}
-              <div
-                className={`max-w-[min(58rem,92%)] rounded-2xl border px-4 py-3 shadow-sm ${
-                  message.role === "user"
-                    ? "border-slate-900/10 bg-slate-950 text-white"
-                    : "border-slate-200 bg-white/75 text-slate-900"
-                }`}
-              >
-                <div className="mb-1 flex items-center justify-between gap-3">
-                  <span className={`text-xs font-semibold ${message.role === "user" ? "text-white/70" : "text-slate-500"}`}>
-                    {message.role === "user" ? "You" : "Second Brain"}
+          {activeThread?.messages.map((message) => {
+            const modelName = apiModelName(message.grounding?.api);
+
+            return (
+              <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                {message.role !== "user" ? (
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-sm">
+                    <BrainCircuit className="-rotate-90" size={15} />
                   </span>
-                  <span className={`text-xs ${message.role === "user" ? "text-white/45" : "text-slate-400"}`}>
-                    {formatTime(message.createdAt)}
-                  </span>
-                </div>
-                <MessageContent
-                  canAddParts={message.role === "assistant"}
-                  content={message.content}
-                  inverted={message.role === "user"}
-                  onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
-                />
-                {message.error ? (
-                  <p className={`mt-3 flex items-center gap-2 text-xs font-semibold ${message.role === "user" ? "text-amber-100" : "text-amber-700"}`}>
-                    <AlertTriangle size={14} />
-                    {message.error}
-                  </p>
                 ) : null}
-                {message.grounding?.graphify ? (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <button
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
-                        message.role === "user"
-                          ? "border-white/20 bg-white/10 text-white/80 hover:bg-white/15"
-                          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      }`}
-                      type="button"
-                      onClick={() => void showGrounding(message.id)}
+                <div
+                  className={`max-w-[min(58rem,92%)] rounded-2xl border px-4 py-3 shadow-sm ${
+                    message.role === "user"
+                      ? "border-slate-900/10 bg-slate-950 text-white"
+                      : "border-slate-200 bg-white/75 text-slate-900"
+                  }`}
+                >
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <span
+                      className={`text-xs font-semibold ${message.role === "user" ? "text-white/70" : "text-slate-500"}`}
                     >
-                      <SearchCheck size={13} />
-                      Local graph context used
-                    </button>
-                    {message.role === "assistant" ? (
-                      <button
-                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 disabled:opacity-50"
-                        disabled={Boolean(artifactBusyId)}
-                        title="Add response to ingestion"
-                        type="button"
-                        onClick={() => void addResponseToBrain(message.id)}
-                      >
-                        {artifactBusyId === message.id ? <Loader2 className="animate-spin" size={13} /> : <FilePlus size={13} />}
-                        Add
-                      </button>
-                    ) : null}
+                      {message.role === "user" ? "You" : "Second Brain"}
+                    </span>
+                    <span className={`text-xs ${message.role === "user" ? "text-white/45" : "text-slate-400"}`}>
+                      {formatTime(message.createdAt)}
+                    </span>
                   </div>
-                ) : null}
+                  <MessageContent
+                    canAddParts={message.role === "assistant"}
+                    content={message.content}
+                    inverted={message.role === "user"}
+                    onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
+                  />
+                  {message.error ? (
+                    <p
+                      className={`mt-3 flex items-center gap-2 text-xs font-semibold ${
+                        message.role === "user" ? "text-amber-100" : "text-amber-700"
+                      }`}
+                    >
+                      <AlertTriangle size={14} />
+                      {message.error}
+                    </p>
+                  ) : null}
+                  {message.grounding?.graphify ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      {modelName ? (
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                            message.role === "user"
+                              ? "border-white/20 bg-white/10 text-white/75"
+                              : "border-slate-200 bg-white text-slate-500"
+                          }`}
+                        >
+                          Model: {modelName}
+                        </span>
+                      ) : null}
+                      <button
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition ${
+                          message.role === "user"
+                            ? "border-white/20 bg-white/10 text-white/80 hover:bg-white/15"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                        }`}
+                        type="button"
+                        onClick={() => void showGrounding(message.id)}
+                      >
+                        <SearchCheck size={13} />
+                        Local graph context used
+                      </button>
+                      {message.role === "assistant" ? (
+                        <button
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 disabled:opacity-50"
+                          disabled={Boolean(artifactBusyId)}
+                          title="Add response to ingestion"
+                          type="button"
+                          onClick={() => void addResponseToBrain(message.id)}
+                        >
+                          {artifactBusyId === message.id ? (
+                            <Loader2 className="animate-spin" size={13} />
+                          ) : (
+                            <FilePlus size={13} />
+                          )}
+                          Add
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
                 {message.artifacts?.length ? (
                   <div className="mt-3 space-y-2">
                     {message.artifacts.map((artifact) => (
@@ -832,7 +865,8 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                 </span>
               ) : null}
             </div>
-          ))}
+            );
+          })}
           {isSending ? (
             <div className="flex justify-start gap-3">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-sm">

@@ -1,8 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import { exec, execFile } from "node:child_process";
 import type { ExecFileOptions, ExecOptions } from "node:child_process";
+import { createReadStream } from "node:fs";
 import type { Dirent } from "node:fs";
 import { copyFile, mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -58,7 +61,7 @@ type GraphifyProviderConfig = {
     output: number;
   };
   temperature: number;
-  max_completion_tokens: number;
+  max_completion_tokens?: number;
 };
 type GraphifyLocalModelSettings = {
   temperature: number;
@@ -72,12 +75,16 @@ type GraphifyInvocation = {
   shell?: boolean | undefined;
 };
 
-const graphifyToolPackage = "graphifyy[pdf,office,openai,mcp]";
+const graphifyToolPackage = "graphifyy[all]";
 const updateTimeoutMs = 10 * 60 * 1_000;
 const maxExecBuffer = 10 * 1024 * 1024;
 const graphifyProviderName = "second-brain-local";
 const defaultLocalModelEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultLocalModelName = "local-model";
+const productionProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
+const productionProxyOpenAiBaseUrl = `${productionProxyOrigin}/v1`;
+const productionProxyChatEndpoint = `${productionProxyOrigin}/chat`;
+const productionProxyChatCompletionsEndpoint = `${productionProxyOrigin}/v1/chat/completions`;
 const defaultGraphifyTemperature = 0.6;
 const defaultGraphifyMaxTokens = 8192;
 const defaultGraphifyRetryTemperature = 0;
@@ -194,6 +201,21 @@ function bufferFromDroppedValue(value: unknown): Buffer | null {
   return null;
 }
 
+function sha256Buffer(value: Buffer | string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function sha256File(filePath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const hash = createHash("sha256");
+    const stream = createReadStream(filePath);
+
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("error", reject);
+    stream.on("end", () => resolve(hash.digest("hex")));
+  });
+}
+
 function looksComplete(stdout: string): boolean {
   return /graph complete|graph:\s+\d+\s+nodes|report updated|outputs in|generation complete|wrote graph/i.test(stdout);
 }
@@ -215,33 +237,9 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
-function normalizeOpenAiBasePath(pathname: string): string {
-  let normalized = pathname.replace(/\/+$/, "");
-
-  normalized = normalized.replace(/\/(?:generate|chat)\/v1\/chat\/completions$/i, "/v1");
-  normalized = normalized.replace(/\/(?:generate|chat)\/chat\/completions$/i, "/v1");
-  normalized = normalized.replace(/\/(?:generate|chat)$/i, "/v1");
-  normalized = normalized.replace(/\/v1\/chat\/completions$/i, "/v1");
-  normalized = normalized.replace(/\/chat\/completions$/i, "");
-
-  return normalized || "";
-}
-
-function normalizeOpenAiBaseUrl(endpoint: string): string {
+function openAiBaseUrlFromChatCompletionsEndpoint(endpoint: string): string {
   const trimmed = endpoint.trim().replace(/\/+$/, "");
-  if (!trimmed) {
-    return "";
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    parsed.pathname = normalizeOpenAiBasePath(parsed.pathname);
-    parsed.search = "";
-    parsed.hash = "";
-    return parsed.toString().replace(/\/+$/, "");
-  } catch {
-    return normalizeOpenAiBasePath(trimmed).replace(/\/+$/, "");
-  }
+  return trimmed.replace(/\/chat\/completions$/i, "") || trimmed;
 }
 
 function numberFromEnv(value: string | undefined, fallback: number, minimum = 0): number {
@@ -266,11 +264,19 @@ function endpointHostLabel(endpoint: string): string {
   }
 }
 
-function defaultIngestCommand(settings: GraphifyLocalModelSettings): string {
+function isProxyAiSettings(aiSettings: AiSettings): boolean {
+  return aiSettings.mode === "proxy";
+}
+
+function defaultUpdateCommand(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): string {
+  if (isProxyAiSettings(aiSettings)) {
+    return "graphify . --update";
+  }
+
   const concurrency = numberFromEnv(process.env.SECOND_BRAIN_GRAPHIFY_MAX_CONCURRENCY, 1, 1);
   const tokenBudget = numberFromEnv(process.env.SECOND_BRAIN_GRAPHIFY_TOKEN_BUDGET, settings.maxTokens, 256);
 
-  return `graphify extract . --out . --backend ${graphifyProviderName} --max-concurrency ${concurrency} --token-budget ${tokenBudget}`;
+  return `graphify . --update --max-concurrency ${concurrency} --token-budget ${tokenBudget}`;
 }
 
 function quoteCommandPart(value: string): string {
@@ -331,471 +337,6 @@ function readInlineSourceComment(content: string): string {
   const pattern = /<!-- second-brain:comment[\s\S]*?-->\s*([\s\S]*?)\s*<!-- \/second-brain:comment -->/;
   const match = content.match(pattern);
   return match?.[1]?.trim() ?? "";
-}
-
-function isSpreadsheetSource(filePath: string): boolean {
-  return path.extname(filePath).toLowerCase() === ".xlsx";
-}
-
-function isPaperSource(filePath: string): boolean {
-  return path.extname(filePath).toLowerCase() === ".pdf";
-}
-
-function spreadsheetComponentScript(): string {
-  return [
-    "import json, re, sys",
-    "from pathlib import Path",
-    "from graphify.detect import xlsx_extract_structure",
-    "",
-    "def _node_id(*parts):",
-    "    raw = '_'.join(str(part) for part in parts if str(part).strip())",
-    "    return re.sub(r'[^a-z0-9_]+', '_', raw.lower()).strip('_') or 'spreadsheet_component'",
-    "",
-    "def _component_node(node_id, label, kind, relative_source, location):",
-    "    return {",
-    "        'id': node_id,",
-    "        'label': label,",
-    "        'type': kind,",
-    "        'node_type': kind,",
-    "        'file_type': 'document',",
-    "        'source_file': relative_source,",
-    "        'source_location': location,",
-    "    }",
-    "",
-    "def _component_edge(source_id, target_id, relation='contains'):",
-    "    return {",
-    "        'source': source_id,",
-    "        'target': target_id,",
-    "        'relation': relation,",
-    "        'confidence': 'EXTRACTED',",
-    "        'weight': 1.0,",
-    "    }",
-    "",
-    "def _add_node(nodes, seen_nodes, node_id, label, kind, relative_source, location):",
-    "    if node_id not in seen_nodes:",
-    "        nodes.append(_component_node(node_id, label, kind, relative_source, location))",
-    "        seen_nodes.add(node_id)",
-    "    return node_id",
-    "",
-    "def _add_edge(edges, seen_edges, source_id, target_id, relation='contains'):",
-    "    key = (source_id, target_id, relation)",
-    "    if source_id and target_id and key not in seen_edges:",
-    "        edges.append(_component_edge(source_id, target_id, relation))",
-    "        seen_edges.add(key)",
-    "",
-    "source = Path(sys.argv[1])",
-    "output = Path(sys.argv[2])",
-    "relative_source = sys.argv[3]",
-    "structure = xlsx_extract_structure(source)",
-    "nodes = structure.get('nodes') or []",
-    "edges = structure.get('edges') or []",
-    "seen_nodes = {str(node.get('id')) for node in nodes if node.get('id')}",
-    "seen_edges = {(str(edge.get('source')), str(edge.get('target')), str(edge.get('relation') or 'contains')) for edge in edges if edge.get('source') and edge.get('target')}",
-    "stem = _node_id(source.stem)",
-    "file_id = str(nodes[0].get('id')) if nodes and nodes[0].get('id') else _node_id(stem, 'file')",
-    "_add_node(nodes, seen_nodes, file_id, source.name, 'spreadsheet_file', relative_source, relative_source)",
-    "try:",
-    "    import openpyxl",
-    "    from openpyxl.utils import range_boundaries",
-    "    workbook = openpyxl.load_workbook(str(source), read_only=False, data_only=True)",
-    "    try:",
-    "        for sheet_name in workbook.sheetnames:",
-    "            worksheet = workbook[sheet_name]",
-    "            sheet_id = _node_id(stem, sheet_name, 'sheet')",
-    "            _add_node(nodes, seen_nodes, sheet_id, f'{sheet_name} (sheet)', 'spreadsheet_sheet', relative_source, f'{relative_source}#{sheet_name}')",
-    "            _add_edge(edges, seen_edges, file_id, sheet_id)",
-    "            table_ranges = []",
-    "            tables = getattr(worksheet, 'tables', {})",
-    "            table_values = tables.values() if hasattr(tables, 'values') else []",
-    "            for table in table_values:",
-    "                table_name = getattr(table, 'displayName', None) or getattr(table, 'name', None) or 'Table'",
-    "                table_ref = getattr(table, 'ref', '') or ''",
-    "                table_id = _node_id(stem, sheet_name, table_name, 'table')",
-    "                _add_node(nodes, seen_nodes, table_id, f'{table_name} (table)', 'spreadsheet_table', relative_source, f'{relative_source}#{sheet_name}!{table_ref}')",
-    "                _add_edge(edges, seen_edges, sheet_id, table_id)",
-    "                if table_ref:",
-    "                    table_ranges.append(table_ref)",
-    "                    min_col, min_row, max_col, _max_row = range_boundaries(table_ref)",
-    "                    for cell in worksheet[min_row][min_col - 1:max_col]:",
-    "                        value = str(cell.value).strip() if cell.value is not None else ''",
-    "                        if value:",
-    "                            column_id = _node_id(stem, sheet_name, table_name, value, 'column')",
-    "                            _add_node(nodes, seen_nodes, column_id, f'{value} (column)', 'spreadsheet_column', relative_source, f'{relative_source}#{sheet_name}!{cell.coordinate}')",
-    "                            _add_edge(edges, seen_edges, table_id, column_id)",
-    "            header_row = None",
-    "            for row in worksheet.iter_rows(min_row=1, max_row=min(25, worksheet.max_row), values_only=False):",
-    "                values = [str(cell.value).strip() for cell in row if cell.value is not None and str(cell.value).strip()]",
-    "                if values:",
-    "                    header_row = row",
-    "                    break",
-    "            if header_row:",
-    "                for cell in header_row:",
-    "                    value = str(cell.value).strip() if cell.value is not None else ''",
-    "                    if value:",
-    "                        column_id = _node_id(stem, sheet_name, value, 'column')",
-    "                        _add_node(nodes, seen_nodes, column_id, f'{value} (column)', 'spreadsheet_column', relative_source, f'{relative_source}#{sheet_name}!{cell.coordinate}')",
-    "                        _add_edge(edges, seen_edges, sheet_id, column_id)",
-    "    finally:",
-    "        workbook.close()",
-    "except Exception as exc:",
-    "    print(f'[second-brain] spreadsheet component augmentation warning for {relative_source}: {exc}', file=sys.stderr)",
-    "structure = {'nodes': nodes, 'edges': edges}",
-    "if len(nodes) <= 1:",
-    "    raise SystemExit('Graphify xlsx_extract_structure produced no spreadsheet components. Install graphifyy[office] and verify the workbook is readable.')",
-    "labels = {node.get('id'): node.get('label') or node.get('id') for node in nodes}",
-    "lines = [",
-    "    f'# Spreadsheet Components: {source.name}',",
-    "    '',",
-    "    f'Source workbook: {relative_source}',",
-    "    '',",
-    "    'This generated file lets Graphify treat workbook sheets, named tables, and column headers as separate graph components.',",
-    "    '',",
-    "    '## Component Nodes',",
-    "    '',",
-    "    '| Component | Graphify ID | Kind |',",
-    "    '| --- | --- | --- |',",
-    "]",
-    "for node in nodes:",
-    "    label = str(node.get('label') or node.get('id') or '').replace('|', '\\\\|')",
-    "    node_id = str(node.get('id') or '').replace('|', '\\\\|')",
-    "    kind = str(node.get('file_type') or 'document').replace('|', '\\\\|')",
-    "    lines.append(f'| {label} | `{node_id}` | {kind} |')",
-    "lines.extend(['', '## Component Relationships', '', '| Parent | Relation | Child |', '| --- | --- | --- |'])",
-    "for edge in edges:",
-    "    source_label = str(labels.get(edge.get('source'), edge.get('source') or '')).replace('|', '\\\\|')",
-    "    target_label = str(labels.get(edge.get('target'), edge.get('target') or '')).replace('|', '\\\\|')",
-    "    relation = str(edge.get('relation') or 'related').replace('|', '\\\\|')",
-    "    lines.append(f'| {source_label} | {relation} | {target_label} |')",
-    "lines.extend(['', '## Raw Graphify Structure', '', '```json', json.dumps(structure, ensure_ascii=False, indent=2), '```', ''])",
-    "output.parent.mkdir(parents=True, exist_ok=True)",
-    "output.write_text('\\n'.join(lines), encoding='utf-8')",
-    "print(f'[second-brain] spreadsheet components: {relative_source} -> {output.name} ({len(nodes)} nodes, {len(edges)} edges)')"
-  ].join("\n");
-}
-
-function paperComponentScript(): string {
-  return [
-    "import json, re, sys, hashlib",
-    "from pathlib import Path",
-    "",
-    "source = Path(sys.argv[1])",
-    "output = Path(sys.argv[2])",
-    "relative_source = sys.argv[3]",
-    "",
-    "def _slug(*parts):",
-    "    raw = '_'.join(str(part) for part in parts if str(part).strip())",
-    "    return re.sub(r'[^a-z0-9_]+', '_', raw.lower()).strip('_') or 'paper_component'",
-    "",
-    "def _node(node_id, label, kind, location='', summary='', extra=None):",
-    "    data = {",
-    "        'id': node_id,",
-    "        'label': label,",
-    "        'type': kind,",
-    "        'node_type': kind,",
-    "        'file_type': 'paper',",
-    "        'source_file': relative_source,",
-    "        'source_location': location or relative_source,",
-    "        'summary': summary,",
-    "    }",
-    "    if extra:",
-    "        data.update(extra)",
-    "    return data",
-    "",
-    "def _edge(source_id, target_id, relation='contains', confidence='EXTRACTED', weight=1.0):",
-    "    return {",
-    "        'source': source_id,",
-    "        'target': target_id,",
-    "        'relation': relation,",
-    "        'confidence': confidence,",
-    "        'weight': weight,",
-    "    }",
-    "",
-    "def _compact(value):",
-    "    return re.sub(r'\\s+', ' ', value or '').strip()",
-    "",
-    "def _safe_name(value, fallback):",
-    "    clean = re.sub(r'[^a-zA-Z0-9._-]+', '-', value or '').strip('-').lower()",
-    "    return (clean or fallback)[:90]",
-    "",
-    "def _csv(value):",
-    "    text = str(value or '').replace('\"', '\"\"')",
-    "    return f'\"{text}\"'",
-    "",
-    "def _sentences(text):",
-    "    return [_compact(part) for part in re.split(r'(?<=[.!?])\\s+', text or '') if _compact(part)]",
-    "",
-    "def _extract_text():",
-    "    warnings = []",
-    "    try:",
-    "        import pymupdf4llm",
-    "        markdown = pymupdf4llm.to_markdown(str(source))",
-    "        if markdown and markdown.strip():",
-    "            return markdown, 'pymupdf4llm', warnings",
-    "    except Exception as exc:",
-    "        warnings.append(f'pymupdf4llm unavailable: {exc}')",
-    "    try:",
-    "        import fitz",
-    "        doc = fitz.open(str(source))",
-    "        pages = []",
-    "        for index, page in enumerate(doc, start=1):",
-    "            pages.append(f'\\n\\n<!-- page:{index} -->\\n' + (page.get_text('text') or ''))",
-    "        doc.close()",
-    "        text = '\\n'.join(pages)",
-    "        if text.strip():",
-    "            return text, 'pymupdf', warnings",
-    "    except Exception as exc:",
-    "        warnings.append(f'pymupdf unavailable: {exc}')",
-    "    try:",
-    "        from pypdf import PdfReader",
-    "        reader = PdfReader(str(source))",
-    "        pages = []",
-    "        for index, page in enumerate(reader.pages, start=1):",
-    "            pages.append(f'\\n\\n<!-- page:{index} -->\\n' + (page.extract_text() or ''))",
-    "        return '\\n'.join(pages), 'pypdf', warnings",
-    "    except Exception as exc:",
-    "        raise SystemExit('Unable to extract PDF text. Install researcher dependencies with uv and verify the PDF is readable. Last error: ' + str(exc))",
-    "",
-    "def _title(lines):",
-    "    for line in lines[:40]:",
-    "        clean = _compact(re.sub(r'^#+\\s*', '', line))",
-    "        if len(clean) >= 8 and not re.match(r'^(abstract|keywords|introduction|references)$', clean, re.I):",
-    "            return clean[:180]",
-    "    return source.stem",
-    "",
-    "def _abstract(text):",
-    "    match = re.search(r'(?is)\\babstract\\b\\s*[:\\-]?\\s*(.*?)(?=\\n\\s*(?:#{1,4}\\s*)?(?:1\\.?\\s*)?(?:introduction|keywords|index terms)\\b)', text)",
-    "    if match:",
-    "        return _compact(match.group(1))[:1600]",
-    "    return ''",
-    "",
-    "def _reference_block(text):",
-    "    match = re.search(r'(?is)\\n\\s*(?:#{1,4}\\s*)?(references|bibliography)\\s*\\n(.*)$', text)",
-    "    return match.group(2) if match else ''",
-    "",
-    "def _split_references(block):",
-    "    if not block.strip():",
-    "        return []",
-    "    entries = re.split(r'\\n\\s*(?:\\[?\\d+\\]?\\.?|\\d+\\.)\\s+', '\\n' + block)",
-    "    refs = [_compact(entry) for entry in entries if len(_compact(entry)) > 20]",
-    "    if len(refs) <= 1:",
-    "        refs = [_compact(entry) for entry in re.split(r'\\n{2,}', block) if len(_compact(entry)) > 20]",
-    "    return refs[:80]",
-    "",
-    "def _split_sections(text):",
-    "    heading = re.compile(r'(?im)^\\s*(?:#{1,4}\\s*)?(?:(\\d+(?:\\.\\d+)*)\\s+)?(abstract|introduction|background|related work|methodology|methods?|approach|experiments?|evaluation|results?|discussion|limitations?|conclusion|references|bibliography|appendix(?:\\s+[a-z])?)\\s*$', re.I)",
-    "    matches = list(heading.finditer(text))",
-    "    sections = []",
-    "    for index, match in enumerate(matches):",
-    "        title = _compact(match.group(0).lstrip('#'))",
-    "        start = match.end()",
-    "        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)",
-    "        content = _compact(text[start:end])",
-    "        if title and content and not re.search(r'^(references|bibliography)$', title, re.I):",
-    "            sections.append({'title': title[:140], 'content': content[:2600]})",
-    "    if not sections:",
-    "        sections.append({'title': 'Paper Overview', 'content': _compact(text)[:2600]})",
-    "    return sections[:32]",
-    "",
-    "def _extract_figures(text):",
-    "    figures = []",
-    "    pattern = re.compile(r'(?im)\\b(?:fig\\.?|figure)\\s*\\d+[a-z]?\\s*[:.\\-]?\\s+(.{20,260})')",
-    "    for index, match in enumerate(pattern.finditer(text), start=1):",
-    "        caption = _compact(match.group(0))",
-    "        figures.append({'label': f'Figure {index}', 'caption': caption[:320]})",
-    "        if len(figures) >= 24:",
-    "            break",
-    "    return figures",
-    "",
-    "def _extract_tables(text):",
-    "    tables = []",
-    "    pattern = re.compile(r'(?im)\\btable\\s*\\d+[a-z]?\\s*[:.\\-]?\\s+(.{20,260})')",
-    "    for index, match in enumerate(pattern.finditer(text), start=1):",
-    "        caption = _compact(match.group(0))",
-    "        tables.append({'label': f'Table {index}', 'caption': caption[:320]})",
-    "        if len(tables) >= 24:",
-    "            break",
-    "    return tables",
-    "",
-    "def _find_sentences(text, pattern, limit):",
-    "    found = []",
-    "    for sentence in _sentences(text):",
-    "        if re.search(pattern, sentence, re.I) and 45 <= len(sentence) <= 420:",
-    "            found.append(sentence)",
-    "        if len(found) >= limit:",
-    "            break",
-    "    return found",
-    "",
-    "text, extractor, warnings = _extract_text()",
-    "lines = [line for line in text.splitlines() if _compact(line)]",
-    "paper_title = _title(lines)",
-    "digest = hashlib.sha1(relative_source.encode('utf-8')).hexdigest()[:12]",
-    "base = _slug(source.stem, digest)",
-    "paper_id = _slug(base, 'paper')",
-    "nodes = [_node(paper_id, paper_title, 'paper_file', relative_source, f'Research paper extracted from {source.name}.', {'extractor': extractor})]",
-    "edges = []",
-    "",
-    "abstract = _abstract(text)",
-    "if abstract:",
-    "    abstract_id = _slug(base, 'abstract')",
-    "    nodes.append(_node(abstract_id, 'Abstract', 'paper_abstract', f'{relative_source}#abstract', abstract))",
-    "    edges.append(_edge(paper_id, abstract_id))",
-    "",
-    "section_ids = []",
-    "for index, section in enumerate(_split_sections(text), start=1):",
-    "    section_id = _slug(base, f'section_{index}', section['title'])",
-    "    section_ids.append(section_id)",
-    "    nodes.append(_node(section_id, section['title'], 'paper_section', f'{relative_source}#section-{index}', section['content']))",
-    "    edges.append(_edge(paper_id, section_id))",
-    "",
-    "for index, figure in enumerate(_extract_figures(text), start=1):",
-    "    figure_id = _slug(base, f'figure_{index}')",
-    "    nodes.append(_node(figure_id, figure['label'], 'paper_figure', f'{relative_source}#figure-{index}', figure['caption']))",
-    "    edges.append(_edge(paper_id, figure_id))",
-    "",
-    "for index, table in enumerate(_extract_tables(text), start=1):",
-    "    table_id = _slug(base, f'table_{index}')",
-    "    nodes.append(_node(table_id, table['label'], 'paper_table', f'{relative_source}#table-{index}', table['caption']))",
-    "    edges.append(_edge(paper_id, table_id))",
-    "",
-    "for index, reference in enumerate(_split_references(_reference_block(text)), start=1):",
-    "    ref_id = _slug(base, f'reference_{index}')",
-    "    label = reference[:110]",
-    "    nodes.append(_node(ref_id, label, 'paper_reference', f'{relative_source}#reference-{index}', reference))",
-    "    edges.append(_edge(paper_id, ref_id, 'cites'))",
-    "",
-    "heuristics = [",
-    "    ('paper_claim', 'claim', r'\\b(we show|we demonstrate|we propose|our contribution|this paper presents|we find|we prove)\\b'),",
-    "    ('paper_method', 'method', r'\\b(method|approach|algorithm|architecture|framework|pipeline|model)\\b'),",
-    "    ('paper_dataset', 'dataset', r'\\b(dataset|corpus|benchmark|participants|samples|measurements|data set)\\b'),",
-    "    ('paper_result', 'result', r'\\b(result|outperform|improve|accuracy|precision|recall|significant|achieves|reduction|increase)\\b'),",
-    "]",
-    "for kind, name, pattern in heuristics:",
-    "    for index, sentence in enumerate(_find_sentences(text, pattern, 10), start=1):",
-    "        node_id = _slug(base, name, index)",
-    "        nodes.append(_node(node_id, f'{name.title()} {index}', kind, f'{relative_source}#{name}-{index}', sentence))",
-    "        relation = 'uses_method' if kind == 'paper_method' else 'uses_dataset' if kind == 'paper_dataset' else 'contains'",
-    "        edges.append(_edge(paper_id, node_id, relation, 'INFERRED' if kind in {'paper_method', 'paper_dataset'} else 'AMBIGUOUS'))",
-    "        if kind in {'paper_claim', 'paper_result'} and section_ids:",
-    "            edges.append(_edge(section_ids[min(index - 1, len(section_ids) - 1)], node_id, 'evidence_for', 'AMBIGUOUS', 0.6))",
-    "",
-    "output.mkdir(parents=True, exist_ok=True)",
-    "artifact_index = []",
-    "component_root = Path('paper-components') / output.name",
-    "kind_dirs = {",
-    "    'paper_abstract': ('sections', 'markdown'),",
-    "    'paper_section': ('sections', 'markdown'),",
-    "    'paper_figure': ('figures', 'markdown'),",
-    "    'paper_table': ('tables', 'csv'),",
-    "    'paper_reference': ('references', 'csv'),",
-    "    'paper_claim': ('claims', 'markdown'),",
-    "    'paper_method': ('methods', 'markdown'),",
-    "    'paper_dataset': ('datasets', 'markdown'),",
-    "    'paper_result': ('results', 'markdown'),",
-    "}",
-    "for node in nodes:",
-    "    kind = str(node.get('type') or 'artifact')",
-    "    if kind == 'paper_file':",
-    "        continue",
-    "    artifact_kind = kind.replace('paper_', '')",
-    "    folder, llm_format = kind_dirs.get(kind, ('artifacts', 'markdown'))",
-    "    folder_path = output / folder",
-    "    folder_path.mkdir(parents=True, exist_ok=True)",
-    "    artifact_file_base = _safe_name(str(node.get('label') or node.get('id')), str(node.get('id') or 'artifact'))",
-    "    artifact_id = str(node.get('id'))",
-    "    summary = _compact(str(node.get('summary') or ''))",
-    "    if llm_format == 'csv':",
-    "        extension = 'csv'",
-    "        body = 'artifact_id,kind,title,source_file,location,content\\n' + ','.join([_csv(artifact_id), _csv(artifact_kind), _csv(node.get('label')), _csv(relative_source), _csv(node.get('source_location')), _csv(summary)]) + '\\n'",
-    "    else:",
-    "        extension = 'md'",
-    "        body = '\\n'.join([",
-    "            f'# {node.get(\"label\") or artifact_id}',",
-    "            '',",
-    "            f'- Artifact ID: `{artifact_id}`',",
-    "            f'- Kind: {artifact_kind}',",
-    "            f'- Source PDF: {relative_source}',",
-    "            f'- Location: {node.get(\"source_location\") or relative_source}',",
-    "            '',",
-    "            '## LLM-Ingestible Context',",
-    "            '',",
-    "            summary or 'No extractable text was found for this artifact.',",
-    "            ''",
-    "        ])",
-    "    artifact_path = folder_path / f'{artifact_file_base}.{extension}'",
-    "    artifact_path.write_text(body, encoding='utf-8')",
-    "    relative_artifact_path = (component_root / folder / artifact_path.name).as_posix()",
-    "    node.update({",
-    "        'artifact_id': artifact_id,",
-    "        'artifact_kind': artifact_kind,",
-    "        'artifact_path': relative_artifact_path,",
-    "        'llm_format': 'csv' if extension == 'csv' else 'markdown',",
-    "        'preview': summary[:320],",
-    "    })",
-    "    artifact_index.append({",
-    "        'artifactId': artifact_id,",
-    "        'artifactKind': artifact_kind,",
-    "        'title': str(node.get('label') or artifact_id),",
-    "        'sourceFile': relative_source,",
-    "        'artifactPath': relative_artifact_path,",
-    "        'graphNodeId': artifact_id,",
-    "        'page': None,",
-    "        'preview': summary[:320],",
-    "        'llmFormat': 'csv' if extension == 'csv' else 'markdown',",
-    "    })",
-    "references = [item for item in artifact_index if item['artifactKind'] == 'reference']",
-    "if references:",
-    "    ref_dir = output / 'references'",
-    "    ref_dir.mkdir(parents=True, exist_ok=True)",
-    "    ref_lines = ['artifact_id,title,source_file,artifact_path']",
-    "    for item in references:",
-    "        ref_lines.append(','.join([_csv(item['artifactId']), _csv(item['title']), _csv(item['sourceFile']), _csv(item['artifactPath'])]))",
-    "    (ref_dir / 'references.csv').write_text('\\n'.join(ref_lines) + '\\n', encoding='utf-8')",
-    "    artifact_index.append({",
-    "        'artifactId': _slug(base, 'references_index'),",
-    "        'artifactKind': 'reference',",
-    "        'title': 'References Index',",
-    "        'sourceFile': relative_source,",
-    "        'artifactPath': (component_root / 'references' / 'references.csv').as_posix(),",
-    "        'graphNodeId': '',",
-    "        'page': None,",
-    "        'preview': f'{len(references)} extracted references.',",
-    "        'llmFormat': 'csv',",
-    "    })",
-    "(output / 'artifact-index.json').write_text(json.dumps({'sourceFile': relative_source, 'artifacts': artifact_index}, ensure_ascii=False, indent=2), encoding='utf-8')",
-    "",
-    "structure = {'nodes': nodes, 'edges': edges, 'warnings': warnings}",
-    "lines_out = [",
-    "    f'# Paper Components: {source.name}',",
-    "    '',",
-    "    f'Source paper: {relative_source}',",
-    "    f'Extractor: {extractor}',",
-    "    '',",
-    "    'This generated file lets Graphify treat the research paper as sections, figures, tables, references, claims, methods, datasets, and results.',",
-    "    '',",
-    "    '## Research Paper',",
-    "    '',",
-    "    f'- Title: {paper_title}',",
-    "    f'- Source: {relative_source}',",
-    "]",
-    "if abstract:",
-    "    lines_out.extend(['', '## Abstract', '', abstract])",
-    "lines_out.extend(['', '## Paper Components', '', '| Component | Graphify ID | Kind | Context |', '| --- | --- | --- | --- |'])",
-    "for node in nodes:",
-    "    label = str(node.get('label') or node.get('id') or '').replace('|', '\\\\|')",
-    "    node_id = str(node.get('id') or '').replace('|', '\\\\|')",
-    "    kind = str(node.get('type') or '').replace('|', '\\\\|')",
-    "    summary = _compact(str(node.get('summary') or '')).replace('|', '\\\\|')[:180]",
-    "    lines_out.append(f'| {label} | `{node_id}` | {kind} | {summary} |')",
-    "lines_out.extend(['', '## Component Relationships', '', '| Parent | Relation | Child | Confidence |', '| --- | --- | --- | --- |'])",
-    "labels = {node['id']: node['label'] for node in nodes}",
-    "for edge in edges:",
-    "    lines_out.append(f\"| {str(labels.get(edge['source'], edge['source'])).replace('|', '\\\\|')} | {edge['relation']} | {str(labels.get(edge['target'], edge['target'])).replace('|', '\\\\|')} | {edge['confidence']} |\")",
-    "if warnings:",
-    "    lines_out.extend(['', '## Extraction Warnings', '', *[f'- {warning}' for warning in warnings]])",
-    "lines_out.extend(['', '## Raw Graphify Structure', '', '```json', json.dumps(structure, ensure_ascii=False, indent=2), '```', ''])",
-    "(output / 'paper.md').write_text('\\n'.join(lines_out), encoding='utf-8')",
-    "print(f'[second-brain] paper components: {relative_source} -> {output.name}/ ({len(nodes)} nodes, {len(edges)} edges, {len(artifact_index)} artifacts, extractor={extractor})')",
-  ].join("\n");
 }
 
 function researchDependencyStatusScript(): string {
@@ -874,6 +415,7 @@ export class GraphifyController {
   private readonly llm: LlmService;
   private cardDefinitionUpdate: Promise<void> | null = null;
   private cardDefinitionQueued = false;
+  private activeGraphifyProxyBaseUrl: string | null = null;
   private definitionStatus: GraphDefinitionStatus = {
     running: false,
     pendingCount: 0,
@@ -886,6 +428,7 @@ export class GraphifyController {
   constructor(
     private readonly rawVaultPath: string,
     private readonly settingsProvider: AiSettingsProvider = async () => ({
+      mode: "local",
       endpoint: process.env.SECOND_BRAIN_LLM_ENDPOINT ?? defaultLocalModelEndpoint,
       apiKey:
         process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
@@ -1004,7 +547,7 @@ export class GraphifyController {
               ? "Install the base Graphify PDF runtime: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\""
               : "",
             missingRich.length > 0
-              ? "For rich research-paper breakdowns, add researcher packages to the Graphify tool environment: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\" --with pymupdf --with pymupdf4llm --with numpy --with matplotlib"
+              ? "For rich research-paper extraction, install the full Graphify tool environment: uv tool install --upgrade \"graphifyy[all]\""
               : "",
             process.env.SECOND_BRAIN_PAPER_COMPONENTS === "0"
               ? "Paper component extraction is disabled by SECOND_BRAIN_PAPER_COMPONENTS=0."
@@ -1036,7 +579,7 @@ export class GraphifyController {
       type: file.type,
       buffer: file.buffer
     }));
-    const textItems = payload.text
+    const textItems = payload.files.length === 0 && payload.text
       ? [
           {
             name: "dropped-text.txt",
@@ -1054,8 +597,6 @@ export class GraphifyController {
     const sourcePath = this.resolveRemovableSourcePath(sourceFile);
     await rm(sourcePath, { force: true });
     await this.removeSourceComment(sourceFile);
-    await this.removeGeneratedComponentsForSource(sourceFile);
-    await this.resetGraphifyOutputs();
 
     if (!(await this.hasRawSourceFiles())) {
       return this.writeEmptyGraphResult();
@@ -1097,8 +638,6 @@ export class GraphifyController {
     await writeFile(targetPath, `${targetContent.trimEnd()}${collapsedBlock}`, "utf8");
     await this.mergeSourceComment(sourceFile, targetSourceFile);
     await rm(sourcePath, { force: true });
-    await this.removeGeneratedComponentsForSource(sourceFile);
-    await this.resetGraphifyOutputs();
 
     return this.queueUpdate(0);
   }
@@ -1305,7 +844,11 @@ export class GraphifyController {
     const writtenFiles = await this.writeRawItems(items);
 
     if (writtenFiles.length === 0) {
-      throw new Error("No dropped files or text were available for Graphify ingestion.");
+      if (await this.fileExists(this.graphPath)) {
+        return this.currentGraphResult(0, "Dropped content is already present in the raw vault; Graphify update was skipped.");
+      }
+
+      return this.queueUpdate(0);
     }
 
     return this.queueUpdate(writtenFiles.length);
@@ -1340,10 +883,14 @@ export class GraphifyController {
     const written: string[] = [];
 
     for (const [index, item] of items.entries()) {
-      const outputPath = this.createRawDestination(item, index);
       const buffer = bufferFromDroppedValue(item.buffer);
 
       if (buffer) {
+        const outputPath = this.createRawDestination(item, index, sha256Buffer(buffer));
+        if (await this.fileExists(outputPath)) {
+          continue;
+        }
+
         await writeFile(outputPath, buffer);
         written.push(outputPath);
         continue;
@@ -1351,8 +898,19 @@ export class GraphifyController {
 
       if (item.path) {
         try {
+          const sourcePath = path.resolve(item.path);
+          const relativeToRaw = path.relative(this.rawVaultPath, sourcePath);
+          if (relativeToRaw && !relativeToRaw.startsWith("..") && !path.isAbsolute(relativeToRaw)) {
+            continue;
+          }
+
           const fileStat = await stat(item.path);
           if (fileStat.isFile()) {
+            const outputPath = this.createRawDestination(item, index, await sha256File(item.path));
+            if (await this.fileExists(outputPath)) {
+              continue;
+            }
+
             await copyFile(item.path, outputPath);
             written.push(outputPath);
             continue;
@@ -1364,207 +922,17 @@ export class GraphifyController {
 
       const text = item.text ?? item.content;
       if (text?.trim()) {
+        const outputPath = this.createRawDestination(item, index, sha256Buffer(text));
+        if (await this.fileExists(outputPath)) {
+          continue;
+        }
+
         await writeFile(outputPath, text, "utf8");
         written.push(outputPath);
       }
     }
 
     return written;
-  }
-
-  private async prepareSpreadsheetComponents(): Promise<string> {
-    if (process.env.SECOND_BRAIN_XLSX_COMPONENTS === "0") {
-      await this.resetSpreadsheetComponentSidecars();
-      return "Spreadsheet component sidecars disabled by SECOND_BRAIN_XLSX_COMPONENTS=0.";
-    }
-
-    const sources = await this.listSpreadsheetSources();
-
-    if (sources.length === 0) {
-      return "";
-    }
-
-    const output: string[] = [];
-    for (const sourcePath of sources) {
-      output.push(await this.prepareSpreadsheetComponent(sourcePath));
-    }
-
-    return output.filter(Boolean).join("\n");
-  }
-
-  private async preparePaperComponents(): Promise<string> {
-    if (process.env.SECOND_BRAIN_PAPER_COMPONENTS === "0") {
-      await this.resetPaperComponentSidecars();
-      return "Paper component sidecars disabled by SECOND_BRAIN_PAPER_COMPONENTS=0.";
-    }
-
-    const sources = await this.listPaperSources();
-
-    if (sources.length === 0) {
-      return "";
-    }
-
-    const output: string[] = [];
-    for (const sourcePath of sources) {
-      output.push(await this.preparePaperComponent(sourcePath));
-    }
-
-    return output.filter(Boolean).join("\n");
-  }
-
-  private async preparePaperComponent(sourcePath: string): Promise<string> {
-    const relativeSource = path.relative(this.rawVaultPath, sourcePath).split(path.sep).join(path.posix.sep);
-    const outputPath = path.join(
-      this.rawVaultPath,
-      paperComponentDirectoryName,
-      paperComponentDirectoryNameForSource(relativeSource)
-    );
-    const indexPath = path.join(outputPath, "artifact-index.json");
-    if (await this.isGeneratedOutputFresh(sourcePath, indexPath)) {
-      return "";
-    }
-
-    await rm(outputPath, { recursive: true, force: true });
-    const script = paperComponentScript();
-    const invocations = await this.getGraphifyPythonInvocations(["-c", script, sourcePath, outputPath, relativeSource]);
-    const failures: string[] = [];
-
-    for (const invocation of invocations) {
-      try {
-        return await this.runGraphifyUtilityInvocation(invocation);
-      } catch (error) {
-        failures.push(`${invocation.label}: ${errorMessage(error)}`);
-      }
-    }
-
-    return [
-      `[second-brain] unable to generate research paper components for ${relativeSource}.`,
-      "The PDF will still be available to Graphify's plain extraction path.",
-      "For richer paper breakdowns, install: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\" --with pymupdf --with pymupdf4llm --with numpy --with matplotlib",
-      "Tried:",
-      ...failures.map((failure) => `- ${failure}`)
-    ].join("\n");
-  }
-
-  private async listPaperSources(directory = this.rawVaultPath): Promise<string[]> {
-    let entries: Dirent[];
-
-    try {
-      entries = await readdir(directory, { withFileTypes: true });
-    } catch {
-      return [];
-    }
-
-    const files: string[] = [];
-    for (const entry of entries) {
-      if (
-        entry.name === "graphify-out" ||
-        entry.name === ".graphify" ||
-        entry.name === sourceCommentDirectoryName ||
-        entry.name === spreadsheetComponentDirectoryName ||
-        entry.name === paperComponentDirectoryName
-      ) {
-        continue;
-      }
-
-      const entryPath = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        files.push(...(await this.listPaperSources(entryPath)));
-        continue;
-      }
-
-      if (entry.isFile() && isPaperSource(entryPath)) {
-        files.push(entryPath);
-      }
-    }
-
-    return files.sort((left, right) => left.localeCompare(right));
-  }
-
-  private async resetPaperComponentSidecars(): Promise<void> {
-    await rm(path.join(this.rawVaultPath, paperComponentDirectoryName), { recursive: true, force: true });
-  }
-
-  private async prepareSpreadsheetComponent(sourcePath: string): Promise<string> {
-    const relativeSource = path.relative(this.rawVaultPath, sourcePath).split(path.sep).join(path.posix.sep);
-    const outputPath = path.join(
-      this.rawVaultPath,
-      spreadsheetComponentDirectoryName,
-      spreadsheetComponentFileName(relativeSource)
-    );
-    if (await this.isGeneratedOutputFresh(sourcePath, outputPath)) {
-      return "";
-    }
-
-    const script = spreadsheetComponentScript();
-    const invocations = await this.getGraphifyPythonInvocations(["-c", script, sourcePath, outputPath, relativeSource]);
-    const failures: string[] = [];
-
-    for (const invocation of invocations) {
-      try {
-        return await this.runGraphifyUtilityInvocation(invocation);
-      } catch (error) {
-        failures.push(`${invocation.label}: ${errorMessage(error)}`);
-      }
-    }
-
-    return [
-      `[second-brain] unable to generate spreadsheet components for ${relativeSource}.`,
-      "Install Graphify with office support: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\".",
-      "Tried:",
-      ...failures.map((failure) => `- ${failure}`)
-    ].join("\n");
-  }
-
-  private async listSpreadsheetSources(directory = this.rawVaultPath): Promise<string[]> {
-    let entries: Dirent[];
-
-    try {
-      entries = await readdir(directory, { withFileTypes: true });
-    } catch {
-      return [];
-    }
-
-    const files: string[] = [];
-    for (const entry of entries) {
-      if (
-        entry.name === "graphify-out" ||
-        entry.name === ".graphify" ||
-        entry.name === sourceCommentDirectoryName ||
-        entry.name === spreadsheetComponentDirectoryName ||
-        entry.name === paperComponentDirectoryName
-      ) {
-        continue;
-      }
-
-      const entryPath = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        files.push(...(await this.listSpreadsheetSources(entryPath)));
-        continue;
-      }
-
-      if (entry.isFile() && isSpreadsheetSource(entryPath)) {
-        files.push(entryPath);
-      }
-    }
-
-    return files.sort((left, right) => left.localeCompare(right));
-  }
-
-  private async resetSpreadsheetComponentSidecars(): Promise<void> {
-    await rm(path.join(this.rawVaultPath, spreadsheetComponentDirectoryName), { recursive: true, force: true });
-  }
-
-  private async removeGeneratedComponentsForSource(sourceFile: string): Promise<void> {
-    await Promise.all([
-      rm(path.join(this.rawVaultPath, spreadsheetComponentDirectoryName, spreadsheetComponentFileName(sourceFile)), {
-        force: true
-      }),
-      rm(path.join(this.rawVaultPath, paperComponentDirectoryName, paperComponentDirectoryNameForSource(sourceFile)), {
-        recursive: true,
-        force: true
-      })
-    ]);
   }
 
   private async isGeneratedOutputFresh(sourcePath: string, outputPath: string): Promise<boolean> {
@@ -1576,11 +944,11 @@ export class GraphifyController {
     }
   }
 
-  private createRawDestination(item: ProcessDroppedItem, index: number): string {
+  private createRawDestination(item: ProcessDroppedItem, index: number, contentHash: string): string {
     const fallbackName = item.text || item.content ? "dropped-text.txt" : `dropped-file-${index + 1}`;
     const safeName = safeFilePart(item.name ?? (item.path ? path.basename(item.path) : fallbackName));
     const parsed = path.parse(safeName);
-    const unique = `${parsed.name}-${Date.now()}-${randomUUID().slice(0, 8)}${parsed.ext || ".txt"}`;
+    const unique = `${parsed.name}-${contentHash.slice(0, 16)}${parsed.ext || ".txt"}`;
 
     return path.join(this.rawVaultPath, unique);
   }
@@ -1600,67 +968,79 @@ export class GraphifyController {
     return this.lastUpdate;
   }
 
-  private async runGraphifyUpdate(writtenFileCount: number): Promise<GraphifyIngestionResult> {
-    const primarySettings = this.getGraphifyLocalModelSettings();
-    const aiSettings = await this.getAiSettings();
-    await this.ensureGraphifyProviderConfig(primarySettings, aiSettings);
-    const spreadsheetStdout = await this.prepareSpreadsheetComponents();
-    const paperStdout = await this.preparePaperComponents();
-
-    const command =
-      process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND ??
-      process.env.SECOND_BRAIN_GRAPHIFY_UPDATE_COMMAND ??
-      defaultIngestCommand(primarySettings);
-    const graphMtimeBefore = await this.fileMtimeMs(this.graphPath);
-    let stdout: string;
-
-    try {
-      stdout = await this.runGraphifyCommandWithRetry(command, primarySettings, aiSettings);
-    } catch (error) {
-      const detail = errorMessage(error);
-      if (await this.canUsePartialGraphifyResult(detail, graphMtimeBefore)) {
-        stdout = [
-          "Graphify reported partial semantic extraction failures, but graph.json was updated.",
-          "Second Brain accepted the partial graph so later drops can continue.",
-          detail
-        ].join("\n\n");
-      } else {
-        throw error;
-      }
-    }
-    const graphExists = await this.fileExists(this.graphPath);
-
-    if (!graphExists) {
-      throw new Error(`Graphify finished but did not create ${this.graphPath}.`);
-    }
-
-    const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
-    const wikiStdout = await this.refreshWikiExport(primarySettings, aiSettings);
-    const combinedStdout = [
-      spreadsheetStdout,
-      paperStdout,
-      stdout,
-      process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
-      htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",
-      wikiStdout ? `Graphify wiki export:\n${wikiStdout}` : ""
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-
-    await this.stopMcp();
-
+  private async currentGraphResult(writtenFileCount: number, stdout: string): Promise<GraphifyIngestionResult> {
     const counts = await this.readGraphCounts();
-    this.scheduleGraphCardDefinitions();
 
     return {
-      completed: looksComplete(combinedStdout) || graphExists,
+      completed: true,
       writtenFileCount,
       graphPath: this.graphPath,
       reportPath: this.reportPath,
       ...counts,
-      stdout: combinedStdout,
+      stdout,
       updatedAt: new Date().toISOString()
     };
+  }
+
+  private async runGraphifyUpdate(writtenFileCount: number): Promise<GraphifyIngestionResult> {
+    const primarySettings = this.getGraphifyLocalModelSettings();
+    const aiSettings = await this.getAiSettings();
+    return this.withGraphifyProxyAdapter(aiSettings, async () => {
+      await this.ensureGraphifyProviderConfig(primarySettings, aiSettings);
+
+      const command =
+        process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND ??
+        process.env.SECOND_BRAIN_GRAPHIFY_UPDATE_COMMAND ??
+        defaultUpdateCommand(primarySettings, aiSettings);
+      const graphMtimeBefore = await this.fileMtimeMs(this.graphPath);
+      let stdout: string;
+
+      try {
+        stdout = await this.runGraphifyCommandWithRetry(command, primarySettings, aiSettings);
+      } catch (error) {
+        const detail = errorMessage(error);
+        if (await this.canUsePartialGraphifyResult(detail, graphMtimeBefore)) {
+          stdout = [
+            "Graphify reported partial semantic extraction failures, but graph.json was updated.",
+            "Second Brain accepted the partial graph so later drops can continue.",
+            detail
+          ].join("\n\n");
+        } else {
+          throw error;
+        }
+      }
+      const graphExists = await this.fileExists(this.graphPath);
+
+      if (!graphExists) {
+        throw new Error(`Graphify finished but did not create ${this.graphPath}.`);
+      }
+
+      const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
+      const wikiStdout = await this.refreshWikiExport(primarySettings, aiSettings);
+      const combinedStdout = [
+        stdout,
+        process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
+        htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",
+        wikiStdout ? `Graphify wiki export:\n${wikiStdout}` : ""
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      await this.stopMcp();
+
+      const counts = await this.readGraphCounts();
+      this.scheduleGraphCardDefinitions();
+
+      return {
+        completed: looksComplete(combinedStdout) || graphExists,
+        writtenFileCount,
+        graphPath: this.graphPath,
+        reportPath: this.reportPath,
+        ...counts,
+        stdout: combinedStdout,
+        updatedAt: new Date().toISOString()
+      };
+    });
   }
 
   private async ensureGraphHtml(
@@ -2148,7 +1528,7 @@ export class GraphifyController {
     } catch (error) {
       const primaryError = errorMessage(error);
 
-      if (!this.canRetryGraphifyCommand() || !this.shouldRetryWithStrictJson(primaryError)) {
+      if (isProxyAiSettings(aiSettings) || !this.canRetryGraphifyCommand() || !this.shouldRetryWithStrictJson(primaryError)) {
         throw this.enrichGraphifyError(primaryError);
       }
 
@@ -2223,6 +1603,136 @@ export class GraphifyController {
 
         resolve(combined);
       });
+    });
+  }
+
+  private async withGraphifyProxyAdapter<T>(aiSettings: AiSettings, task: () => Promise<T>): Promise<T> {
+    if (!isProxyAiSettings(aiSettings)) {
+      return task();
+    }
+
+    const adapter = await this.startGraphifyProxyAdapter(aiSettings);
+    const previousBaseUrl = this.activeGraphifyProxyBaseUrl;
+    this.activeGraphifyProxyBaseUrl = adapter.baseUrl;
+
+    try {
+      return await task();
+    } finally {
+      this.activeGraphifyProxyBaseUrl = previousBaseUrl;
+      await adapter.close();
+    }
+  }
+
+  private async startGraphifyProxyAdapter(aiSettings: AiSettings): Promise<{ baseUrl: string; close: () => Promise<void> }> {
+    const server = createServer((request, response) => {
+      void this.handleGraphifyProxyAdapterRequest(request, response, aiSettings);
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", () => {
+        server.off("error", reject);
+        resolve();
+      });
+    });
+
+    const address = server.address();
+    if (!address || typeof address === "string") {
+      await this.closeServer(server);
+      throw new Error("Could not start local Graphify proxy adapter.");
+    }
+
+    return {
+      baseUrl: `http://127.0.0.1:${address.port}/v1`,
+      close: () => this.closeServer(server)
+    };
+  }
+
+  private closeServer(server: Server): Promise<void> {
+    return new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  private async handleGraphifyProxyAdapterRequest(
+    request: IncomingMessage,
+    response: ServerResponse,
+    aiSettings: AiSettings
+  ): Promise<void> {
+    try {
+      if (request.method !== "POST" || !request.url?.replace(/\/+$/, "").endsWith("/chat/completions")) {
+        response.writeHead(404, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ error: { message: "Not Found" } }));
+        return;
+      }
+
+      const rawBody = await this.readHttpRequestBody(request);
+      const payload = JSON.parse(rawBody) as Record<string, unknown>;
+      const requestId = randomUUID();
+      const proxyResponse = await fetch(productionProxyChatEndpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${aiSettings.apiKey}`,
+          "Content-Type": "application/json",
+          "X-Second-Brain-Request-Id": requestId
+        },
+        body: JSON.stringify({
+          userIdOrKey: aiSettings.apiKey,
+          model: typeof payload.model === "string" ? payload.model : aiSettings.model,
+          groundingEnabled: false,
+          requestId,
+          messages: Array.isArray(payload.messages) ? payload.messages : []
+        })
+      });
+      const proxyText = await proxyResponse.text();
+
+      if (!proxyResponse.ok) {
+        response.writeHead(proxyResponse.status, { "Content-Type": "application/json" });
+        response.end(proxyText);
+        return;
+      }
+
+      const parsed = JSON.parse(proxyText) as Record<string, unknown>;
+      const text = typeof parsed.text === "string" ? parsed.text : typeof parsed.output_text === "string" ? parsed.output_text : "";
+      const model = typeof parsed.model === "string" ? parsed.model : aiSettings.model;
+      response.writeHead(200, { "Content-Type": "application/json" });
+      response.end(
+        JSON.stringify({
+          id: requestId,
+          object: "chat.completion",
+          model,
+          choices: [
+            {
+              index: 0,
+              finish_reason: "stop",
+              message: {
+                role: "assistant",
+                content: text
+              }
+            }
+          ],
+          usage: parsed.usage ?? null
+        })
+      );
+    } catch (error) {
+      response.writeHead(500, { "Content-Type": "application/json" });
+      response.end(JSON.stringify({ error: { message: errorMessage(error) } }));
+    }
+  }
+
+  private readHttpRequestBody(request: IncomingMessage): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      request.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+      request.on("error", reject);
+      request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     });
   }
 
@@ -2542,21 +2052,25 @@ export class GraphifyController {
     aiSettings?: AiSettings
   ): Promise<void> {
     const resolvedAiSettings = aiSettings ?? (await this.getAiSettings());
+    const endpoint = this.getGraphifyLlmEndpoint(resolvedAiSettings);
     const graphifyConfigPath = path.join(this.rawVaultPath, ".graphify");
     const providerPath = path.join(graphifyConfigPath, "providers.json");
+    const provider: GraphifyProviderConfig = {
+      base_url: this.getGraphifyOpenAiBaseUrl(resolvedAiSettings, endpoint),
+      default_model: this.getGraphifyLlmModel(resolvedAiSettings),
+      model_env_key: "SECOND_BRAIN_GRAPHIFY_LLM_MODEL",
+      env_key: "SECOND_BRAIN_GRAPHIFY_LLM_API_KEY",
+      pricing: {
+        input: 0,
+        output: 0
+      },
+      temperature: settings.temperature
+    };
+    if (!isProxyAiSettings(resolvedAiSettings)) {
+      provider.max_completion_tokens = settings.maxTokens;
+    }
     const providerConfig: Record<string, GraphifyProviderConfig> = {
-      [graphifyProviderName]: {
-        base_url: normalizeOpenAiBaseUrl(this.getGraphifyLlmEndpoint(resolvedAiSettings)),
-        default_model: this.getGraphifyLlmModel(resolvedAiSettings),
-        model_env_key: "SECOND_BRAIN_GRAPHIFY_LLM_MODEL",
-        env_key: "SECOND_BRAIN_GRAPHIFY_LLM_API_KEY",
-        pricing: {
-          input: 0,
-          output: 0
-        },
-        temperature: settings.temperature,
-        max_completion_tokens: settings.maxTokens
-      }
+      [graphifyProviderName]: provider
     };
 
     await mkdir(graphifyConfigPath, { recursive: true });
@@ -2565,24 +2079,44 @@ export class GraphifyController {
 
   private buildGraphifyEnvironment(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): NodeJS.ProcessEnv {
     const endpoint = this.getGraphifyLlmEndpoint(aiSettings);
+    const baseUrl = this.getGraphifyOpenAiBaseUrl(aiSettings, endpoint);
     const model = this.getGraphifyLlmModel(aiSettings);
-    const maxTokens = String(settings.maxTokens);
-
-    return {
+    const apiKey =
+      process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
+      process.env.OPENAI_API_KEY ??
+      aiSettings.apiKey ??
+      "second-brain-local";
+    const graphifyModel = process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ?? process.env.OPENAI_MODEL ?? model;
+    const env: NodeJS.ProcessEnv = {
       ...process.env,
       GRAPHIFY_ALLOW_LOCAL_PROVIDERS: process.env.GRAPHIFY_ALLOW_LOCAL_PROVIDERS ?? "1",
-      GRAPHIFY_MAX_OUTPUT_TOKENS: maxTokens,
-      SECOND_BRAIN_GRAPHIFY_LLM_API_KEY:
-        process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
-        aiSettings.apiKey ??
-        "second-brain-local",
+      SECOND_BRAIN_GRAPHIFY_LLM_API_KEY: apiKey,
       SECOND_BRAIN_GRAPHIFY_LLM_ENDPOINT: endpoint,
-      SECOND_BRAIN_GRAPHIFY_LLM_MODEL: process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ?? model,
-      SECOND_BRAIN_GRAPHIFY_TEMPERATURE: String(settings.temperature)
+      SECOND_BRAIN_GRAPHIFY_LLM_MODEL: graphifyModel,
+      SECOND_BRAIN_GRAPHIFY_TEMPERATURE: String(settings.temperature),
+      OPENAI_API_KEY: apiKey,
+      OPENAI_BASE_URL: baseUrl,
+      OPENAI_MODEL: graphifyModel
     };
+
+    if (!isProxyAiSettings(aiSettings)) {
+      env.GRAPHIFY_MAX_OUTPUT_TOKENS = String(settings.maxTokens);
+    } else {
+      delete env.GRAPHIFY_MAX_OUTPUT_TOKENS;
+      delete env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS;
+      delete env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS;
+      delete env.SECOND_BRAIN_GRAPHIFY_TOKEN_BUDGET;
+      delete env.SECOND_BRAIN_GRAPHIFY_MAX_CONCURRENCY;
+    }
+
+    return env;
   }
 
   private getGraphifyLlmEndpoint(aiSettings: AiSettings): string {
+    if (isProxyAiSettings(aiSettings)) {
+      return productionProxyChatCompletionsEndpoint;
+    }
+
     return (
       process.env.SECOND_BRAIN_GRAPHIFY_LLM_ENDPOINT ??
       aiSettings.endpoint ??
@@ -2590,9 +2124,22 @@ export class GraphifyController {
     );
   }
 
+  private getGraphifyOpenAiBaseUrl(aiSettings: AiSettings, endpoint = this.getGraphifyLlmEndpoint(aiSettings)): string {
+    if (this.activeGraphifyProxyBaseUrl) {
+      return this.activeGraphifyProxyBaseUrl;
+    }
+
+    if (isProxyAiSettings(aiSettings)) {
+      return productionProxyOpenAiBaseUrl;
+    }
+
+    return openAiBaseUrlFromChatCompletionsEndpoint(endpoint);
+  }
+
   private getGraphifyLlmModel(aiSettings: AiSettings): string {
     return (
       process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ??
+      process.env.OPENAI_MODEL ??
       aiSettings.model ??
       defaultLocalModelName
     );
@@ -2861,11 +2408,6 @@ export class GraphifyController {
     await mkdir(path.dirname(targetCommentPath), { recursive: true });
     await writeFile(targetCommentPath, `${nextComment.trim()}\n`, "utf8");
     await this.removeSourceComment(sourceFile);
-  }
-
-  private async resetGraphifyOutputs(): Promise<void> {
-    await this.stopMcp();
-    await rm(this.graphOutPath, { recursive: true, force: true });
   }
 
   private async hasRawSourceFiles(directory = this.rawVaultPath): Promise<boolean> {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Cloud, Cpu, KeyRound, RefreshCcw, Save, Settings, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Cloud, Cpu, RefreshCcw, Save, Settings, X } from "lucide-react";
 import type { AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } from "../../shared/ipc";
 
 type SettingsPanelProps = {
@@ -65,6 +65,7 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
 
     try {
       const saved = await window.api.settings.updateApp({
+        aiMode: settings.aiMode,
         ai: {
           endpoint: settings.ai.endpoint,
           apiKey: settings.ai.apiKey,
@@ -82,6 +83,9 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
       setIsSaving(false);
     }
   }
+
+  const aiMode = settings?.aiMode ?? "proxy";
+  const isProxyMode = aiMode === "proxy";
 
   async function refreshDependencyStatus(): Promise<void> {
     setIsCheckingDependencies(true);
@@ -166,305 +170,243 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-lg border border-slate-200 bg-white/55 p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <KeyRound size={17} className="text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-950">Local AI Endpoint</h3>
-              </div>
-              <label className="block text-xs font-semibold text-slate-500">
-                Endpoint
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  type="url"
-                  value={settings?.ai.endpoint ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current ? { ...current, ai: { ...current.ai, endpoint: event.target.value } } : current
-                    )
-                  }
-                />
-              </label>
-              <label className="mt-3 block text-xs font-semibold text-slate-500">
-                Model
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  type="text"
-                  value={settings?.ai.model ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current ? { ...current, ai: { ...current.ai, model: event.target.value } } : current
-                    )
-                  }
-                />
-              </label>
-              <label className="mt-3 block text-xs font-semibold text-slate-500">
-                API key
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  type="password"
-                  value={settings?.ai.apiKey ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current ? { ...current, ai: { ...current.ai, apiKey: event.target.value } } : current
-                    )
-                  }
-                />
-              </label>
-            </section>
-
-            <section className="rounded-lg border border-slate-200 bg-white/55 p-4">
+            <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center gap-2">
                 <Cloud size={17} className="text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-950">AI Provider</h3>
+                <h3 className="text-sm font-semibold text-slate-950">AI Mode</h3>
               </div>
-              <label className="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
-                Use managed proxy for AI features
-                <input
-                  checked={settings?.managedProxy.enabled ?? false}
-                  className="h-4 w-4 accent-slate-950"
-                  type="checkbox"
-                  onChange={(event) =>
+              <div className="grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-white/65 p-1">
+                <button
+                  className={`h-9 rounded text-sm font-semibold transition ${
+                    isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
+                  }`}
+                  type="button"
+                  onClick={() =>
                     setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            managedProxy: { ...current.managedProxy, enabled: event.target.checked }
-                          }
-                        : current
+                      current ? { ...current, aiMode: "proxy", managedProxy: { ...current.managedProxy, enabled: true } } : current
                     )
                   }
-                />
-              </label>
-              <label className="mt-3 block text-xs font-semibold text-slate-500">
-                Proxy endpoint
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  placeholder="https://second-brain-proxy-...run.app/generate"
-                  type="url"
-                  value={settings?.managedProxy.endpoint ?? ""}
-                  onChange={(event) =>
+                >
+                  Use Proxy AI
+                </button>
+                <button
+                  className={`h-9 rounded text-sm font-semibold transition ${
+                    !isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
+                  }`}
+                  type="button"
+                  onClick={() =>
                     setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            managedProxy: { ...current.managedProxy, endpoint: event.target.value }
-                          }
-                        : current
+                      current ? { ...current, aiMode: "local", managedProxy: { ...current.managedProxy, enabled: false } } : current
                     )
                   }
-                />
-              </label>
-              <label className="mt-3 block text-xs font-semibold text-slate-500">
-                Secret key
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  type="password"
-                  value={settings?.managedProxy.secretKey ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            managedProxy: { ...current.managedProxy, secretKey: event.target.value }
-                          }
-                        : current
-                    )
-                  }
-                />
-              </label>
-              <label className="mt-3 block text-xs font-semibold text-slate-500">
-                Gemini model
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  type="text"
-                  value={settings?.managedProxy.model ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            managedProxy: { ...current.managedProxy, model: event.target.value }
-                          }
-                        : current
-                    )
-                  }
-                />
-              </label>
-              <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
-                API grounding
-                <input
-                  checked={settings?.managedProxy.groundingEnabled ?? true}
-                  className="h-4 w-4 accent-slate-950"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            managedProxy: { ...current.managedProxy, groundingEnabled: event.target.checked }
-                          }
-                        : current
-                    )
-                  }
-                />
-              </label>
+                >
+                  Use Local AI
+                </button>
+              </div>
+
+              {isProxyMode ? (
+                <label className="mt-4 block text-xs font-semibold text-slate-500">
+                  Secret key
+                  <input
+                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                    type="password"
+                    value={settings?.managedProxy.secretKey ?? ""}
+                    onChange={(event) =>
+                      setSettings((current) =>
+                        current
+                          ? {
+                              ...current,
+                              managedProxy: { ...current.managedProxy, secretKey: event.target.value, enabled: true }
+                            }
+                          : current
+                      )
+                    }
+                  />
+                </label>
+              ) : (
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  <label className="block text-xs font-semibold text-slate-500 md:col-span-3">
+                    Base URL
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      type="url"
+                      value={settings?.ai.endpoint ?? ""}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current ? { ...current, ai: { ...current.ai, endpoint: event.target.value } } : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500 md:col-span-2">
+                    Model
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      type="text"
+                      value={settings?.ai.model ?? ""}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current ? { ...current, ai: { ...current.ai, model: event.target.value } } : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    API key
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      type="password"
+                      value={settings?.ai.apiKey ?? ""}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current ? { ...current, ai: { ...current.ai, apiKey: event.target.value } } : current
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              )}
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white/55 p-4">
-              <div className="mb-4 flex items-center gap-2">
-                <Cpu size={17} className="text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-950">Graphify</h3>
-              </div>
-              <label className="block text-xs font-semibold text-slate-500">
-                Graphify executable
-                <input
-                  className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                  placeholder="Auto-detect"
-                  type="text"
-                  value={settings?.graphify.graphifyBin ?? ""}
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? { ...current, graphify: { ...current.graphify, graphifyBin: event.target.value } }
-                        : current
-                    )
-                  }
-                />
-              </label>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+            {!isProxyMode ? (
+              <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
+                <div className="mb-4 flex items-center gap-2">
+                  <Cpu size={17} className="text-slate-500" />
+                  <h3 className="text-sm font-semibold text-slate-950">Local Graphify Controls</h3>
+                </div>
                 <label className="block text-xs font-semibold text-slate-500">
-                  Max tokens
+                  Graphify executable
                   <input
                     className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    min={512}
-                    step={512}
-                    type="number"
-                    value={settings?.graphify.maxTokens ?? 8192}
+                    placeholder="Auto-detect"
+                    type="text"
+                    value={settings?.graphify.graphifyBin ?? ""}
+                    onChange={(event) =>
+                      setSettings((current) =>
+                        current
+                          ? { ...current, graphify: { ...current.graphify, graphifyBin: event.target.value } }
+                          : current
+                      )
+                    }
+                  />
+                </label>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Max tokens
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      min={512}
+                      step={512}
+                      type="number"
+                      value={settings?.graphify.maxTokens ?? 8192}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                graphify: {
+                                  ...current.graphify,
+                                  maxTokens: numberValue(event.target.value, current.graphify.maxTokens)
+                                }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Retry tokens
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      min={512}
+                      step={512}
+                      type="number"
+                      value={settings?.graphify.retryMaxTokens ?? 4096}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                graphify: {
+                                  ...current.graphify,
+                                  retryMaxTokens: numberValue(event.target.value, current.graphify.retryMaxTokens)
+                                }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Timeout ms
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      min={10000}
+                      step={10000}
+                      type="number"
+                      value={settings?.graphify.timeoutMs ?? 600000}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                graphify: {
+                                  ...current.graphify,
+                                  timeoutMs: numberValue(event.target.value, current.graphify.timeoutMs)
+                                }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Cards per pass
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      min={1}
+                      step={1}
+                      type="number"
+                      value={settings?.graphify.cardDefinitionMaxPerPass ?? 24}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                graphify: {
+                                  ...current.graphify,
+                                  cardDefinitionMaxPerPass: numberValue(
+                                    event.target.value,
+                                    current.graphify.cardDefinitionMaxPerPass
+                                  )
+                                }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+                <label className="mt-4 flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
+                  Card definitions
+                  <input
+                    checked={settings?.graphify.cardDefinitions ?? true}
+                    className="h-4 w-4 accent-slate-950"
+                    type="checkbox"
                     onChange={(event) =>
                       setSettings((current) =>
                         current
                           ? {
                               ...current,
-                              graphify: {
-                                ...current.graphify,
-                                maxTokens: numberValue(event.target.value, current.graphify.maxTokens)
-                              }
+                              graphify: { ...current.graphify, cardDefinitions: event.target.checked }
                             }
                           : current
                       )
                     }
                   />
                 </label>
-                <label className="block text-xs font-semibold text-slate-500">
-                  Retry tokens
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    min={512}
-                    step={512}
-                    type="number"
-                    value={settings?.graphify.retryMaxTokens ?? 4096}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              graphify: {
-                                ...current.graphify,
-                                retryMaxTokens: numberValue(event.target.value, current.graphify.retryMaxTokens)
-                              }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
-                <label className="block text-xs font-semibold text-slate-500">
-                  Timeout ms
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    min={10000}
-                    step={10000}
-                    type="number"
-                    value={settings?.graphify.timeoutMs ?? 600000}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              graphify: {
-                                ...current.graphify,
-                                timeoutMs: numberValue(event.target.value, current.graphify.timeoutMs)
-                              }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
-                <label className="block text-xs font-semibold text-slate-500">
-                  Cards per pass
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    min={1}
-                    step={1}
-                    type="number"
-                    value={settings?.graphify.cardDefinitionMaxPerPass ?? 24}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              graphify: {
-                                ...current.graphify,
-                                cardDefinitionMaxPerPass: numberValue(
-                                  event.target.value,
-                                  current.graphify.cardDefinitionMaxPerPass
-                                )
-                              }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
-              </div>
-              <label className="mt-4 flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
-                Card definitions
-                <input
-                  checked={settings?.graphify.cardDefinitions ?? true}
-                  className="h-4 w-4 accent-slate-950"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            graphify: { ...current.graphify, cardDefinitions: event.target.checked }
-                          }
-                        : current
-                    )
-                  }
-                />
-              </label>
-              <label className="mt-3 flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
-                Paper components
-                <input
-                  checked={settings?.graphify.paperComponents ?? true}
-                  className="h-4 w-4 accent-slate-950"
-                  type="checkbox"
-                  onChange={(event) =>
-                    setSettings((current) =>
-                      current
-                        ? {
-                            ...current,
-                            graphify: { ...current.graphify, paperComponents: event.target.checked }
-                          }
-                        : current
-                    )
-                  }
-                />
-              </label>
-            </section>
+              </section>
+            ) : null}
 
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between gap-3">

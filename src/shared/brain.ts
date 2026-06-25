@@ -139,11 +139,14 @@ export type GroupGraphNodesInput = {
 };
 
 export type AiSettings = {
+  mode: AiMode;
   endpoint: string;
   apiKey: string;
   model: string;
   updatedAt: string;
 };
+
+export type AiMode = "proxy" | "local";
 
 export type ManagedProxySettings = {
   enabled: boolean;
@@ -173,6 +176,7 @@ export type GraphifyRuntimeSettings = {
 };
 
 export type AppSettings = {
+  aiMode: AiMode;
   ai: AiSettings;
   managedProxy: ManagedProxySettings;
   graphify: GraphifyRuntimeSettings;
@@ -182,6 +186,7 @@ export type AppSettings = {
 export type UpdateGraphifyRuntimeSettingsInput = Partial<GraphifyRuntimeSettings>;
 
 export type UpdateAppSettingsInput = {
+  aiMode?: AiMode | undefined;
   ai?: UpdateAiSettingsInput | undefined;
   managedProxy?: UpdateManagedProxySettingsInput | undefined;
   graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;

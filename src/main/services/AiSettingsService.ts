@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type {
+  AiMode,
   AiSettings,
   AppSettings,
   GraphifyRuntimeSettings,
@@ -13,8 +14,9 @@ import type {
 const defaultEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultModel = "local-model";
 const placeholderApiKey = "local-dev-placeholder";
-const defaultManagedProxyEndpoint = "";
-const defaultManagedProxyModel = "gemini-3.1-flash";
+const productionProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
+const productionProxyChatEndpoint = `${productionProxyOrigin}/chat`;
+const defaultManagedProxyModel = "google/gemini-3.5-flash";
 const defaultGraphifySettings: GraphifyRuntimeSettings = {
   graphifyBin: "",
   maxTokens: 8192,
@@ -39,7 +41,20 @@ function normalizeModel(value: string | undefined): string {
 }
 
 function normalizeManagedProxyModel(value: string | undefined): string {
-  return value?.trim() || defaultManagedProxyModel;
+  const trimmed = value?.trim();
+  return !trimmed || trimmed === "gemini-3.1-flash" ? defaultManagedProxyModel : trimmed;
+}
+
+function normalizeProxyApiKey(value: string | undefined): string {
+  return process.env.OPENAI_API_KEY?.trim() || value?.trim() || placeholderApiKey;
+}
+
+function normalizeProxyModel(value: string | undefined): string {
+  return process.env.OPENAI_MODEL?.trim() || normalizeManagedProxyModel(value);
+}
+
+function normalizeAiMode(value: unknown, fallback: AiMode = "proxy"): AiMode {
+  return value === "local" || value === "proxy" ? value : fallback;
 }
 
 function numberSetting(value: unknown, fallback: number, minimum = 1): number {
@@ -73,8 +88,8 @@ function normalizeManagedProxySettings(value: unknown): ManagedProxySettings {
   const parsed = asRecord(value);
 
   return {
-    enabled: booleanSetting(parsed.enabled, false),
-    endpoint: typeof parsed.endpoint === "string" ? parsed.endpoint.trim() : defaultManagedProxyEndpoint,
+    enabled: true,
+    endpoint: productionProxyChatEndpoint,
     secretKey: typeof parsed.secretKey === "string" ? parsed.secretKey.trim() : "",
     model: normalizeManagedProxyModel(typeof parsed.model === "string" ? parsed.model : undefined),
     groundingEnabled: booleanSetting(parsed.groundingEnabled, true),
@@ -148,31 +163,36 @@ export class AiSettingsService {
   }
 
   async getSettings(): Promise<AiSettings> {
-    return (await this.getAppSettings()).ai;
+    return this.getEffectiveSettings();
   }
 
   async getEffectiveSettings(): Promise<AiSettings> {
     const settings = await this.getAppSettings();
     const proxy = settings.managedProxy;
 
-    if (proxy.enabled && proxy.endpoint.trim()) {
+    if (settings.aiMode === "proxy") {
       return {
-        endpoint: proxy.endpoint.trim(),
-        apiKey: proxy.secretKey.trim() || placeholderApiKey,
-        model: normalizeManagedProxyModel(proxy.model),
+        mode: "proxy",
+        endpoint: productionProxyChatEndpoint,
+        apiKey: normalizeProxyApiKey(proxy.secretKey),
+        model: normalizeProxyModel(proxy.model),
         updatedAt: proxy.updatedAt
       };
     }
 
-    return settings.ai;
+    return { ...settings.ai, mode: "local" };
   }
 
   async getAppSettings(): Promise<AppSettings> {
     try {
       const parsed = JSON.parse(await readFile(this.settingsPath, "utf8")) as Record<string, unknown>;
       const aiRecord = asRecord(parsed.ai ?? parsed);
+      const legacyProxy = normalizeManagedProxySettings(parsed.managedProxy);
+      const aiMode = normalizeAiMode(parsed.aiMode, "proxy");
       const settings = {
+        aiMode,
         ai: {
+          mode: "local" as const,
           endpoint: normalizeEndpoint(process.env.SECOND_BRAIN_LLM_ENDPOINT ?? (aiRecord.endpoint as string | undefined)),
           apiKey: normalizeApiKey(process.env.SECOND_BRAIN_LLM_API_KEY ?? (aiRecord.apiKey as string | undefined)),
           model: normalizeModel(
@@ -180,7 +200,7 @@ export class AiSettingsService {
           ),
           updatedAt: typeof aiRecord.updatedAt === "string" ? aiRecord.updatedAt : new Date().toISOString()
         },
-        managedProxy: normalizeManagedProxySettings(parsed.managedProxy),
+        managedProxy: legacyProxy,
         graphify: normalizeGraphifySettings(parsed.graphify),
         updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
       };
@@ -205,19 +225,19 @@ export class AiSettingsService {
 
   async updateAppSettings(input: UpdateAppSettingsInput): Promise<AppSettings> {
     const current = await this.getAppSettings();
+    const aiMode = normalizeAiMode(input.aiMode, current.aiMode);
     const next: AppSettings = {
+      aiMode,
       ai: {
+        mode: "local",
         endpoint: normalizeEndpoint(input.ai?.endpoint ?? current.ai.endpoint),
         apiKey: normalizeApiKey(input.ai?.apiKey ?? current.ai.apiKey),
         model: normalizeModel(input.ai?.model ?? current.ai.model),
         updatedAt: new Date().toISOString()
       },
       managedProxy: {
-        enabled: input.managedProxy?.enabled ?? current.managedProxy.enabled,
-        endpoint:
-          typeof input.managedProxy?.endpoint === "string"
-            ? input.managedProxy.endpoint.trim()
-            : current.managedProxy.endpoint,
+        enabled: true,
+        endpoint: productionProxyChatEndpoint,
         secretKey:
           typeof input.managedProxy?.secretKey === "string"
             ? input.managedProxy.secretKey.trim()
@@ -240,7 +260,9 @@ export class AiSettingsService {
 
   private defaultAppSettings(): AppSettings {
     return {
+      aiMode: "proxy",
       ai: {
+        mode: "local",
         endpoint: normalizeEndpoint(process.env.SECOND_BRAIN_LLM_ENDPOINT),
         apiKey: normalizeApiKey(process.env.SECOND_BRAIN_LLM_API_KEY),
         model: normalizeModel(process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL),
@@ -259,12 +281,24 @@ export class AiSettingsService {
       delete process.env.SECOND_BRAIN_GRAPHIFY_BIN;
     }
 
-    process.env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS = String(settings.graphify.maxTokens);
-    process.env.GRAPHIFY_MAX_OUTPUT_TOKENS = String(settings.graphify.maxTokens);
-    process.env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS = String(settings.graphify.retryMaxTokens);
+    if (settings.aiMode === "local") {
+      process.env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS = String(settings.graphify.maxTokens);
+      process.env.GRAPHIFY_MAX_OUTPUT_TOKENS = String(settings.graphify.maxTokens);
+      process.env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS = String(settings.graphify.retryMaxTokens);
+    } else {
+      delete process.env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS;
+      delete process.env.GRAPHIFY_MAX_OUTPUT_TOKENS;
+      delete process.env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS;
+      delete process.env.SECOND_BRAIN_GRAPHIFY_TOKEN_BUDGET;
+      delete process.env.SECOND_BRAIN_GRAPHIFY_MAX_CONCURRENCY;
+    }
     process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS = String(settings.graphify.timeoutMs);
     process.env.SECOND_BRAIN_CARD_DEFINITIONS = settings.graphify.cardDefinitions ? "1" : "0";
-    process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS = String(settings.graphify.cardDefinitionMaxPerPass);
+    if (settings.aiMode === "local") {
+      process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS = String(settings.graphify.cardDefinitionMaxPerPass);
+    } else {
+      delete process.env.SECOND_BRAIN_CARD_DEFINITION_MAX_PER_PASS;
+    }
     process.env.SECOND_BRAIN_PAPER_COMPONENTS = settings.graphify.paperComponents ? "1" : "0";
   }
 
