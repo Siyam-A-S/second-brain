@@ -4,9 +4,14 @@
     "ast_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93",
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
+  "electron-builder.json": {
+    "mtime": 1780895400.5336041,
+    "ast_hash": "7549684322ac72dc4bebfab4baa5a8a2",
+    "semantic_hash": "7549684322ac72dc4bebfab4baa5a8a2"
+  },
   "package.json": {
-    "mtime": 1782630216.2412374,
-    "ast_hash": "eae64d745603138782acef51226bb8bb",
+    "mtime": 1781676223.7746146,
+    "ast_hash": "20bf0ea76f56ac1f8a91df30a6d28713",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -220,8 +225,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1782629929.2277946,
-    "ast_hash": "196f21f085c35d8905e0f7b5b64d80a4",
+    "mtime": 1782441645.7860427,
+    "ast_hash": "4c43f633ce61aa061673f36973393f9c",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -340,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782629929.2577949,
-    "ast_hash": "90bc102ce5a7c018549782dff46ac156",
+    "mtime": 1782171877.572241,
+    "ast_hash": "3bc13db031a8c6d5819f285da3873e77",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
@@ -367,16 +372,6 @@
   "src/main/services/ArtifactToolService.ts": {
     "mtime": 1782236413.7951567,
     "ast_hash": "06d9d74e37e25810cfc6863e3a4e758d",
-    "semantic_hash": ""
-  },
-  "dev/mcp-graphify-serve.md": {
-    "mtime": 1782612137.6528575,
-    "ast_hash": "9fe1d8175a42808e5d58623018cc1e74",
-    "semantic_hash": ""
-  },
-  "electron-builder.yml": {
-    "mtime": 1782630216.2392375,
-    "ast_hash": "49ee437dd557492290436dd053bc94bb",
     "semantic_hash": ""
   }
 }

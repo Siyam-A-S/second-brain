@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782630216.2412374,
-    "ast_hash": "eae64d745603138782acef51226bb8bb",
+    "mtime": 1782621350.105058,
+    "ast_hash": "b81e775bd112d121920f596efcf3737a",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -220,8 +220,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1782629929.2277946,
-    "ast_hash": "196f21f085c35d8905e0f7b5b64d80a4",
+    "mtime": 1782612184.4239874,
+    "ast_hash": "f218e1cfaaffc2b59691ebf2cad88645",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782629929.2577949,
-    "ast_hash": "90bc102ce5a7c018549782dff46ac156",
+    "mtime": 1782612178.8099718,
+    "ast_hash": "871c08fef94c8e59f345a0cb583b4c01",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "electron-builder.yml": {
-    "mtime": 1782630216.2392375,
-    "ast_hash": "49ee437dd557492290436dd053bc94bb",
+    "mtime": 1782621297.3956594,
+    "ast_hash": "0de3d75be7388b24457b4c760bb840cb",
     "semantic_hash": ""
   }
 }

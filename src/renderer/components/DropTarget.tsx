@@ -10,7 +10,7 @@ type DropTargetProps = {
 };
 
 const toneColors: Record<DropTone, string> = {
-  idle: "#FFFAF0",
+  idle: "var(--color-panel)",
   text: "rgba(226, 232, 240, 0.5)",
   pdf: "rgba(254, 226, 226, 0.5)",
   image: "rgba(243, 232, 255, 0.5)",
@@ -227,9 +227,12 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
     <motion.div
       animate={{
         backgroundColor: toneColors[tone],
-        boxShadow: tone === "idle" ? "inset 0 0 0 1px rgba(41, 37, 36, 0.04)" : "inset 0 0 0 1px rgba(15, 23, 42, 0.08)"
+        boxShadow:
+          tone === "idle"
+            ? "inset 0 0 0 1px rgba(41, 37, 36, 0.08), 2px 4px 6px rgba(0,0,0,0.08)"
+            : "inset 0 0 0 1px rgba(15, 23, 42, 0.08), 2px 4px 6px rgba(0,0,0,0.08)"
       }}
-      className="relative h-full min-h-0 overflow-hidden rounded-lg"
+      className="material-frosted relative h-full min-h-0 overflow-hidden rounded-xl border border-black/10 shadow-keycap"
       transition={{
         duration: 0.22,
         ease: "easeOut"
@@ -288,10 +291,10 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       <div className="relative z-10 flex h-full flex-col justify-between p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Local ingest</p>
-            <h2 className="mt-2 text-lg font-semibold leading-6 text-slate-950">Drop zone</h2>
+            <p className="font-mono text-xs font-semibold uppercase text-highlight">Local ingest</p>
+            <h2 className="mt-2 font-mono text-lg font-semibold leading-6 text-legend">Drop zone</h2>
           </div>
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white/70 text-slate-700 shadow-sm">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-keycap text-legend shadow-keycap">
             {isProcessing ? (
               <Loader2 className="animate-spin" size={19} />
             ) : tone === "error" ? (
@@ -305,15 +308,15 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
         </div>
 
         <div>
-          <p className="text-sm leading-6 text-slate-700">{statusText}</p>
+          <p className="text-sm leading-6 text-textMain">{statusText}</p>
           {lastResult ? (
-            <div className="mt-4 rounded-md border border-emerald-200 bg-white/65 p-3">
-              <p className="text-xs font-semibold uppercase text-emerald-700">
+            <div className="mt-4 rounded-xl border border-highlight bg-keycap p-3 shadow-inner">
+              <p className="font-mono text-xs font-semibold uppercase text-highlight">
                 {lastResult.graphify
                     ? "graphify"
                     : lastResult.routing?.strategy.replace("-", " ") ?? "processed"}
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-semibold text-textMain">
                 {lastResult.graphify
                     ? `${lastResult.graphify.writtenFileCount} raw item${lastResult.graphify.writtenFileCount === 1 ? "" : "s"}`
                   : lastResult.createdNode?.title ?? "Processed drop"}

@@ -893,5 +893,6 @@ export function installBrowserApiFallback(): void {
     return;
   }
 
+  document.documentElement.dataset.theme = "keypiphy";
   window.api = browserApiFallback;
 }

@@ -2,6 +2,8 @@ import { execFile } from "node:child_process";
 import type { ExecFileOptions } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { GraphifyContextCitation, GraphifyContextResult } from "../../shared/brain";
 
 type GraphifyInvocation = {
@@ -14,6 +16,7 @@ type GraphifyInvocation = {
 const graphifyToolPackage = "graphifyy[all]";
 const maxExecBuffer = 4 * 1024 * 1024;
 const defaultTimeoutMs = 90_000;
+const defaultMcpTimeoutMs = 45_000;
 const defaultBudget = 1800;
 const maxHydratedContextFiles = 8;
 const maxHydratedContextChars = 2800;
@@ -56,6 +59,60 @@ function quoteCommandPart(value: string): string {
 
 function formatInvocation(invocation: GraphifyInvocation): string {
   return [invocation.command, ...invocation.args].map(quoteCommandPart).join(" ");
+}
+
+function formatMcpTool(name: string, args: Record<string, unknown>): string {
+  return `mcp:graphify.serve/${name} ${JSON.stringify(args)}`;
+}
+
+function parseArgs(command: string): string[] {
+  const args: string[] = [];
+  let current = "";
+  let quote: "'" | '"' | null = null;
+  let escaped = false;
+
+  for (const char of command) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+
+    if (quote) {
+      if (char === quote) {
+        quote = null;
+      } else {
+        current += char;
+      }
+      continue;
+    }
+
+    if (char === "'" || char === '"') {
+      quote = char;
+      continue;
+    }
+
+    if (/\s/.test(char)) {
+      if (current) {
+        args.push(current);
+        current = "";
+      }
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current) {
+    args.push(current);
+  }
+
+  return args;
 }
 
 function isCmdShim(filePath: string): boolean {
@@ -155,8 +212,40 @@ function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function stringifyMcpToolResult(result: unknown): string {
+  const record = asRecord(result);
+  if (!record) {
+    return String(result ?? "");
+  }
+
+  const content = Array.isArray(record.content) ? record.content : [];
+  const parts = content
+    .map((item) => {
+      const itemRecord = asRecord(item);
+      if (!itemRecord) {
+        return "";
+      }
+
+      if (typeof itemRecord.text === "string") {
+        return itemRecord.text;
+      }
+
+      return JSON.stringify(itemRecord);
+    })
+    .filter(Boolean);
+
+  if (record.structuredContent) {
+    parts.push(JSON.stringify(record.structuredContent, null, 2));
+  }
+
+  return parts.length > 0 ? parts.join("\n\n").trim() : JSON.stringify(record, null, 2);
+}
+
 export class GraphifyContextService {
   private readonly graphPath: string;
+  private mcpClient: Client | null = null;
+  private mcpTransport: StdioClientTransport | null = null;
+  private mcpGraphMtimeMs = 0;
 
   constructor(private readonly rawVaultPath: string) {
     this.graphPath = path.join(rawVaultPath, "graphify-out", "graph.json");
@@ -170,7 +259,13 @@ export class GraphifyContextService {
       throw new Error("A question is required for Graphify context retrieval.");
     }
 
-    return this.runGraphifyContextCommand(normalizedQuestion, ["query", normalizedQuestion, "--budget", String(normalizedBudget)], normalizedBudget);
+    return this.runGraphifyMcpTool(
+      normalizedQuestion,
+      "query_graph",
+      [{ question: normalizedQuestion, mode: "bfs", token_budget: normalizedBudget }],
+      normalizedBudget,
+      ["query", normalizedQuestion, "--budget", String(normalizedBudget)]
+    );
   }
 
   async explain(nodeIdOrLabel: string): Promise<GraphifyContextResult> {
@@ -179,7 +274,13 @@ export class GraphifyContextService {
       throw new Error("A node label is required for Graphify explain.");
     }
 
-    return this.runGraphifyContextCommand(normalized, ["explain", normalized], defaultBudget);
+    return this.runGraphifyMcpTool(
+      normalized,
+      "get_node",
+      [{ node_id_or_label: normalized }, { id: normalized }, { label: normalized }, { node: normalized }],
+      defaultBudget,
+      ["explain", normalized]
+    );
   }
 
   async tracePath(from: string, to: string): Promise<GraphifyContextResult> {
@@ -189,35 +290,112 @@ export class GraphifyContextService {
       throw new Error("Both source and target node labels are required for Graphify path tracing.");
     }
 
-    return this.runGraphifyContextCommand(`${source} -> ${target}`, ["path", source, target], defaultBudget);
+    return this.runGraphifyMcpTool(
+      `${source} -> ${target}`,
+      "shortest_path",
+      [
+        { source, target },
+        { from: source, to: target },
+        { start: source, end: target },
+        { source_label: source, target_label: target }
+      ],
+      defaultBudget,
+      ["path", source, target]
+    );
   }
 
-  private async runGraphifyContextCommand(query: string, args: string[], budget: number): Promise<GraphifyContextResult> {
+  private async runGraphifyMcpTool(
+    query: string,
+    toolName: string,
+    argumentAttempts: Array<Record<string, unknown>>,
+    budget: number,
+    fallbackGraphifyArgs: string[]
+  ): Promise<GraphifyContextResult> {
+    const failures: string[] = [];
+
+    for (const toolArgs of argumentAttempts) {
+      try {
+        const client = await this.ensureMcpClient();
+        const result = await client.callTool(
+          {
+            name: toolName,
+            arguments: toolArgs
+          },
+          undefined,
+          {
+            timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_MCP_TIMEOUT_MS ?? defaultMcpTimeoutMs)
+          }
+        );
+        const stdout = stringifyMcpToolResult(result);
+        return this.buildContextResult(query, stdout, budget, formatMcpTool(toolName, toolArgs));
+      } catch (error) {
+        failures.push(`${toolName}: ${errorMessage(error)}`);
+        await this.stopMcp();
+      }
+    }
+
+    const fallback = await this.runGraphifyCliContextCommand(query, fallbackGraphifyArgs, budget);
+    if (fallback.error) {
+      return {
+        ...fallback,
+        error: [
+          "Graphify MCP context retrieval failed, and CLI fallback failed.",
+          "MCP attempts:",
+          ...failures.map((failure) => `- ${failure}`),
+          "",
+          fallback.error
+        ].join("\n")
+      };
+    }
+
+    return {
+      ...fallback,
+      stdout: [
+        fallback.stdout,
+        "",
+        "Note: Graphify MCP context retrieval was unavailable, so Second Brain used the CLI compatibility fallback.",
+        ...failures.slice(0, 3).map((failure) => `- ${failure}`)
+      ]
+        .filter(Boolean)
+        .join("\n")
+    };
+  }
+
+  private async buildContextResult(
+    query: string,
+    stdout: string,
+    budget: number,
+    command: string
+  ): Promise<GraphifyContextResult> {
+    const citations = extractCitations(stdout);
+    const hydratedContext = await this.hydrateContext(stdout, citations);
+    const graphCards = await this.hydrateGraphCardDefinitions(stdout, citations);
+    const wikiContext = await this.hydrateWikiContext(stdout, graphCards.communityIds);
+    return {
+      query,
+      stdout: [
+        stdout,
+        graphCards.text ? `Relevant card definitions:\n${graphCards.text}` : "",
+        wikiContext ? `Relevant community wiki:\n${wikiContext}` : "",
+        hydratedContext ? `Relevant local excerpts:\n${hydratedContext}` : ""
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      budget,
+      command,
+      graphPath: this.graphPath,
+      citations
+    };
+  }
+
+  private async runGraphifyCliContextCommand(query: string, args: string[], budget: number): Promise<GraphifyContextResult> {
     const invocations = await this.getGraphifyInvocations(args);
     const failures: string[] = [];
 
     for (const invocation of invocations) {
       try {
         const stdout = await this.runInvocation(invocation);
-        const citations = extractCitations(stdout);
-        const hydratedContext = await this.hydrateContext(stdout, citations);
-        const graphCards = await this.hydrateGraphCardDefinitions(stdout, citations);
-        const wikiContext = await this.hydrateWikiContext(stdout, graphCards.communityIds);
-        return {
-          query,
-          stdout: [
-            stdout,
-            graphCards.text ? `Relevant card definitions:\n${graphCards.text}` : "",
-            wikiContext ? `Relevant community wiki:\n${wikiContext}` : "",
-            hydratedContext ? `Relevant local excerpts:\n${hydratedContext}` : ""
-          ]
-            .filter(Boolean)
-            .join("\n\n"),
-          budget,
-          command: formatInvocation(invocation),
-          graphPath: this.graphPath,
-          citations
-        };
+        return this.buildContextResult(query, stdout, budget, formatInvocation(invocation));
       } catch (error) {
         failures.push(`${invocation.label}: ${errorMessage(error)}`);
       }
@@ -233,6 +411,123 @@ export class GraphifyContextService {
       citations: [],
       error
     };
+  }
+
+  private async ensureMcpClient(): Promise<Client> {
+    const graphStat = await stat(this.graphPath).catch(() => null);
+    if (!graphStat?.isFile()) {
+      throw new Error(`Graphify graph is not available at ${this.graphPath}.`);
+    }
+
+    if (this.mcpClient && this.mcpGraphMtimeMs === graphStat.mtimeMs) {
+      return this.mcpClient;
+    }
+
+    await this.stopMcp();
+
+    const invocations = await this.getGraphifyMcpInvocations();
+    const failures: string[] = [];
+    for (const invocation of invocations) {
+      const client = new Client({
+        name: "second-brain-graphify-context",
+        version: "0.1.0"
+      });
+      const transport = new StdioClientTransport({
+        command: invocation.command,
+        args: invocation.args,
+        cwd: this.rawVaultPath,
+        stderr: "pipe"
+      });
+
+      transport.stderr?.on("data", (chunk) => {
+        console.warn("Graphify context MCP stderr", chunk.toString());
+      });
+
+      try {
+        await client.connect(transport);
+        this.mcpClient = client;
+        this.mcpTransport = transport;
+        this.mcpGraphMtimeMs = graphStat.mtimeMs;
+        return client;
+      } catch (error) {
+        failures.push(`${invocation.label}: ${errorMessage(error)}`);
+        await transport.close().catch(() => undefined);
+      }
+    }
+
+    throw new Error(["Could not start Graphify MCP context server.", "Tried:", ...failures.map((failure) => `- ${failure}`)].join("\n"));
+  }
+
+  private async stopMcp(): Promise<void> {
+    const client = this.mcpClient;
+    const transport = this.mcpTransport;
+    this.mcpClient = null;
+    this.mcpTransport = null;
+    this.mcpGraphMtimeMs = 0;
+
+    await client?.close().catch(() => undefined);
+    await transport?.close().catch(() => undefined);
+  }
+
+  private async getGraphifyMcpInvocations(): Promise<GraphifyInvocation[]> {
+    const baseArgs =
+      process.env.SECOND_BRAIN_GRAPHIFY_MCP_ARGS !== undefined
+        ? parseArgs(process.env.SECOND_BRAIN_GRAPHIFY_MCP_ARGS).map((arg) => arg.replace("{graphPath}", this.graphPath))
+        : ["-m", "graphify.serve", this.graphPath];
+    const invocations: GraphifyInvocation[] = [];
+    const configured = process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND?.trim();
+
+    if (configured) {
+      invocations.push({
+        label: "SECOND_BRAIN_GRAPHIFY_MCP_COMMAND",
+        command: configured,
+        args: baseArgs,
+        shell: isCmdShim(configured)
+      });
+    }
+
+    const bundledPython = await this.findBundledGraphifyPythonCommand();
+    if (bundledPython) {
+      invocations.push({
+        label: "bundled Graphify Python runtime",
+        command: bundledPython,
+        args: baseArgs,
+        shell: isCmdShim(bundledPython)
+      });
+    }
+
+    invocations.push(
+      {
+        label: "uv tool graphifyy[all] Python",
+        command: "uv",
+        args: ["tool", "run", "--from", graphifyToolPackage, "python", ...baseArgs]
+      }
+    );
+
+    const uvPython = await this.findUvToolGraphifyPythonCommand();
+    if (uvPython) {
+      invocations.push({
+        label: "uv installed graphifyy Python",
+        command: uvPython,
+        args: baseArgs,
+        shell: isCmdShim(uvPython)
+      });
+    }
+
+    invocations.push(
+      {
+        label: "Windows py Graphify MCP",
+        command: "py",
+        args: baseArgs
+      },
+      {
+        label: "python Graphify MCP",
+        command: process.platform === "win32" ? "python" : "python3",
+        args: baseArgs
+      }
+    );
+
+    return invocations;
   }
 
   private async getGraphifyInvocations(graphifyArgs: string[]): Promise<GraphifyInvocation[]> {
@@ -312,6 +607,25 @@ export class GraphifyContextService {
     return null;
   }
 
+  private async findBundledGraphifyPythonCommand(): Promise<string | null> {
+    const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+    const candidates = [
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python.exe") : "",
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python") : "",
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "bin", "python") : "",
+      path.join(process.cwd(), "resources", "graphify-runtime", "python", process.platform === "win32" ? "python.exe" : "python"),
+      path.join(process.cwd(), "resources", "graphify-runtime", "python", "bin", "python")
+    ].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (await this.fileExists(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
   private async findUvToolGraphifyCommand(): Promise<string | null> {
     let uvToolDir = "";
 
@@ -325,6 +639,30 @@ export class GraphifyContextService {
       path.join(uvToolDir.trim().split(/\r?\n/)[0] ?? "", "graphifyy", "Scripts", "graphify.exe"),
       path.join(uvToolDir.trim().split(/\r?\n/)[0] ?? "", "graphifyy", "Scripts", "graphify.cmd"),
       path.join(uvToolDir.trim().split(/\r?\n/)[0] ?? "", "graphifyy", "bin", "graphify")
+    ];
+
+    for (const candidate of candidates) {
+      if (await this.fileExists(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private async findUvToolGraphifyPythonCommand(): Promise<string | null> {
+    let uvToolDir = "";
+
+    try {
+      uvToolDir = await this.execCapture("uv", ["tool", "dir"], { cwd: this.rawVaultPath });
+    } catch {
+      return null;
+    }
+
+    const root = uvToolDir.trim().split(/\r?\n/)[0] ?? "";
+    const candidates = [
+      path.join(root, "graphifyy", "Scripts", "python.exe"),
+      path.join(root, "graphifyy", "bin", "python")
     ];
 
     for (const candidate of candidates) {

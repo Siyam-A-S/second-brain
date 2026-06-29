@@ -20,19 +20,19 @@ export function Sidebar({
 }: SidebarProps): JSX.Element {
   if (collapsed) {
     return (
-      <aside className="flex w-16 shrink-0 flex-col items-center gap-3 border-r border-black/5 bg-white/25 p-3">
+      <aside className="material-frosted flex w-16 shrink-0 flex-col items-center gap-3 border-r border-black/10 bg-panel p-3">
         <button
-          className="grid h-9 w-9 place-items-center rounded-md bg-white/70 text-slate-600 shadow-sm transition hover:bg-white hover:text-slate-950"
+          className="grid h-9 w-9 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner"
           title="Expand left panel"
           type="button"
           onClick={onToggleCollapsed}
         >
           <PanelLeftOpen size={17} />
         </button>
-        <div className="mt-2 grid h-9 w-9 place-items-center rounded-md border border-slate-200/80 bg-white/45 text-slate-500">
+        <div className="mt-2 grid h-9 w-9 place-items-center rounded-xl border border-black/10 bg-keycap text-legend shadow-keycap">
           <UploadCloud size={17} />
         </div>
-        <div className="grid h-9 w-9 place-items-center rounded-md border border-slate-200/80 bg-white/45 text-slate-500">
+        <div className="grid h-9 w-9 place-items-center rounded-xl border border-black/10 bg-keycap text-legend shadow-keycap">
           <FolderKanban size={17} />
         </div>
       </aside>
@@ -40,14 +40,14 @@ export function Sidebar({
   }
 
   return (
-    <aside className="flex min-w-80 basis-[30%] flex-col gap-5 border-r border-black/5 bg-white/25 p-5">
+    <aside className="material-frosted flex min-w-80 basis-[30%] flex-col gap-5 border-r border-black/10 bg-panel p-5">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-950">Capture</h2>
-          <p className="text-xs text-slate-500">Drop into the active project</p>
+          <h2 className="font-mono text-sm font-semibold text-legend">Capture</h2>
+          <p className="text-xs text-textMain">Drop into the active project</p>
         </div>
         <button
-          className="grid h-9 w-9 place-items-center rounded-md bg-white/70 text-slate-600 shadow-sm transition hover:bg-white hover:text-slate-950"
+          className="grid h-9 w-9 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner"
           title="Collapse left panel"
           type="button"
           onClick={onToggleCollapsed}

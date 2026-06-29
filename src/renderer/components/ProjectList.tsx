@@ -79,18 +79,18 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200/80 bg-white/45 shadow-sm">
-      <header className="flex h-11 shrink-0 items-center justify-between border-b border-slate-200/80 px-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+    <section className="material-frosted flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-black/10 bg-panel shadow-keycap">
+      <header className="flex h-11 shrink-0 items-center justify-between border-b border-black/10 px-4">
+        <div className="flex items-center gap-2 font-mono text-sm font-semibold text-legend">
           <FolderKanban size={16} />
           <span>Projects</span>
         </div>
-        {isLoading ? <Loader2 className="animate-spin text-slate-400" size={15} /> : null}
+        {isLoading ? <Loader2 className="animate-spin text-led" size={15} /> : null}
       </header>
 
-      <div className="flex shrink-0 gap-2 border-b border-slate-200/70 p-3">
+      <div className="flex shrink-0 gap-2 border-b border-black/10 p-3">
         <input
-          className="min-w-0 flex-1 rounded-md border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+          className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white/45 px-3 py-2 font-mono text-sm text-textMain shadow-inner outline-none transition placeholder:text-slate-500 focus:border-highlight"
           placeholder="New project"
           value={newProjectName}
           onChange={(event) => setNewProjectName(event.target.value)}
@@ -101,7 +101,7 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
           }}
         />
         <button
-          className="grid h-9 w-9 place-items-center rounded-md bg-slate-950 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="grid h-9 w-9 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner disabled:cursor-not-allowed disabled:opacity-40"
           disabled={!newProjectName.trim()}
           title="Create project"
           type="button"
@@ -129,8 +129,8 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
           return (
             <article
               key={project.id}
-              className={`group mb-1 rounded-md border px-2 py-2 transition ${
-                isActive ? "border-slate-300 bg-white text-slate-950 shadow-sm" : "border-transparent text-slate-600 hover:bg-white/65"
+              className={`group mb-1 rounded-xl border px-2 py-2 transition ${
+                isActive ? "border-highlight bg-keycap text-legend shadow-keycap" : "border-transparent text-textMain hover:bg-keycap"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -141,14 +141,14 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
                 >
                   {isRenaming ? (
                     <input
-                      className="h-8 w-full rounded-md border border-slate-200 bg-white/90 px-2 text-sm font-semibold outline-none focus:border-slate-400"
+                      className="h-8 w-full rounded-xl border border-black/10 bg-white/55 px-2 font-mono text-sm font-semibold outline-none shadow-inner focus:border-highlight"
                       value={renameDraft}
                       onChange={(event) => setRenameDraft(event.target.value)}
                       onClick={(event) => event.stopPropagation()}
                     />
                   ) : (
                     <>
-                      <p className="truncate text-sm font-semibold">{project.name}</p>
+                      <p className="truncate font-mono text-sm font-semibold">{project.name}</p>
                       <p className="truncate text-xs text-slate-500">{isActive ? "Active project" : project.id}</p>
                     </>
                   )}
@@ -156,7 +156,7 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
                 {isRenaming ? (
                   <>
                     <button
-                      className="grid h-8 w-8 place-items-center rounded-md text-emerald-700 transition hover:bg-emerald-50"
+                      className="grid h-8 w-8 place-items-center rounded-xl bg-keycap text-highlight shadow-keycap transition active:translate-y-[2px] active:shadow-inner"
                       title="Save project name"
                       type="button"
                       onClick={() => void handleRename(project.id)}
@@ -164,7 +164,7 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
                       <Check size={15} />
                     </button>
                     <button
-                      className="grid h-8 w-8 place-items-center rounded-md text-slate-500 transition hover:bg-white"
+                      className="grid h-8 w-8 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner"
                       title="Cancel rename"
                       type="button"
                       onClick={() => setRenamingProjectId("")}
@@ -175,7 +175,7 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
                 ) : (
                   <>
                     <button
-                      className="grid h-8 w-8 place-items-center rounded-md text-slate-400 opacity-0 transition hover:bg-white hover:text-slate-950 group-hover:opacity-100"
+                      className="grid h-8 w-8 place-items-center rounded-xl bg-keycap text-legend opacity-0 shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner group-hover:opacity-100"
                       title="Rename project"
                       type="button"
                       onClick={() => {
@@ -186,7 +186,7 @@ export function ProjectList({ refreshKey, onProjectChanged }: ProjectListProps):
                       <Pencil size={15} />
                     </button>
                     <button
-                      className="grid h-8 w-8 place-items-center rounded-md text-rose-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-700 group-hover:opacity-100"
+                      className="grid h-8 w-8 place-items-center rounded-xl bg-keycap text-rose-500 opacity-0 shadow-keycap transition hover:text-rose-700 active:translate-y-[2px] active:shadow-inner group-hover:opacity-100"
                       title="Archive project"
                       type="button"
                       onClick={() => void handleArchive(project.id)}

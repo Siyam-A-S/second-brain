@@ -46,13 +46,183 @@
   },
   "nodes": [
     {
+      "label": "electron-builder.json",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "electron_builder",
+      "community": 38,
+      "norm_label": "electron-builder.json"
+    },
+    {
+      "label": "appId",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L2",
+      "_origin": "ast",
+      "id": "electron_builder_appid",
+      "community": 38,
+      "norm_label": "appid"
+    },
+    {
+      "label": "productName",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L3",
+      "_origin": "ast",
+      "id": "electron_builder_productname",
+      "community": 38,
+      "norm_label": "productname"
+    },
+    {
+      "label": "directories",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L4",
+      "_origin": "ast",
+      "id": "electron_builder_directories",
+      "community": 38,
+      "norm_label": "directories"
+    },
+    {
+      "label": "output",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "electron_builder_directories_output",
+      "community": 38,
+      "norm_label": "output"
+    },
+    {
+      "label": "buildResources",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "electron_builder_directories_buildresources",
+      "community": 38,
+      "norm_label": "buildresources"
+    },
+    {
+      "label": "files",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "electron_builder_files",
+      "community": 38,
+      "norm_label": "files"
+    },
+    {
+      "label": "asar",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "electron_builder_asar",
+      "community": 38,
+      "norm_label": "asar"
+    },
+    {
+      "label": "win",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "electron_builder_win",
+      "community": 38,
+      "norm_label": "win"
+    },
+    {
+      "label": "target",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "electron_builder_win_target",
+      "community": 38,
+      "norm_label": "target"
+    },
+    {
+      "label": "artifactName",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "electron_builder_win_artifactname",
+      "community": 38,
+      "norm_label": "artifactname"
+    },
+    {
+      "label": "nsis",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "electron_builder_nsis",
+      "community": 42,
+      "norm_label": "nsis"
+    },
+    {
+      "label": "oneClick",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "electron_builder_nsis_oneclick",
+      "community": 42,
+      "norm_label": "oneclick"
+    },
+    {
+      "label": "allowToChangeInstallationDirectory",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L26",
+      "_origin": "ast",
+      "id": "electron_builder_nsis_allowtochangeinstallationdirectory",
+      "community": 42,
+      "norm_label": "allowtochangeinstallationdirectory"
+    },
+    {
+      "label": "perMachine",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L27",
+      "_origin": "ast",
+      "id": "electron_builder_nsis_permachine",
+      "community": 42,
+      "norm_label": "permachine"
+    },
+    {
+      "label": "linux",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "electron_builder_linux",
+      "community": 38,
+      "norm_label": "linux"
+    },
+    {
+      "label": "target",
+      "file_type": "code",
+      "source_file": "electron-builder.json",
+      "source_location": "L30",
+      "_origin": "ast",
+      "id": "electron_builder_linux_target",
+      "community": 38,
+      "norm_label": "target"
+    },
+    {
       "label": "package.json",
       "file_type": "code",
       "source_file": "package.json",
       "source_location": "L1",
       "_origin": "ast",
       "id": "package",
-      "community": 38,
+      "community": 39,
       "norm_label": "package.json"
     },
     {
@@ -62,7 +232,7 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "package_name",
-      "community": 38,
+      "community": 39,
       "norm_label": "name"
     },
     {
@@ -72,7 +242,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "package_version",
-      "community": 38,
+      "community": 39,
       "norm_label": "version"
     },
     {
@@ -82,7 +252,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "package_description",
-      "community": 38,
+      "community": 39,
       "norm_label": "description"
     },
     {
@@ -92,7 +262,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "package_main",
-      "community": 38,
+      "community": 39,
       "norm_label": "main"
     },
     {
@@ -102,7 +272,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "package_author",
-      "community": 38,
+      "community": 39,
       "norm_label": "author"
     },
     {
@@ -112,7 +282,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "package_license",
-      "community": 38,
+      "community": 39,
       "norm_label": "license"
     },
     {
@@ -122,7 +292,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "package_private",
-      "community": 38,
+      "community": 39,
       "norm_label": "private"
     },
     {
@@ -176,50 +346,10 @@
       "norm_label": "typecheck"
     },
     {
-      "label": "package:dir",
-      "file_type": "code",
-      "source_file": "package.json",
-      "source_location": "L14",
-      "_origin": "ast",
-      "id": "package_scripts_package_dir",
-      "community": 6,
-      "norm_label": "package:dir"
-    },
-    {
-      "label": "package:mac",
-      "file_type": "code",
-      "source_file": "package.json",
-      "source_location": "L15",
-      "_origin": "ast",
-      "id": "package_scripts_package_mac",
-      "community": 6,
-      "norm_label": "package:mac"
-    },
-    {
-      "label": "package:mac:dir",
-      "file_type": "code",
-      "source_file": "package.json",
-      "source_location": "L16",
-      "_origin": "ast",
-      "id": "package_scripts_package_mac_dir",
-      "community": 6,
-      "norm_label": "package:mac:dir"
-    },
-    {
-      "label": "package:mac:dmg",
-      "file_type": "code",
-      "source_file": "package.json",
-      "source_location": "L17",
-      "_origin": "ast",
-      "id": "package_scripts_package_mac_dmg",
-      "community": 6,
-      "norm_label": "package:mac:dmg"
-    },
-    {
       "label": "package:win",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L18",
+      "source_location": "L14",
       "_origin": "ast",
       "id": "package_scripts_package_win",
       "community": 6,
@@ -229,7 +359,7 @@
       "label": "package:win:installer",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L19",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "package_scripts_package_win_installer",
       "community": 6,
@@ -239,27 +369,17 @@
       "label": "package:win:zip",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L20",
+      "source_location": "L16",
       "_origin": "ast",
       "id": "package_scripts_package_win_zip",
       "community": 6,
       "norm_label": "package:win:zip"
     },
     {
-      "label": "package:linux",
-      "file_type": "code",
-      "source_file": "package.json",
-      "source_location": "L21",
-      "_origin": "ast",
-      "id": "package_scripts_package_linux",
-      "community": 6,
-      "norm_label": "package:linux"
-    },
-    {
       "label": "package:win:zip-existing",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L22",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "package_scripts_package_win_zip_existing",
       "community": 6,
@@ -269,7 +389,7 @@
       "label": "preview",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L23",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "package_scripts_preview",
       "community": 6,
@@ -279,7 +399,7 @@
       "label": "dev:renderer",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L24",
+      "source_location": "L19",
       "_origin": "ast",
       "id": "package_scripts_dev_renderer",
       "community": 6,
@@ -289,7 +409,7 @@
       "label": "dev:headless",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L25",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "package_scripts_dev_headless",
       "community": 6,
@@ -299,7 +419,7 @@
       "label": "test:onboarding",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L26",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "package_scripts_test_onboarding",
       "community": 6,
@@ -309,7 +429,7 @@
       "label": "devDependencies",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L28",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "package_devdependencies",
       "community": 2,
@@ -319,7 +439,7 @@
       "label": "@types/node",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L29",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "package_devdependencies_types_node",
       "community": 2,
@@ -329,7 +449,7 @@
       "label": "@types/react",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L30",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "package_devdependencies_types_react",
       "community": 2,
@@ -339,7 +459,7 @@
       "label": "@types/react-dom",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L31",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "package_devdependencies_types_react_dom",
       "community": 2,
@@ -349,7 +469,7 @@
       "label": "@vitejs/plugin-react",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L32",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "package_devdependencies_vitejs_plugin_react",
       "community": 2,
@@ -359,7 +479,7 @@
       "label": "autoprefixer",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L33",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "package_devdependencies_autoprefixer",
       "community": 2,
@@ -369,7 +489,7 @@
       "label": "concurrently",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L34",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "package_devdependencies_concurrently",
       "community": 2,
@@ -379,7 +499,7 @@
       "label": "cross-env",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L35",
+      "source_location": "L30",
       "_origin": "ast",
       "id": "package_devdependencies_cross_env",
       "community": 2,
@@ -389,7 +509,7 @@
       "label": "electron",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L36",
+      "source_location": "L31",
       "_origin": "ast",
       "id": "package_devdependencies_electron",
       "community": 2,
@@ -399,17 +519,17 @@
       "label": "electron-builder",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L37",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "package_devdependencies_electron_builder",
-      "community": 2,
+      "community": 38,
       "norm_label": "electron-builder"
     },
     {
       "label": "electron-is-dev",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L38",
+      "source_location": "L33",
       "_origin": "ast",
       "id": "package_devdependencies_electron_is_dev",
       "community": 2,
@@ -419,7 +539,7 @@
       "label": "framer-motion",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L39",
+      "source_location": "L34",
       "_origin": "ast",
       "id": "package_devdependencies_framer_motion",
       "community": 2,
@@ -429,7 +549,7 @@
       "label": "lucide-react",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L40",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "package_devdependencies_lucide_react",
       "community": 2,
@@ -439,7 +559,7 @@
       "label": "postcss",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L41",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "package_devdependencies_postcss",
       "community": 2,
@@ -449,7 +569,7 @@
       "label": "react",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L42",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "package_devdependencies_react",
       "community": 2,
@@ -459,7 +579,7 @@
       "label": "react-dom",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L43",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "package_devdependencies_react_dom",
       "community": 2,
@@ -469,7 +589,7 @@
       "label": "tailwindcss",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L44",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "package_devdependencies_tailwindcss",
       "community": 2,
@@ -479,7 +599,7 @@
       "label": "typescript",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L45",
+      "source_location": "L40",
       "_origin": "ast",
       "id": "package_devdependencies_typescript",
       "community": 2,
@@ -489,7 +609,7 @@
       "label": "vite",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L46",
+      "source_location": "L41",
       "_origin": "ast",
       "id": "package_devdependencies_vite",
       "community": 2,
@@ -499,7 +619,7 @@
       "label": "wait-on",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L47",
+      "source_location": "L42",
       "_origin": "ast",
       "id": "package_devdependencies_wait_on",
       "community": 2,
@@ -509,7 +629,7 @@
       "label": "zustand",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L48",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "package_devdependencies_zustand",
       "community": 2,
@@ -519,70 +639,70 @@
       "label": "dependencies",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L50",
+      "source_location": "L45",
       "_origin": "ast",
       "id": "package_dependencies",
-      "community": 39,
+      "community": 40,
       "norm_label": "dependencies"
     },
     {
       "label": "@modelcontextprotocol/sdk",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L51",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "package_dependencies_modelcontextprotocol_sdk",
-      "community": 39,
+      "community": 40,
       "norm_label": "@modelcontextprotocol/sdk"
     },
     {
       "label": "@xenova/transformers",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L52",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "package_dependencies_xenova_transformers",
-      "community": 39,
+      "community": 40,
       "norm_label": "@xenova/transformers"
     },
     {
       "label": "gray-matter",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L53",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "package_dependencies_gray_matter",
-      "community": 39,
+      "community": 40,
       "norm_label": "gray-matter"
     },
     {
       "label": "react-force-graph-2d",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L54",
+      "source_location": "L49",
       "_origin": "ast",
       "id": "package_dependencies_react_force_graph_2d",
-      "community": 39,
+      "community": 40,
       "norm_label": "react-force-graph-2d"
     },
     {
       "label": "uuid",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L55",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "package_dependencies_uuid",
-      "community": 39,
+      "community": 40,
       "norm_label": "uuid"
     },
     {
       "label": "zod",
       "file_type": "code",
       "source_file": "package.json",
-      "source_location": "L56",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "package_dependencies_zod",
-      "community": 39,
+      "community": 40,
       "norm_label": "zod"
     },
     {
@@ -962,7 +1082,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentcontroller",
-      "community": 32,
+      "community": 10,
       "norm_label": "agentcontroller.ts"
     },
     {
@@ -972,7 +1092,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "services_agentcontroller_graphifyprovider",
-      "community": 32,
+      "community": 10,
       "norm_label": "graphifyprovider"
     },
     {
@@ -982,7 +1102,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller",
-      "community": 32,
+      "community": 29,
       "norm_label": "agentcontroller"
     },
     {
@@ -992,7 +1112,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_constructor",
-      "community": 32,
+      "community": 29,
       "norm_label": ".constructor()"
     },
     {
@@ -1002,7 +1122,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_registeripc",
-      "community": 32,
+      "community": 29,
       "norm_label": ".registeripc()"
     },
     {
@@ -1012,7 +1132,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_processdroppeditems",
-      "community": 32,
+      "community": 29,
       "norm_label": ".processdroppeditems()"
     },
     {
@@ -1022,7 +1142,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_sendstatus",
-      "community": 32,
+      "community": 29,
       "norm_label": ".sendstatus()"
     },
     {
@@ -1032,7 +1152,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentruntimeconfig",
-      "community": 32,
+      "community": 41,
       "norm_label": "agentruntimeconfig.ts"
     },
     {
@@ -1052,7 +1172,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "services_agentruntimeconfig_agentprompts",
-      "community": 32,
+      "community": 41,
       "norm_label": "agentprompts"
     },
     {
@@ -2182,7 +2302,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_embeddingservice",
-      "community": 0,
+      "community": 5,
       "norm_label": "embeddingservice.ts"
     },
     {
@@ -2192,7 +2312,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_embeddingservice_transformersmodule",
-      "community": 0,
+      "community": 5,
       "norm_label": "transformersmodule"
     },
     {
@@ -2202,7 +2322,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_embeddingservice_cachedembedding",
-      "community": 0,
+      "community": 5,
       "norm_label": "cachedembedding"
     },
     {
@@ -2212,7 +2332,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_embeddingservice_dynamicimport",
-      "community": 0,
+      "community": 5,
       "norm_label": "dynamicimport()"
     },
     {
@@ -2222,7 +2342,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "services_embeddingservice_dotproduct",
-      "community": 0,
+      "community": 5,
       "norm_label": "dotproduct()"
     },
     {
@@ -2232,7 +2352,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "services_embeddingservice_searchabletext",
-      "community": 0,
+      "community": 5,
       "norm_label": "searchabletext()"
     },
     {
@@ -2242,7 +2362,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_embeddingservice_fingerprintnode",
-      "community": 0,
+      "community": 5,
       "norm_label": "fingerprintnode()"
     },
     {
@@ -2252,7 +2372,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice",
-      "community": 0,
+      "community": 5,
       "norm_label": "embeddingservice"
     },
     {
@@ -2262,7 +2382,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_constructor",
-      "community": 0,
+      "community": 5,
       "norm_label": ".constructor()"
     },
     {
@@ -2272,7 +2392,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_generateembedding",
-      "community": 0,
+      "community": 5,
       "norm_label": ".generateembedding()"
     },
     {
@@ -2282,7 +2402,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embed",
-      "community": 0,
+      "community": 5,
       "norm_label": ".embed()"
     },
     {
@@ -2292,7 +2412,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_search",
-      "community": 0,
+      "community": 51,
       "norm_label": ".search()"
     },
     {
@@ -2302,7 +2422,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embeddingfornode",
-      "community": 0,
+      "community": 5,
       "norm_label": ".embeddingfornode()"
     },
     {
@@ -2312,7 +2432,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_getextractor",
-      "community": 0,
+      "community": 5,
       "norm_label": ".getextractor()"
     },
     {
@@ -2322,7 +2442,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_loadextractor",
-      "community": 0,
+      "community": 5,
       "norm_label": ".loadextractor()"
     },
     {
@@ -3222,7 +3342,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "services_graphboardservice_graphboardservice_constructor",
-      "community": 12,
+      "community": 33,
       "norm_label": ".constructor()"
     },
     {
@@ -3412,7 +3532,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_constructor",
-      "community": 0,
+      "community": 5,
       "norm_label": ".constructor()"
     },
     {
@@ -3422,7 +3542,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_searchboardtopology",
-      "community": 10,
+      "community": 5,
       "norm_label": ".searchboardtopology()"
     },
     {
@@ -3472,7 +3592,7 @@
       "source_location": "L241",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_totopologynode",
-      "community": 10,
+      "community": 5,
       "norm_label": ".totopologynode()"
     },
     {
@@ -3919,7 +4039,7 @@
       "label": "GraphifyInvocation",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L9",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifyinvocation",
       "community": 8,
@@ -3929,7 +4049,7 @@
       "label": "readableContextExtensions",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L27",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "services_graphifycontextservice_readablecontextextensions",
       "community": 8,
@@ -3939,7 +4059,7 @@
       "label": "quoteCommandPart()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L56",
+      "source_location": "L53",
       "_origin": "ast",
       "id": "services_graphifycontextservice_quotecommandpart",
       "community": 8,
@@ -3949,37 +4069,17 @@
       "label": "formatInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L60",
+      "source_location": "L57",
       "_origin": "ast",
       "id": "services_graphifycontextservice_formatinvocation",
       "community": 8,
       "norm_label": "formatinvocation()"
     },
     {
-      "label": "formatMcpTool()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L64",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_formatmcptool",
-      "community": 8,
-      "norm_label": "formatmcptool()"
-    },
-    {
-      "label": "parseArgs()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L68",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_parseargs",
-      "community": 8,
-      "norm_label": "parseargs()"
-    },
-    {
       "label": "isCmdShim()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L118",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "services_graphifycontextservice_iscmdshim",
       "community": 8,
@@ -3989,7 +4089,7 @@
       "label": "normalizeBudget()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L122",
+      "source_location": "L65",
       "_origin": "ast",
       "id": "services_graphifycontextservice_normalizebudget",
       "community": 8,
@@ -3999,7 +4099,7 @@
       "label": "errorMessage()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L126",
+      "source_location": "L69",
       "_origin": "ast",
       "id": "services_graphifycontextservice_errormessage",
       "community": 8,
@@ -4009,7 +4109,7 @@
       "label": "extractCitations()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L130",
+      "source_location": "L73",
       "_origin": "ast",
       "id": "services_graphifycontextservice_extractcitations",
       "community": 8,
@@ -4019,7 +4119,7 @@
       "label": "normalizeCandidatePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L153",
+      "source_location": "L96",
       "_origin": "ast",
       "id": "services_graphifycontextservice_normalizecandidatepath",
       "community": 8,
@@ -4029,7 +4129,7 @@
       "label": "extractContextPathCandidates()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L157",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "services_graphifycontextservice_extractcontextpathcandidates",
       "community": 8,
@@ -4039,7 +4139,7 @@
       "label": "sliceByLocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L182",
+      "source_location": "L125",
       "_origin": "ast",
       "id": "services_graphifycontextservice_slicebylocation",
       "community": 8,
@@ -4049,7 +4149,7 @@
       "label": "excerptTitle()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L199",
+      "source_location": "L142",
       "_origin": "ast",
       "id": "services_graphifycontextservice_excerpttitle",
       "community": 8,
@@ -4059,7 +4159,7 @@
       "label": "asRecord()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L203",
+      "source_location": "L146",
       "_origin": "ast",
       "id": "services_graphifycontextservice_asrecord",
       "community": 8,
@@ -4069,7 +4169,7 @@
       "label": "asString()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L207",
+      "source_location": "L150",
       "_origin": "ast",
       "id": "services_graphifycontextservice_asstring",
       "community": 8,
@@ -4079,27 +4179,17 @@
       "label": "compact()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L211",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "services_graphifycontextservice_compact",
       "community": 8,
       "norm_label": "compact()"
     },
     {
-      "label": "stringifyMcpToolResult()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L215",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_stringifymcptoolresult",
-      "community": 8,
-      "norm_label": "stringifymcptoolresult()"
-    },
-    {
       "label": "GraphifyContextService",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L244",
+      "source_location": "L158",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice",
       "community": 8,
@@ -4109,7 +4199,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L250",
+      "source_location": "L161",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_constructor",
       "community": 8,
@@ -4119,7 +4209,7 @@
       "label": ".query()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L254",
+      "source_location": "L165",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_query",
       "community": 8,
@@ -4129,7 +4219,7 @@
       "label": ".explain()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L271",
+      "source_location": "L176",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_explain",
       "community": 8,
@@ -4139,77 +4229,27 @@
       "label": ".tracePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L286",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_tracepath",
       "community": 8,
       "norm_label": ".tracepath()"
     },
     {
-      "label": ".runGraphifyMcpTool()",
+      "label": ".runGraphifyContextCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L307",
+      "source_location": "L195",
       "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
+      "id": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "community": 8,
-      "norm_label": ".rungraphifymcptool()"
-    },
-    {
-      "label": ".buildContextResult()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L364",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "community": 8,
-      "norm_label": ".buildcontextresult()"
-    },
-    {
-      "label": ".runGraphifyCliContextCommand()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L391",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
-      "community": 8,
-      "norm_label": ".rungraphifyclicontextcommand()"
-    },
-    {
-      "label": ".ensureMcpClient()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L416",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient",
-      "community": 8,
-      "norm_label": ".ensuremcpclient()"
-    },
-    {
-      "label": ".stopMcp()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L461",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_stopmcp",
-      "community": 8,
-      "norm_label": ".stopmcp()"
-    },
-    {
-      "label": ".getGraphifyMcpInvocations()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L472",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
-      "community": 8,
-      "norm_label": ".getgraphifymcpinvocations()"
+      "norm_label": ".rungraphifycontextcommand()"
     },
     {
       "label": ".getGraphifyInvocations()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L533",
+      "source_location": "L238",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_getgraphifyinvocations",
       "community": 8,
@@ -4219,47 +4259,27 @@
       "label": ".findBundledGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L592",
+      "source_location": "L297",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifycommand",
       "community": 8,
       "norm_label": ".findbundledgraphifycommand()"
     },
     {
-      "label": ".findBundledGraphifyPythonCommand()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L610",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifypythoncommand",
-      "community": 8,
-      "norm_label": ".findbundledgraphifypythoncommand()"
-    },
-    {
       "label": ".findUvToolGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L629",
+      "source_location": "L315",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifycommand",
       "community": 8,
       "norm_label": ".finduvtoolgraphifycommand()"
     },
     {
-      "label": ".findUvToolGraphifyPythonCommand()",
-      "file_type": "code",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L653",
-      "_origin": "ast",
-      "id": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand",
-      "community": 8,
-      "norm_label": ".finduvtoolgraphifypythoncommand()"
-    },
-    {
       "label": ".runInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L677",
+      "source_location": "L339",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_runinvocation",
       "community": 8,
@@ -4269,7 +4289,7 @@
       "label": ".hydrateContext()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L685",
+      "source_location": "L347",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydratecontext",
       "community": 8,
@@ -4279,7 +4299,7 @@
       "label": ".hydrateGraphCardDefinitions()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L724",
+      "source_location": "L386",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydrategraphcarddefinitions",
       "community": 8,
@@ -4289,7 +4309,7 @@
       "label": ".hydrateWikiContext()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L774",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydratewikicontext",
       "community": 8,
@@ -4299,7 +4319,7 @@
       "label": ".resolveContextPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L835",
+      "source_location": "L497",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_resolvecontextpath",
       "community": 8,
@@ -4309,7 +4329,7 @@
       "label": ".isReadableContextFile()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L846",
+      "source_location": "L508",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_isreadablecontextfile",
       "community": 8,
@@ -4319,7 +4339,7 @@
       "label": ".execCapture()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L850",
+      "source_location": "L512",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_execcapture",
       "community": 8,
@@ -4329,7 +4349,7 @@
       "label": ".fileExists()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L879",
+      "source_location": "L541",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_fileexists",
       "community": 8,
@@ -4532,7 +4552,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "services_graphifycontroller_chunkarray",
-      "community": 3,
+      "community": 48,
       "norm_label": "chunkarray()"
     },
     {
@@ -4572,7 +4592,7 @@
       "source_location": "L259",
       "_origin": "ast",
       "id": "services_graphifycontroller_endpointhostlabel",
-      "community": 3,
+      "community": 48,
       "norm_label": "endpointhostlabel()"
     },
     {
@@ -4842,7 +4862,7 @@
       "source_location": "L496",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_generatecallflowhtml",
-      "community": 43,
+      "community": 25,
       "norm_label": ".generatecallflowhtml()"
     },
     {
@@ -4952,7 +4972,7 @@
       "source_location": "L883",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_stopmcp",
-      "community": 43,
+      "community": 48,
       "norm_label": ".stopmcp()"
     },
     {
@@ -5092,7 +5112,7 @@
       "source_location": "L1439",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_schedulegraphcarddefinitions",
-      "community": 43,
+      "community": 48,
       "norm_label": ".schedulegraphcarddefinitions()"
     },
     {
@@ -5152,7 +5172,7 @@
       "source_location": "L1581",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycommand",
-      "community": 43,
+      "community": 52,
       "norm_label": ".rungraphifycommand()"
     },
     {
@@ -5172,7 +5192,7 @@
       "source_location": "L1641",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_startgraphifyproxyadapter",
-      "community": 52,
+      "community": 25,
       "norm_label": ".startgraphifyproxyadapter()"
     },
     {
@@ -5192,7 +5212,7 @@
       "source_location": "L1679",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_handlegraphifyproxyadapterrequest",
-      "community": 25,
+      "community": 43,
       "norm_label": ".handlegraphifyproxyadapterrequest()"
     },
     {
@@ -5202,7 +5222,7 @@
       "source_location": "L1745",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readhttprequestbody",
-      "community": 25,
+      "community": 43,
       "norm_label": ".readhttprequestbody()"
     },
     {
@@ -5279,7 +5299,7 @@
       "label": ".runGraphifyInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L1995",
+      "source_location": "L1993",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifyinvocation",
       "community": 52,
@@ -5289,7 +5309,7 @@
       "label": ".runGraphifyUtilityInvocation()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2033",
+      "source_location": "L2031",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifyutilityinvocation",
       "community": 3,
@@ -5299,7 +5319,7 @@
       "label": ".ensureGraphifyProviderConfig()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2067",
+      "source_location": "L2065",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuregraphifyproviderconfig",
       "community": 52,
@@ -5309,7 +5329,7 @@
       "label": ".buildGraphifyEnvironment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2097",
+      "source_location": "L2095",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_buildgraphifyenvironment",
       "community": 52,
@@ -5319,7 +5339,7 @@
       "label": ".getGraphifyLlmEndpoint()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2132",
+      "source_location": "L2130",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyllmendpoint",
       "community": 52,
@@ -5329,7 +5349,7 @@
       "label": ".getGraphifyOpenAiBaseUrl()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2144",
+      "source_location": "L2142",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyopenaibaseurl",
       "community": 52,
@@ -5339,7 +5359,7 @@
       "label": ".getGraphifyLlmModel()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2156",
+      "source_location": "L2154",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyllmmodel",
       "community": 52,
@@ -5349,7 +5369,7 @@
       "label": ".getAiSettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2165",
+      "source_location": "L2163",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getaisettings",
       "community": 43,
@@ -5359,7 +5379,7 @@
       "label": ".getGraphifyTemperature()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2169",
+      "source_location": "L2167",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifytemperature",
       "community": 52,
@@ -5369,7 +5389,7 @@
       "label": ".getGraphifyMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2173",
+      "source_location": "L2171",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifymaxtokens",
       "community": 52,
@@ -5379,7 +5399,7 @@
       "label": ".getGraphifyRetryMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2181",
+      "source_location": "L2179",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyretrymaxtokens",
       "community": 52,
@@ -5389,17 +5409,17 @@
       "label": ".getGraphifyLocalModelSettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2185",
+      "source_location": "L2183",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifylocalmodelsettings",
-      "community": 48,
+      "community": 52,
       "norm_label": ".getgraphifylocalmodelsettings()"
     },
     {
       "label": ".getStrictRetrySettings()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2192",
+      "source_location": "L2190",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getstrictretrysettings",
       "community": 52,
@@ -5409,7 +5429,7 @@
       "label": ".canRetryGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2199",
+      "source_location": "L2197",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canretrygraphifycommand",
       "community": 52,
@@ -5419,7 +5439,7 @@
       "label": ".shouldRetryWithStrictJson()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2206",
+      "source_location": "L2204",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldretrywithstrictjson",
       "community": 52,
@@ -5429,7 +5449,7 @@
       "label": ".enrichGraphifyError()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2212",
+      "source_location": "L2210",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_enrichgraphifyerror",
       "community": 52,
@@ -5439,27 +5459,27 @@
       "label": ".ensureMcpClient()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2232",
+      "source_location": "L2230",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuremcpclient",
       "community": 25,
       "norm_label": ".ensuremcpclient()"
     },
     {
-      "label": ".getGraphifyMcpInvocations()",
+      "label": ".resolveMcpCommand()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2274",
+      "source_location": "L2266",
       "_origin": "ast",
-      "id": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
+      "id": "services_graphifycontroller_graphifycontroller_resolvemcpcommand",
       "community": 25,
-      "norm_label": ".getgraphifymcpinvocations()"
+      "norm_label": ".resolvemcpcommand()"
     },
     {
       "label": ".resolveSourcePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2332",
+      "source_location": "L2302",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolvesourcepath",
       "community": 26,
@@ -5469,7 +5489,7 @@
       "label": ".resolveRemovableSourcePath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2336",
+      "source_location": "L2306",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolveremovablesourcepath",
       "community": 26,
@@ -5479,7 +5499,7 @@
       "label": ".resolveSourceCommentPath()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2357",
+      "source_location": "L2327",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_resolvesourcecommentpath",
       "community": 26,
@@ -5489,7 +5509,7 @@
       "label": ".readSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2361",
+      "source_location": "L2331",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readsourcecomment",
       "community": 26,
@@ -5499,17 +5519,17 @@
       "label": ".listCallflowHtmlCandidates()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2381",
+      "source_location": "L2351",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listcallflowhtmlcandidates",
-      "community": 43,
+      "community": 25,
       "norm_label": ".listcallflowhtmlcandidates()"
     },
     {
       "label": ".removeSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2415",
+      "source_location": "L2385",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_removesourcecomment",
       "community": 26,
@@ -5519,7 +5539,7 @@
       "label": ".renameSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2419",
+      "source_location": "L2389",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_renamesourcecomment",
       "community": 26,
@@ -5529,7 +5549,7 @@
       "label": ".mergeSourceComment()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2435",
+      "source_location": "L2405",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_mergesourcecomment",
       "community": 26,
@@ -5539,7 +5559,7 @@
       "label": ".hasRawSourceFiles()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2458",
+      "source_location": "L2428",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_hasrawsourcefiles",
       "community": 26,
@@ -5549,7 +5569,7 @@
       "label": ".writeEmptyGraphResult()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2492",
+      "source_location": "L2462",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_writeemptygraphresult",
       "community": 26,
@@ -5559,7 +5579,7 @@
       "label": ".fileExists()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2522",
+      "source_location": "L2492",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_fileexists",
       "community": 25,
@@ -5569,7 +5589,7 @@
       "label": ".fileMtimeMs()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2531",
+      "source_location": "L2501",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_filemtimems",
       "community": 43,
@@ -5579,7 +5599,7 @@
       "label": ".canUsePartialGraphifyResult()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2539",
+      "source_location": "L2509",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canusepartialgraphifyresult",
       "community": 43,
@@ -5589,7 +5609,7 @@
       "label": ".readGraphCounts()",
       "file_type": "code",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2552",
+      "source_location": "L2522",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readgraphcounts",
       "community": 26,
@@ -5612,7 +5632,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "services_llmservice_graphifymcptoolspec",
-      "community": 32,
+      "community": 25,
       "norm_label": "graphifymcptoolspec"
     },
     {
@@ -5642,7 +5662,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "services_llmservice_chatmessage",
-      "community": 4,
+      "community": 32,
       "norm_label": "chatmessage"
     },
     {
@@ -6842,7 +6862,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_storageservice",
-      "community": 40,
+      "community": 5,
       "norm_label": "storageservice.ts"
     },
     {
@@ -6852,7 +6872,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_storageservice_uuidmodule",
-      "community": 40,
+      "community": 5,
       "norm_label": "uuidmodule"
     },
     {
@@ -6862,7 +6882,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "services_storageservice_createuuid",
-      "community": 40,
+      "community": 5,
       "norm_label": "createuuid()"
     },
     {
@@ -6872,7 +6892,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "services_storageservice_wordsin",
-      "community": 40,
+      "community": 5,
       "norm_label": "wordsin()"
     },
     {
@@ -6882,7 +6902,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "services_storageservice_stringarray",
-      "community": 40,
+      "community": 5,
       "norm_label": "stringarray()"
     },
     {
@@ -6892,7 +6912,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "services_storageservice_optionalstringarray",
-      "community": 40,
+      "community": 5,
       "norm_label": "optionalstringarray()"
     },
     {
@@ -6902,7 +6922,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "services_storageservice_clampimportance",
-      "community": 40,
+      "community": 5,
       "norm_label": "clampimportance()"
     },
     {
@@ -6912,7 +6932,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "services_storageservice_isuservalidationstate",
-      "community": 40,
+      "community": 5,
       "norm_label": "isuservalidationstate()"
     },
     {
@@ -6922,7 +6942,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "services_storageservice_slugifyfilepart",
-      "community": 40,
+      "community": 5,
       "norm_label": "slugifyfilepart()"
     },
     {
@@ -6932,7 +6952,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "services_storageservice_storageservice",
-      "community": 28,
+      "community": 5,
       "norm_label": "storageservice"
     },
     {
@@ -6942,7 +6962,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_constructor",
-      "community": 28,
+      "community": 5,
       "norm_label": ".constructor()"
     },
     {
@@ -6952,7 +6972,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_getvaultpath",
-      "community": 28,
+      "community": 5,
       "norm_label": ".getvaultpath()"
     },
     {
@@ -6962,7 +6982,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_initialize",
-      "community": 28,
+      "community": 5,
       "norm_label": ".initialize()"
     },
     {
@@ -6972,7 +6992,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_writenode",
-      "community": 28,
+      "community": 5,
       "norm_label": ".writenode()"
     },
     {
@@ -6982,7 +7002,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnode",
-      "community": 28,
+      "community": 5,
       "norm_label": ".readnode()"
     },
     {
@@ -6992,7 +7012,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_ingestfragment",
-      "community": 28,
+      "community": 5,
       "norm_label": ".ingestfragment()"
     },
     {
@@ -7002,7 +7022,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_addconnection",
-      "community": 28,
+      "community": 5,
       "norm_label": ".addconnection()"
     },
     {
@@ -7012,7 +7032,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_updatenodesignals",
-      "community": 28,
+      "community": 5,
       "norm_label": ".updatenodesignals()"
     },
     {
@@ -7022,7 +7042,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_fetchfilesegments",
-      "community": 28,
+      "community": 5,
       "norm_label": ".fetchfilesegments()"
     },
     {
@@ -7032,7 +7052,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listnodes",
-      "community": 28,
+      "community": 5,
       "norm_label": ".listnodes()"
     },
     {
@@ -7042,7 +7062,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_normalizeinput",
-      "community": 40,
+      "community": 5,
       "norm_label": ".normalizeinput()"
     },
     {
@@ -7052,7 +7072,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_validatefrontmatter",
-      "community": 40,
+      "community": 5,
       "norm_label": ".validatefrontmatter()"
     },
     {
@@ -7062,7 +7082,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnodefile",
-      "community": 28,
+      "community": 5,
       "norm_label": ".readnodefile()"
     },
     {
@@ -7072,7 +7092,7 @@
       "source_location": "L295",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_findnodepath",
-      "community": 28,
+      "community": 5,
       "norm_label": ".findnodepath()"
     },
     {
@@ -7082,7 +7102,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_parsemarkdownsections",
-      "community": 28,
+      "community": 5,
       "norm_label": ".parsemarkdownsections()"
     },
     {
@@ -7092,7 +7112,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listmarkdownfiles",
-      "community": 28,
+      "community": 5,
       "norm_label": ".listmarkdownfiles()"
     },
     {
@@ -7792,7 +7812,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_droptarget",
-      "community": 20,
+      "community": 45,
       "norm_label": "droptarget.tsx"
     },
     {
@@ -7802,7 +7822,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "components_droptarget_droptone",
-      "community": 20,
+      "community": 45,
       "norm_label": "droptone"
     },
     {
@@ -7812,7 +7832,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "components_droptarget_droptargetprops",
-      "community": 20,
+      "community": 45,
       "norm_label": "droptargetprops"
     },
     {
@@ -7822,7 +7842,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_droptarget_tonecolors",
-      "community": 20,
+      "community": 45,
       "norm_label": "tonecolors"
     },
     {
@@ -7832,7 +7852,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_droptarget_inferdroptone",
-      "community": 20,
+      "community": 45,
       "norm_label": "inferdroptone()"
     },
     {
@@ -7842,7 +7862,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "components_droptarget_toprocessitems",
-      "community": 20,
+      "community": 45,
       "norm_label": "toprocessitems()"
     },
     {
@@ -7852,7 +7872,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "components_droptarget_droptarget",
-      "community": 20,
+      "community": 45,
       "norm_label": "droptarget()"
     },
     {
@@ -8092,7 +8112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projectlist",
-      "community": 20,
+      "community": 28,
       "norm_label": "projectlist.tsx"
     },
     {
@@ -8102,7 +8122,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_projectlist_projectlistprops",
-      "community": 20,
+      "community": 28,
       "norm_label": "projectlistprops"
     },
     {
@@ -8112,7 +8132,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_projectlist_projectlist",
-      "community": 20,
+      "community": 28,
       "norm_label": "projectlist()"
     },
     {
@@ -8122,7 +8142,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_settingspanel",
-      "community": 20,
+      "community": 36,
       "norm_label": "settingspanel.tsx"
     },
     {
@@ -8132,7 +8152,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_settingspanel_settingspanelprops",
-      "community": 20,
+      "community": 36,
       "norm_label": "settingspanelprops"
     },
     {
@@ -8142,7 +8162,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_settingspanel_numbervalue",
-      "community": 20,
+      "community": 36,
       "norm_label": "numbervalue()"
     },
     {
@@ -8152,7 +8172,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_settingspanel_settingspanel",
-      "community": 20,
+      "community": 36,
       "norm_label": "settingspanel()"
     },
     {
@@ -8162,7 +8182,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_sidebar",
-      "community": 20,
+      "community": 45,
       "norm_label": "sidebar.tsx"
     },
     {
@@ -8172,7 +8192,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_sidebar_sidebarprops",
-      "community": 20,
+      "community": 45,
       "norm_label": "sidebarprops"
     },
     {
@@ -8182,7 +8202,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "components_sidebar_sidebar",
-      "community": 20,
+      "community": 45,
       "norm_label": "sidebar()"
     },
     {
@@ -8192,7 +8212,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_titlebar",
-      "community": 20,
+      "community": 36,
       "norm_label": "titlebar.tsx"
     },
     {
@@ -8202,7 +8222,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "components_titlebar_thememode",
-      "community": 20,
+      "community": 36,
       "norm_label": "thememode"
     },
     {
@@ -8212,7 +8232,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_titlebar_titlebarprops",
-      "community": 20,
+      "community": 36,
       "norm_label": "titlebarprops"
     },
     {
@@ -8222,7 +8242,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "components_titlebar_titlebar",
-      "community": 20,
+      "community": 36,
       "norm_label": "titlebar()"
     },
     {
@@ -8232,7 +8252,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_topiccanvas",
-      "community": 20,
+      "community": 46,
       "norm_label": "topiccanvas.tsx"
     },
     {
@@ -8242,7 +8262,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "components_topiccanvas_topiccanvasprops",
-      "community": 20,
+      "community": 46,
       "norm_label": "topiccanvasprops"
     },
     {
@@ -8252,7 +8272,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "components_topiccanvas_loadstate",
-      "community": 20,
+      "community": 46,
       "norm_label": "loadstate"
     },
     {
@@ -8262,7 +8282,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "components_topiccanvas_exportstate",
-      "community": 20,
+      "community": 46,
       "norm_label": "exportstate"
     },
     {
@@ -8272,7 +8292,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "components_topiccanvas_formatrelativetime",
-      "community": 20,
+      "community": 46,
       "norm_label": "formatrelativetime()"
     },
     {
@@ -8282,7 +8302,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_topiccanvas_validationlabel",
-      "community": 20,
+      "community": 46,
       "norm_label": "validationlabel()"
     },
     {
@@ -8292,7 +8312,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "components_topiccanvas_validationclass",
-      "community": 20,
+      "community": 46,
       "norm_label": "validationclass()"
     },
     {
@@ -8302,7 +8322,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "components_topiccanvas_topiccanvas",
-      "community": 20,
+      "community": 46,
       "norm_label": "topiccanvas()"
     },
     {
@@ -8402,7 +8422,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_browserapifallback",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserapifallback.ts"
     },
     {
@@ -8412,7 +8432,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "lib_browserapifallback_trackerstatushandlers",
-      "community": 29,
+      "community": 27,
       "norm_label": "trackerstatushandlers"
     },
     {
@@ -8422,7 +8442,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "lib_browserapifallback_chatstreamhandlers",
-      "community": 29,
+      "community": 27,
       "norm_label": "chatstreamhandlers"
     },
     {
@@ -8432,7 +8452,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "lib_browserapifallback_browsertrackers",
-      "community": 29,
+      "community": 27,
       "norm_label": "browsertrackers"
     },
     {
@@ -8442,7 +8462,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserprojects",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserprojects"
     },
     {
@@ -8452,7 +8472,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorertree",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserexplorertree"
     },
     {
@@ -8462,7 +8482,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "lib_browserapifallback_browseraisettings",
-      "community": 29,
+      "community": 27,
       "norm_label": "browseraisettings"
     },
     {
@@ -8472,7 +8492,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserappsettings",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserappsettings"
     },
     {
@@ -8482,7 +8502,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserthreads",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserthreads"
     },
     {
@@ -8492,7 +8512,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "lib_browserapifallback_browsereffectiveaisettings",
-      "community": 29,
+      "community": 27,
       "norm_label": "browsereffectiveaisettings()"
     },
     {
@@ -8502,7 +8522,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserresearchdependencyreport",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserresearchdependencyreport"
     },
     {
@@ -8512,7 +8532,7 @@
       "source_location": "L125",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserruntimestatus",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserruntimestatus"
     },
     {
@@ -8522,7 +8542,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaper",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserpaper"
     },
     {
@@ -8532,7 +8552,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserdefinitionstatus",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserdefinitionstatus"
     },
     {
@@ -8542,7 +8562,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaperdetails",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserpaperdetails"
     },
     {
@@ -8552,7 +8572,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "lib_browserapifallback_compact",
-      "community": 29,
+      "community": 27,
       "norm_label": "compact()"
     },
     {
@@ -8562,7 +8582,7 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizeline",
-      "community": 29,
+      "community": 27,
       "norm_label": "normalizeline()"
     },
     {
@@ -8572,7 +8592,7 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerstatus",
-      "community": 29,
+      "community": 27,
       "norm_label": "normalizetrackerstatus()"
     },
     {
@@ -8582,7 +8602,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerpriority",
-      "community": 29,
+      "community": 27,
       "norm_label": "normalizetrackerpriority()"
     },
     {
@@ -8592,7 +8612,7 @@
       "source_location": "L211",
       "_origin": "ast",
       "id": "lib_browserapifallback_emittrackerstatus",
-      "community": 29,
+      "community": 27,
       "norm_label": "emittrackerstatus()"
     },
     {
@@ -8602,7 +8622,7 @@
       "source_location": "L217",
       "_origin": "ast",
       "id": "lib_browserapifallback_emitchatstreamevent",
-      "community": 29,
+      "community": 27,
       "norm_label": "emitchatstreamevent()"
     },
     {
@@ -8612,7 +8632,7 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "lib_browserapifallback_readdroppedcontent",
-      "community": 29,
+      "community": 27,
       "norm_label": "readdroppedcontent()"
     },
     {
@@ -8622,7 +8642,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "lib_browserapifallback_processdroppeditemsinbrowser",
-      "community": 29,
+      "community": 27,
       "norm_label": "processdroppeditemsinbrowser()"
     },
     {
@@ -8632,7 +8652,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserapifallback",
-      "community": 29,
+      "community": 27,
       "norm_label": "browserapifallback"
     },
     {
@@ -8642,7 +8662,7 @@
       "source_location": "L891",
       "_origin": "ast",
       "id": "lib_browserapifallback_installbrowserapifallback",
-      "community": 29,
+      "community": 0,
       "norm_label": "installbrowserapifallback()"
     },
     {
@@ -8692,7 +8712,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_main",
-      "community": 29,
+      "community": 0,
       "norm_label": "main.tsx"
     },
     {
@@ -8702,7 +8722,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "renderer_main_params",
-      "community": 29,
+      "community": 0,
       "norm_label": "params"
     },
     {
@@ -8712,7 +8732,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_main_windowname",
-      "community": 29,
+      "community": 0,
       "norm_label": "windowname"
     },
     {
@@ -8792,7 +8812,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "stores_useprojectstore_useprojectstore",
-      "community": 20,
+      "community": 28,
       "norm_label": "useprojectstore"
     },
     {
@@ -8892,7 +8912,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "views_floatingwidget_floatingwidget",
-      "community": 29,
+      "community": 0,
       "norm_label": "floatingwidget()"
     },
     {
@@ -8902,7 +8922,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "views_mainapp",
-      "community": 20,
+      "community": 36,
       "norm_label": "mainapp.tsx"
     },
     {
@@ -8912,7 +8932,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "views_mainapp_activeview",
-      "community": 20,
+      "community": 36,
       "norm_label": "activeview"
     },
     {
@@ -8922,7 +8942,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "views_mainapp_themevariablenames",
-      "community": 20,
+      "community": 36,
       "norm_label": "themevariablenames"
     },
     {
@@ -8932,7 +8952,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "views_mainapp_initialthememode",
-      "community": 20,
+      "community": 36,
       "norm_label": "initialthememode()"
     },
     {
@@ -8942,7 +8962,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "views_mainapp_initialaccenthue",
-      "community": 20,
+      "community": 36,
       "norm_label": "initialaccenthue()"
     },
     {
@@ -8952,7 +8972,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "views_mainapp_wraphue",
-      "community": 20,
+      "community": 36,
       "norm_label": "wraphue()"
     },
     {
@@ -8962,7 +8982,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "views_mainapp_keypiphypalettefromhue",
-      "community": 20,
+      "community": 36,
       "norm_label": "keypiphypalettefromhue()"
     },
     {
@@ -8972,7 +8992,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "views_mainapp_mainapp",
-      "community": 29,
+      "community": 0,
       "norm_label": "mainapp()"
     },
     {
@@ -8982,7 +9002,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain",
-      "community": 10,
+      "community": 35,
       "norm_label": "brain.ts"
     },
     {
@@ -8992,7 +9012,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain_brainnodefrontmatter",
-      "community": 40,
+      "community": 5,
       "norm_label": "brainnodefrontmatter"
     },
     {
@@ -9002,7 +9022,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "shared_brain_uservalidationstate",
-      "community": 20,
+      "community": 46,
       "norm_label": "uservalidationstate"
     },
     {
@@ -9012,7 +9032,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "shared_brain_brainnode",
-      "community": 28,
+      "community": 5,
       "norm_label": "brainnode"
     },
     {
@@ -9022,7 +9042,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "shared_brain_writebrainnodeinput",
-      "community": 40,
+      "community": 5,
       "norm_label": "writebrainnodeinput"
     },
     {
@@ -9032,7 +9052,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "shared_brain_listbrainnodesinput",
-      "community": 10,
+      "community": 5,
       "norm_label": "listbrainnodesinput"
     },
     {
@@ -9042,7 +9062,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "shared_brain_searchbrainnodesinput",
-      "community": 0,
+      "community": 51,
       "norm_label": "searchbrainnodesinput"
     },
     {
@@ -9052,7 +9072,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "shared_brain_brainsearchresult",
-      "community": 0,
+      "community": 51,
       "norm_label": "brainsearchresult"
     },
     {
@@ -9062,7 +9082,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "shared_brain_boardtopologynode",
-      "community": 10,
+      "community": 5,
       "norm_label": "boardtopologynode"
     },
     {
@@ -9072,7 +9092,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "shared_brain_searchboardtopologyinput",
-      "community": 10,
+      "community": 5,
       "norm_label": "searchboardtopologyinput"
     },
     {
@@ -9112,7 +9132,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "shared_brain_ingestandroutefragmentresult",
-      "community": 5,
+      "community": 10,
       "norm_label": "ingestandroutefragmentresult"
     },
     {
@@ -9152,7 +9172,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "shared_brain_updatenodesignalsinput",
-      "community": 47,
+      "community": 5,
       "norm_label": "updatenodesignalsinput"
     },
     {
@@ -9202,7 +9222,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "shared_brain_aimode",
-      "community": 10,
+      "community": 35,
       "norm_label": "aimode"
     },
     {
@@ -9242,7 +9262,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "shared_brain_graphifyruntimesettings",
-      "community": 10,
+      "community": 35,
       "norm_label": "graphifyruntimesettings"
     },
     {
@@ -9262,7 +9282,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "shared_brain_updategraphifyruntimesettingsinput",
-      "community": 10,
+      "community": 35,
       "norm_label": "updategraphifyruntimesettingsinput"
     },
     {
@@ -9302,7 +9322,7 @@
       "source_location": "L211",
       "_origin": "ast",
       "id": "shared_brain_chatrole",
-      "community": 10,
+      "community": 35,
       "norm_label": "chatrole"
     },
     {
@@ -9312,7 +9332,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "shared_brain_chatartifactsource",
-      "community": 10,
+      "community": 51,
       "norm_label": "chatartifactsource"
     },
     {
@@ -9382,7 +9402,7 @@
       "source_location": "L306",
       "_origin": "ast",
       "id": "shared_brain_savechatartifactinput",
-      "community": 4,
+      "community": 47,
       "norm_label": "savechatartifactinput"
     },
     {
@@ -9502,7 +9522,7 @@
       "source_location": "L403",
       "_origin": "ast",
       "id": "shared_brain_graphboardneighbor",
-      "community": 10,
+      "community": 35,
       "norm_label": "graphboardneighbor"
     },
     {
@@ -9522,7 +9542,7 @@
       "source_location": "L414",
       "_origin": "ast",
       "id": "shared_brain_researchpapercomponenttype",
-      "community": 10,
+      "community": 51,
       "norm_label": "researchpapercomponenttype"
     },
     {
@@ -9532,7 +9552,7 @@
       "source_location": "L426",
       "_origin": "ast",
       "id": "shared_brain_researchdependencystatus",
-      "community": 10,
+      "community": 35,
       "norm_label": "researchdependencystatus"
     },
     {
@@ -9702,7 +9722,7 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "shared_brain_clipboardingestibleitemsresult",
-      "community": 10,
+      "community": 11,
       "norm_label": "clipboardingestibleitemsresult"
     },
     {
@@ -9712,7 +9732,7 @@
       "source_location": "L565",
       "_origin": "ast",
       "id": "shared_brain_processdroppeditemsresult",
-      "community": 20,
+      "community": 45,
       "norm_label": "processdroppeditemsresult"
     },
     {
@@ -9732,7 +9752,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_ipc",
-      "community": 36,
+      "community": 51,
       "norm_label": "ipc.ts"
     },
     {
@@ -9742,7 +9762,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "shared_ipc_windowchannels",
-      "community": 11,
+      "community": 51,
       "norm_label": "windowchannels"
     },
     {
@@ -9762,7 +9782,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "shared_ipc_brainchannels",
-      "community": 32,
+      "community": 10,
       "norm_label": "brainchannels"
     },
     {
@@ -9772,7 +9792,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannels",
-      "community": 32,
+      "community": 10,
       "norm_label": "trackerchannels"
     },
     {
@@ -9782,7 +9802,7 @@
       "source_location": "L188",
       "_origin": "ast",
       "id": "shared_ipc_boardchannels",
-      "community": 36,
+      "community": 11,
       "norm_label": "boardchannels"
     },
     {
@@ -9842,7 +9862,7 @@
       "source_location": "L239",
       "_origin": "ast",
       "id": "shared_ipc_settingschannels",
-      "community": 36,
+      "community": 51,
       "norm_label": "settingschannels"
     },
     {
@@ -9852,7 +9872,7 @@
       "source_location": "L247",
       "_origin": "ast",
       "id": "shared_ipc_chatchannels",
-      "community": 36,
+      "community": 11,
       "norm_label": "chatchannels"
     },
     {
@@ -9872,7 +9892,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "shared_ipc_windowchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "windowchannel"
     },
     {
@@ -9882,7 +9902,7 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "shared_ipc_filechannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "filechannel"
     },
     {
@@ -9892,7 +9912,7 @@
       "source_location": "L268",
       "_origin": "ast",
       "id": "shared_ipc_brainchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "brainchannel"
     },
     {
@@ -9902,7 +9922,7 @@
       "source_location": "L269",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "trackerchannel"
     },
     {
@@ -9912,7 +9932,7 @@
       "source_location": "L270",
       "_origin": "ast",
       "id": "shared_ipc_boardchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "boardchannel"
     },
     {
@@ -9922,7 +9942,7 @@
       "source_location": "L271",
       "_origin": "ast",
       "id": "shared_ipc_explorerchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "explorerchannel"
     },
     {
@@ -9932,7 +9952,7 @@
       "source_location": "L272",
       "_origin": "ast",
       "id": "shared_ipc_projectchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "projectchannel"
     },
     {
@@ -9942,7 +9962,7 @@
       "source_location": "L273",
       "_origin": "ast",
       "id": "shared_ipc_graphboardchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "graphboardchannel"
     },
     {
@@ -9952,7 +9972,7 @@
       "source_location": "L274",
       "_origin": "ast",
       "id": "shared_ipc_researchchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "researchchannel"
     },
     {
@@ -9962,7 +9982,7 @@
       "source_location": "L275",
       "_origin": "ast",
       "id": "shared_ipc_clipboardchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "clipboardchannel"
     },
     {
@@ -9972,7 +9992,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "shared_ipc_settingschannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "settingschannel"
     },
     {
@@ -9982,7 +10002,7 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "shared_ipc_chatchannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "chatchannel"
     },
     {
@@ -9992,7 +10012,7 @@
       "source_location": "L278",
       "_origin": "ast",
       "id": "shared_ipc_runtimechannel",
-      "community": 36,
+      "community": 51,
       "norm_label": "runtimechannel"
     },
     {
@@ -10022,7 +10042,7 @@
       "source_location": "L294",
       "_origin": "ast",
       "id": "shared_ipc_widgetbounds",
-      "community": 36,
+      "community": 51,
       "norm_label": "widgetbounds"
     },
     {
@@ -10052,7 +10072,7 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "shared_ipc_secondbrainapi",
-      "community": 45,
+      "community": 49,
       "norm_label": "secondbrainapi"
     },
     {
@@ -10352,7 +10372,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_vite_env_d",
-      "community": 45,
+      "community": 49,
       "norm_label": "vite-env.d.ts"
     },
     {
@@ -10362,7 +10382,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_vite_env_d_window",
-      "community": 45,
+      "community": 49,
       "norm_label": "window"
     },
     {
@@ -10966,106 +10986,6 @@
       "norm_label": "for ssh/headless:"
     },
     {
-      "label": "mcp-graphify-serve.md",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve",
-      "community": 42,
-      "norm_label": "mcp-graphify-serve.md"
-    },
-    {
-      "label": "Fine-Grained Controls for Graph Extraction",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L3",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction",
-      "community": 42,
-      "norm_label": "fine-grained controls for graph extraction"
-    },
-    {
-      "label": "**CLI-Level Controls**",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L7",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_cli_level_controls",
-      "community": 42,
-      "norm_label": "**cli-level controls**"
-    },
-    {
-      "label": "**Environmental Controls**",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L35",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_environmental_controls",
-      "community": 42,
-      "norm_label": "**environmental controls**"
-    },
-    {
-      "label": "**Programmatic/Library Controls**",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L43",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_programmatic_library_controls",
-      "community": 42,
-      "norm_label": "**programmatic/library controls**"
-    },
-    {
-      "label": "**Graph-Time Configuration**",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L59",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_graph_time_configuration",
-      "community": 42,
-      "norm_label": "**graph-time configuration**"
-    },
-    {
-      "label": "MCP Tools Available (7 Total)",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L67",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_mcp_tools_available_7_total",
-      "community": 42,
-      "norm_label": "mcp tools available (7 total)"
-    },
-    {
-      "label": "**MCP Resources** (read-only):",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L84",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_mcp_resources_read_only",
-      "community": 42,
-      "norm_label": "**mcp resources** (read-only):"
-    },
-    {
-      "label": "Invocation Summary",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L94",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_invocation_summary",
-      "community": 42,
-      "norm_label": "invocation summary"
-    },
-    {
-      "label": "Second Brain Integration Notes",
-      "file_type": "document",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L112",
-      "_origin": "ast",
-      "id": "dev_mcp_graphify_serve_second_brain_integration_notes",
-      "community": 42,
-      "norm_label": "second brain integration notes"
-    },
-    {
       "label": "README.md",
       "file_type": "document",
       "source_file": "proxy/README.md",
@@ -11384,6 +11304,177 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_appid"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_asar"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_directories"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_files"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_linux"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L24",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_nsis"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_productname"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder",
+      "target": "electron_builder_win"
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "package.json",
+      "source_location": "L32",
+      "weight": 1.0,
+      "context": "import",
+      "confidence_score": 1.0,
+      "source": "package_devdependencies_electron_builder",
+      "target": "electron_builder"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_directories",
+      "target": "electron_builder_directories_buildresources"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_directories",
+      "target": "electron_builder_directories_output"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_win",
+      "target": "electron_builder_win_artifactname"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_win",
+      "target": "electron_builder_win_target"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L26",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_nsis",
+      "target": "electron_builder_nsis_allowtochangeinstallationdirectory"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L25",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_nsis",
+      "target": "electron_builder_nsis_oneclick"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_nsis",
+      "target": "electron_builder_nsis_permachine"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "electron-builder.json",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "electron_builder_linux",
+      "target": "electron_builder_linux_target"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "package.json",
       "source_location": "L6",
       "weight": 1.0,
@@ -11530,56 +11621,6 @@
       "confidence_score": 1.0,
       "source": "package_scripts",
       "target": "package_scripts_dev_renderer"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "package.json",
-      "source_location": "L15",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "package_scripts",
-      "target": "package_scripts_package_dir"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "package.json",
-      "source_location": "L21",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "package_scripts",
-      "target": "package_scripts_package_linux"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "package.json",
-      "source_location": "L15",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "package_scripts",
-      "target": "package_scripts_package_mac"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "package.json",
-      "source_location": "L16",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "package_scripts",
-      "target": "package_scripts_package_mac_dir"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "package.json",
-      "source_location": "L17",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "package_scripts",
-      "target": "package_scripts_package_mac_dmg"
     },
     {
       "relation": "contains",
@@ -22854,16 +22895,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L64",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice",
-      "target": "services_graphifycontextservice_formatmcptool"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L62",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -22914,16 +22945,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L68",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice",
-      "target": "services_graphifycontextservice_parseargs"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L19",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -22949,16 +22970,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice",
       "target": "services_graphifycontextservice_slicebylocation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L215",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice",
-      "target": "services_graphifycontextservice_stringifymcptoolresult"
     },
     {
       "relation": "imports_from",
@@ -23020,33 +23031,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L398",
+      "source_location": "L110",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "services_graphifycontextservice_formatinvocation"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L330",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_formatmcptool"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L475",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
-      "target": "services_graphifycontextservice_parseargs"
     },
     {
       "relation": "calls",
@@ -23057,17 +23046,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice_getgraphifyinvocations",
-      "target": "services_graphifycontextservice_iscmdshim"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L485",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
       "target": "services_graphifycontextservice_iscmdshim"
     },
     {
@@ -23086,10 +23064,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L453",
+      "source_location": "L115",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "services_graphifycontextservice_errormessage"
     },
     {
@@ -23097,32 +23075,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L400",
+      "source_location": "L112",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
-      "target": "services_graphifycontextservice_errormessage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L332",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_errormessage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L370",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "services_graphifycontextservice_extractcitations"
     },
     {
@@ -23185,17 +23141,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L216",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_stringifymcptoolresult",
-      "target": "services_graphifycontextservice_asrecord"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L399",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23225,27 +23170,6 @@
       "target": "services_graphifycontextservice_compact"
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L329",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_stringifymcptoolresult"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L364",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_buildcontextresult"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
@@ -23254,16 +23178,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice",
       "target": "services_graphifycontextservice_graphifycontextservice_constructor"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L416",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient"
     },
     {
       "relation": "method",
@@ -23309,16 +23223,6 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L610",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifypythoncommand"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L208",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23329,31 +23233,11 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L653",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L131",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice",
       "target": "services_graphifycontextservice_graphifycontextservice_getgraphifyinvocations"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L472",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations"
     },
     {
       "relation": "method",
@@ -23419,21 +23303,11 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L391",
+      "source_location": "L99",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L307",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool"
+      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand"
     },
     {
       "relation": "method",
@@ -23444,16 +23318,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice",
       "target": "services_graphifycontextservice_graphifycontextservice_runinvocation"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L461",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice",
-      "target": "services_graphifycontextservice_graphifycontextservice_stopmcp"
     },
     {
       "relation": "method",
@@ -23492,11 +23356,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L262",
+      "source_location": "L77",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice_query",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool"
+      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand"
     },
     {
       "relation": "references",
@@ -23514,11 +23378,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L277",
+      "source_location": "L86",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice_explain",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool"
+      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand"
     },
     {
       "relation": "references",
@@ -23536,11 +23400,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L293",
+      "source_location": "L96",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice_tracepath",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool"
+      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand"
     },
     {
       "relation": "references",
@@ -23558,120 +23422,10 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L330",
+      "source_location": "L100",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_graphifycontextservice_buildcontextresult"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L318",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L337",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L333",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "services_graphifycontextservice_graphifycontextservice_stopmcp"
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L307",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "target": "shared_brain_graphifycontextresult"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L371",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "target": "services_graphifycontextservice_graphifycontextservice_hydratecontext"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L372",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "target": "services_graphifycontextservice_graphifycontextservice_hydrategraphcarddefinitions"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L373",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "target": "services_graphifycontextservice_graphifycontextservice_hydratewikicontext"
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L364",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "target": "shared_brain_graphifycontextresult"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L398",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
-      "target": "services_graphifycontextservice_graphifycontextservice_buildcontextresult"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L392",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "services_graphifycontextservice_graphifycontextservice_getgraphifyinvocations"
     },
     {
@@ -23679,10 +23433,43 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L397",
+      "source_location": "L188",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
+      "target": "services_graphifycontextservice_graphifycontextservice_hydratecontext"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyContextService.ts",
+      "source_location": "L204",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
+      "target": "services_graphifycontextservice_graphifycontextservice_hydrategraphcarddefinitions"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyContextService.ts",
+      "source_location": "L205",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
+      "target": "services_graphifycontextservice_graphifycontextservice_hydratewikicontext"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyContextService.ts",
+      "source_location": "L105",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "services_graphifycontextservice_graphifycontextservice_runinvocation"
     },
     {
@@ -23690,55 +23477,11 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L391",
+      "source_location": "L99",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
+      "source": "services_graphifycontextservice_graphifycontextservice_rungraphifycontextcommand",
       "target": "shared_brain_graphifycontextresult"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L428",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient",
-      "target": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L426",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient",
-      "target": "services_graphifycontextservice_graphifycontextservice_stopmcp"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L489",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
-      "target": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifypythoncommand"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L507",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
-      "target": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand"
     },
     {
       "relation": "calls",
@@ -23778,17 +23521,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L621",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifypythoncommand",
-      "target": "services_graphifycontextservice_graphifycontextservice_fileexists"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
       "source_location": "L212",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23804,28 +23536,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifycommand",
-      "target": "services_graphifycontextservice_graphifycontextservice_fileexists"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L657",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand",
-      "target": "services_graphifycontextservice_graphifycontextservice_execcapture"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyContextService.ts",
-      "source_location": "L669",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand",
       "target": "services_graphifycontextservice_graphifycontextservice_fileexists"
     },
     {
@@ -24561,17 +24271,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2277",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
-      "target": "services_graphifycontroller_parseargs"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L705",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24664,17 +24363,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_enrichgraphcarddefinitions",
-      "target": "services_graphifycontroller_errormessage"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2266",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_ensuremcpclient",
       "target": "services_graphifycontroller_errormessage"
     },
     {
@@ -24851,17 +24539,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_getgraphifyinvocations",
-      "target": "services_graphifycontroller_iscmdshim"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2287",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
       "target": "services_graphifycontroller_iscmdshim"
     },
     {
@@ -25508,16 +25185,6 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2274",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller",
-      "target": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L1991",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -25823,6 +25490,16 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller",
       "target": "services_graphifycontroller_graphifycontroller_renamesourcecomment"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/GraphifyController.ts",
+      "source_location": "L406",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "services_graphifycontroller_graphifycontroller",
+      "target": "services_graphifycontroller_graphifycontroller_resolvemcpcommand"
     },
     {
       "relation": "method",
@@ -27569,17 +27246,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2307",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
-      "target": "services_graphifycontroller_graphifycontroller_finduvtoolgraphifypythoncommand"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
       "source_location": "L869",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27596,17 +27262,6 @@
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_findbundledgraphifypythoncommand",
       "target": "services_graphifycontroller_graphifycontroller_fileexists"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2291",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
-      "target": "services_graphifycontroller_graphifycontroller_findbundledgraphifypythoncommand"
     },
     {
       "relation": "calls",
@@ -27866,11 +27521,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/GraphifyController.ts",
-      "source_location": "L2242",
+      "source_location": "L348",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_graphifycontroller_graphifycontroller_ensuremcpclient",
-      "target": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations"
+      "target": "services_graphifycontroller_graphifycontroller_resolvemcpcommand"
     },
     {
       "relation": "calls",
@@ -36184,9 +35839,9 @@
       "source_file": "src/renderer/views/MainApp.tsx",
       "source_location": "L56",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "views_mainapp",
-      "target": "views_mainapp_keypiphypalettefromhue"
+      "target": "views_mainapp_keypiphypalettefromhue",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -36204,9 +35859,9 @@
       "source_file": "src/renderer/views/MainApp.tsx",
       "source_location": "L18",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "views_mainapp",
-      "target": "views_mainapp_themevariablenames"
+      "target": "views_mainapp_themevariablenames",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -36214,9 +35869,9 @@
       "source_file": "src/renderer/views/MainApp.tsx",
       "source_location": "L52",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "views_mainapp",
-      "target": "views_mainapp_wraphue"
+      "target": "views_mainapp_wraphue",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -36225,9 +35880,9 @@
       "source_file": "src/renderer/views/MainApp.tsx",
       "source_location": "L57",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "views_mainapp_keypiphypalettefromhue",
-      "target": "views_mainapp_wraphue"
+      "target": "views_mainapp_wraphue",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -39048,96 +38703,6 @@
       "confidence_score": 1.0,
       "source": "dev_chatnotes",
       "target": "dev_chatnotes_verification"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L3",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve",
-      "target": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L94",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve",
-      "target": "dev_mcp_graphify_serve_invocation_summary"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L67",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve",
-      "target": "dev_mcp_graphify_serve_mcp_tools_available_7_total"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L112",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve",
-      "target": "dev_mcp_graphify_serve_second_brain_integration_notes"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L7",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction",
-      "target": "dev_mcp_graphify_serve_cli_level_controls"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L35",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction",
-      "target": "dev_mcp_graphify_serve_environmental_controls"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L59",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction",
-      "target": "dev_mcp_graphify_serve_graph_time_configuration"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L43",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve_fine_grained_controls_for_graph_extraction",
-      "target": "dev_mcp_graphify_serve_programmatic_library_controls"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "dev/mcp-graphify-serve.md",
-      "source_location": "L84",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "dev_mcp_graphify_serve_mcp_tools_available_7_total",
-      "target": "dev_mcp_graphify_serve_mcp_resources_read_only"
     },
     {
       "relation": "contains",

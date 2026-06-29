@@ -268,9 +268,24 @@ function isProxyAiSettings(aiSettings: AiSettings): boolean {
   return aiSettings.mode === "proxy";
 }
 
-function defaultUpdateCommand(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): string {
+function defaultUpdateCommand(
+  settings: GraphifyLocalModelSettings,
+  aiSettings: AiSettings,
+  writtenFileCount: number
+): string {
+  if (writtenFileCount > 0) {
+    if (isProxyAiSettings(aiSettings)) {
+      return `graphify extract . --out . --mode deep --backend ${graphifyProviderName} --max-concurrency 10`;
+    }
+
+    const concurrency = numberFromEnv(process.env.SECOND_BRAIN_GRAPHIFY_MAX_CONCURRENCY, 1, 1);
+    const tokenBudget = numberFromEnv(process.env.SECOND_BRAIN_GRAPHIFY_TOKEN_BUDGET, settings.maxTokens, 256);
+
+    return `graphify extract . --out . --mode deep --backend ${graphifyProviderName} --max-concurrency ${concurrency} --token-budget ${tokenBudget}`;
+  }
+
   if (isProxyAiSettings(aiSettings)) {
-    return "graphify . --update";
+    return "graphify . --update --max-concurrency 10";
   }
 
   const concurrency = numberFromEnv(process.env.SECOND_BRAIN_GRAPHIFY_MAX_CONCURRENCY, 1, 1);
@@ -989,9 +1004,9 @@ export class GraphifyController {
       await this.ensureGraphifyProviderConfig(primarySettings, aiSettings);
 
       const command =
-        process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND ??
+        (writtenFileCount > 0 ? process.env.SECOND_BRAIN_GRAPHIFY_INGEST_COMMAND : undefined) ??
         process.env.SECOND_BRAIN_GRAPHIFY_UPDATE_COMMAND ??
-        defaultUpdateCommand(primarySettings, aiSettings);
+        defaultUpdateCommand(primarySettings, aiSettings, writtenFileCount);
       const graphMtimeBefore = await this.fileMtimeMs(this.graphPath);
       let stdout: string;
 
@@ -1963,7 +1978,9 @@ export class GraphifyController {
     const candidates = [
       resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python.exe") : "",
       resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "python") : "",
-      path.join(process.cwd(), "resources", "graphify-runtime", "python", process.platform === "win32" ? "python.exe" : "python")
+      resourcesPath ? path.join(resourcesPath, "graphify-runtime", "python", "bin", "python") : "",
+      path.join(process.cwd(), "resources", "graphify-runtime", "python", process.platform === "win32" ? "python.exe" : "python"),
+      path.join(process.cwd(), "resources", "graphify-runtime", "python", "bin", "python")
     ].filter(Boolean);
 
     for (const candidate of candidates) {
@@ -2222,66 +2239,94 @@ export class GraphifyController {
       throw new Error(`Graphify graph is not available at ${this.graphPath}.`);
     }
 
-    const command = await this.resolveMcpCommand();
-    const args =
+    const invocations = await this.getGraphifyMcpInvocations();
+    const failures: string[] = [];
+    for (const invocation of invocations) {
+      const client = new Client({
+        name: "second-brain-graphify",
+        version: "0.1.0"
+      });
+      const transport = new StdioClientTransport({
+        command: invocation.command,
+        args: invocation.args,
+        cwd: this.rawVaultPath,
+        stderr: "pipe"
+      });
+
+      transport.stderr?.on("data", (chunk) => {
+        console.warn("Graphify MCP stderr", chunk.toString());
+      });
+
+      try {
+        await client.connect(transport);
+        this.mcpClient = client;
+        this.mcpTransport = transport;
+        return client;
+      } catch (error) {
+        failures.push(`${invocation.label}: ${errorMessage(error)}`);
+        await transport.close().catch(() => undefined);
+      }
+    }
+
+    throw new Error(["Could not start Graphify MCP server.", "Tried:", ...failures.map((failure) => `- ${failure}`)].join("\n"));
+  }
+
+  private async getGraphifyMcpInvocations(): Promise<GraphifyInvocation[]> {
+    const baseArgs =
       process.env.SECOND_BRAIN_GRAPHIFY_MCP_ARGS !== undefined
         ? parseArgs(process.env.SECOND_BRAIN_GRAPHIFY_MCP_ARGS).map((arg) => arg.replace("{graphPath}", this.graphPath))
         : ["-m", "graphify.serve", this.graphPath];
-    const client = new Client({
-      name: "second-brain-graphify",
-      version: "0.1.0"
-    });
-    const transport = new StdioClientTransport({
-      command,
-      args,
-      cwd: this.rawVaultPath,
-      stderr: "pipe"
-    });
+    const invocations: GraphifyInvocation[] = [];
+    const configured = process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND?.trim();
 
-    transport.stderr?.on("data", (chunk) => {
-      console.warn("Graphify MCP stderr", chunk.toString());
-    });
-
-    await client.connect(transport);
-    this.mcpClient = client;
-    this.mcpTransport = transport;
-    return client;
-  }
-
-  private async resolveMcpCommand(): Promise<string> {
-    if (process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND) {
-      return process.env.SECOND_BRAIN_GRAPHIFY_MCP_COMMAND;
-    }
-
-    if (process.platform === "win32") {
-      return "python";
-    }
-
-    try {
-      const graphifyBin = await new Promise<string>((resolve, reject) => {
-        exec("command -v graphify", { windowsHide: true }, (error, stdout) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-
-          resolve(stdout.trim().split(/\r?\n/)[0] ?? "");
-        });
+    if (configured) {
+      invocations.push({
+        label: "SECOND_BRAIN_GRAPHIFY_MCP_COMMAND",
+        command: configured,
+        args: baseArgs,
+        shell: isCmdShim(configured)
       });
-
-      if (graphifyBin) {
-        const firstLine = (await readFile(graphifyBin, "utf8")).split(/\r?\n/)[0] ?? "";
-        const shebang = firstLine.startsWith("#!") ? firstLine.slice(2).trim() : "";
-
-        if (shebang) {
-          return shebang;
-        }
-      }
-    } catch {
-      // Fall back below.
     }
 
-    return "python3";
+    const bundledPython = await this.findBundledGraphifyPythonCommand();
+    if (bundledPython) {
+      invocations.push({
+        label: "bundled Graphify Python runtime",
+        command: bundledPython,
+        args: baseArgs,
+        shell: isCmdShim(bundledPython)
+      });
+    }
+
+    invocations.push({
+      label: "uv tool graphifyy python",
+      command: "uv",
+      args: ["tool", "run", "--from", graphifyToolPackage, "python", ...baseArgs]
+    });
+
+    const uvInstalledPython = await this.findUvToolGraphifyPythonCommand();
+    if (uvInstalledPython) {
+      invocations.push({
+        label: "uv installed graphifyy Python",
+        command: uvInstalledPython,
+        args: baseArgs,
+        shell: isCmdShim(uvInstalledPython)
+      });
+    }
+
+    invocations.push(
+      {
+        label: "Windows py",
+        command: "py",
+        args: baseArgs
+      },
+      {
+        label: "python module runtime",
+        command: process.platform === "win32" ? "python" : "python3",
+        args: baseArgs
+      }
+    );
+    return invocations;
   }
 
   private resolveSourcePath(sourceFile: string): string {

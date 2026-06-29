@@ -58,11 +58,19 @@ function relationEndpoint(value: string | ForceNode): string {
   return typeof value === "string" ? value : value.id;
 }
 
+function themeValue(name: string, fallback: string): string {
+  if (typeof document === "undefined") {
+    return fallback;
+  }
+
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
 function colorFor(node: GraphBoardNode): string {
-  const palette = ["#0f766e", "#7c3aed", "#b45309", "#2563eb", "#be123c", "#475569", "#15803d", "#a21caf"];
+  const palette = ["#7a6fa5", "#5f8f7a", "#8b72a8", "#6b9a82", "#7f68a4", "#4f8f8a", "#8f6c92", "#6c8769"];
   const seed = `${node.type}:${node.community}`;
   const total = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return palette[total % palette.length] ?? "#475569";
+  return palette[total % palette.length] ?? "#7a6fa5";
 }
 
 function displaySource(sourceFile: string): string {
@@ -261,15 +269,17 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
     const y = node.y ?? 0;
     const radius = Math.max(4, Math.min(12, 4 + Math.sqrt(node.degree || 1)));
     const isActive = details?.id === node.id || hoveredNode?.id === node.id;
+    const highlight = themeValue("--color-highlight", "#006666");
+    const textMain = themeValue("--color-text-main", "#21302b");
 
     ctx.beginPath();
     ctx.arc(x, y, isActive ? radius + 2 : radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle = colorFor(node);
+    ctx.fillStyle = isActive ? highlight : colorFor(node);
     ctx.fill();
 
     if (isActive) {
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#0f172a";
+      ctx.strokeStyle = highlight;
       ctx.stroke();
     }
 
@@ -283,16 +293,28 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
     ctx.font = `${fontSize}px Inter, ui-sans-serif, system-ui`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = isActive ? "#0f172a" : "rgba(15,23,42,0.78)";
+    ctx.fillStyle = isActive ? highlight : textMain;
     ctx.fillText(label.slice(0, isActive ? 38 : 26), x, y + radius + 4);
   }
 
+  function linkColor(link: ForceLink): string {
+    const selectedId = selectedNode?.id;
+    if (
+      selectedId &&
+      (relationEndpoint(link.source) === selectedId || relationEndpoint(link.target) === selectedId)
+    ) {
+      return themeValue("--color-highlight", "#006666");
+    }
+
+    return "rgba(91, 82, 102, 0.24)";
+  }
+
   return (
-    <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-floral">
-      <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-900/5 px-6">
+    <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-frame">
+      <header className="material-frosted flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-black/10 bg-panel px-6">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold leading-6 text-slate-950">Board</h1>
-          <p className="mt-1 truncate text-xs text-slate-500">
+          <h1 className="font-mono text-lg font-semibold leading-6 text-legend">Board</h1>
+          <p className="mt-1 truncate text-xs text-slate-600">
             {graph ? `${graph.nodes.length} nodes · ${graph.links.length} edges` : "Explore the active project graph"}
           </p>
           {definitionStatus ? (
@@ -316,7 +338,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
           <label className="relative hidden w-72 min-w-0 md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
             <input
-              className="h-9 w-full rounded-md border border-slate-200 bg-white/65 pl-9 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white"
+              className="h-9 w-full rounded-xl border border-black/10 bg-white/45 pl-9 pr-3 font-mono text-sm text-textMain shadow-inner outline-none transition placeholder:text-slate-500 focus:border-highlight"
               placeholder="Search nodes, types, sources"
               type="search"
               value={query}
@@ -324,7 +346,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
             />
           </label>
           <button
-            className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white/60 text-slate-600 transition hover:bg-white hover:text-slate-950"
+            className="grid h-9 w-9 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner"
             title="Refresh board"
             type="button"
             onClick={() => void loadGraph()}
@@ -335,7 +357,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
       </header>
 
       <section className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_20rem] gap-3 p-3">
-        <div ref={containerRef} className="min-h-0 overflow-hidden rounded-lg border border-slate-200 bg-white/45 shadow-sm">
+        <div ref={containerRef} className="min-h-0 overflow-hidden rounded-xl border border-black/10 bg-[#f7f1d8] shadow-keycap">
           {loadState === "loading" || loadState === "idle" ? (
             <div className="grid h-full place-items-center text-sm text-slate-500">Loading graph...</div>
           ) : null}
@@ -362,11 +384,11 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
 
           {loadState === "ready" && graphData.nodes.length > 0 ? (
             <ForceGraph2D
-              backgroundColor="rgba(255,250,240,0)"
+              backgroundColor="#f7f1d8"
               cooldownTicks={80}
               graphData={graphData}
               height={size.height}
-              linkColor={() => "rgba(71,85,105,0.28)"}
+              linkColor={(link) => linkColor(link as ForceLink)}
               linkDirectionalParticles={1}
               linkDirectionalParticleSpeed={0.002}
               linkWidth={(link) => Math.max(0.8, Math.min(3, (link as ForceLink).weight))}
@@ -385,12 +407,12 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
           ) : null}
         </div>
 
-        <aside className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white/55 shadow-sm">
-          <header className="flex h-11 shrink-0 items-center justify-between border-b border-slate-200/80 px-4">
-            <span className="text-sm font-semibold text-slate-950">Node</span>
+        <aside className="material-frosted flex min-h-0 flex-col overflow-hidden rounded-xl border border-black/10 bg-panel shadow-keycap">
+          <header className="flex h-11 shrink-0 items-center justify-between border-b border-black/10 px-4">
+            <span className="font-mono text-sm font-semibold text-legend">Node</span>
             {details ? (
               <button
-                className="grid h-8 w-8 place-items-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-950"
+                className="grid h-8 w-8 place-items-center rounded-xl bg-keycap text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner"
                 title="Clear selection"
                 type="button"
                 onClick={() => {
@@ -411,9 +433,9 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
             ) : (
               <div className="space-y-5">
                 <section>
-                  <p className="text-xs font-semibold uppercase text-slate-500">{selectedNode.type}</p>
-                  <h2 className="mt-2 text-lg font-semibold leading-6 text-slate-950">{selectedNode.label}</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-700">{selectedNode.summary}</p>
+                  <p className="font-mono text-xs font-semibold uppercase text-highlight">{selectedNode.type}</p>
+                  <h2 className="mt-2 font-mono text-lg font-semibold leading-6 text-legend">{selectedNode.label}</h2>
+                  <p className="mt-3 font-sans text-sm leading-6 text-textMain">{selectedNode.summary}</p>
                 </section>
 
                 {details?.research ? (
@@ -502,12 +524,12 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                   </section>
                 ) : null}
 
-                <section className="rounded-md border border-slate-200 bg-white/60 p-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
+                <section className="rounded-xl border border-black/10 bg-keycap p-3 shadow-inner">
+                  <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase text-highlight">
                     <FileText size={14} />
                     <span>Source</span>
                   </div>
-                  <p className="mt-2 break-words text-sm text-slate-800">
+                  <p className="mt-2 break-words text-sm text-textMain">
                     {selectedNode.sourceFile ? displaySource(selectedNode.sourceFile) : "Unknown source"}
                   </p>
                   {selectedNode.sourceFile ? (
@@ -518,8 +540,8 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                 {details ? (
                   <section>
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase text-slate-500">Neighbors</p>
-                      <span className="text-xs text-slate-400">{details.neighbors.length}</span>
+                      <p className="font-mono text-xs font-semibold uppercase text-highlight">Neighbors</p>
+                      <span className="text-xs text-slate-500">{details.neighbors.length}</span>
                     </div>
                     <div className="space-y-2">
                       {details.neighbors.length === 0 ? (
@@ -528,7 +550,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                         details.neighbors.slice(0, 24).map((neighbor) => (
                           <button
                             key={`${neighbor.direction}-${neighbor.id}-${neighbor.relation}`}
-                            className="w-full rounded-md border border-slate-200 bg-white/55 p-3 text-left transition hover:bg-white"
+                            className="w-full rounded-xl border border-black/10 bg-keycap p-3 text-left shadow-inner transition hover:bg-keycap"
                             type="button"
                             onClick={() =>
                               void selectNode({
@@ -543,7 +565,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                               })
                             }
                           >
-                            <p className="truncate text-sm font-semibold text-slate-950">{neighbor.label}</p>
+                            <p className="truncate font-mono text-sm font-semibold text-legend">{neighbor.label}</p>
                             <p className="mt-1 truncate text-xs text-slate-500">
                               {neighbor.direction} · {neighbor.relation}
                             </p>
@@ -557,7 +579,7 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                 {details ? (
                   <section>
                     <button
-                      className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-keycap px-3 font-mono text-sm font-semibold text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={callflowLoading}
                       type="button"
                       onClick={() => void generateCallflow()}

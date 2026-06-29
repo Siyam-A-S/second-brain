@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 :root {
-  color: #2c2925;
-  background: #fffaf0;
+  --color-frame: #fffaf0;
+  --color-panel: rgba(255, 255, 255, 0.52);
+  --color-keycap: #ffffff;
+  --color-legend: #2c2925;
+  --color-highlight: #0f766e;
+  --color-led-status: #14b8a6;
+  --color-text-main: #2c2925;
+  color: var(--color-text-main);
+  background: var(--color-frame);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -12,6 +19,17 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="keypiphy"],
+[data-theme="mint"] {
+  --color-frame: #e8f6e0;
+  --color-panel: #f5f5e0;
+  --color-keycap: #d1e8d1;
+  --color-legend: #20362f;
+  --color-highlight: #006666;
+  --color-led-status: #008080;
+  --color-text-main: #21302b;
 }
 
 html,
@@ -24,7 +42,7 @@ body,
 body {
   min-width: 320px;
   overflow: hidden;
-  background: #fffaf0;
+  background: var(--color-frame);
 }
 
 html[data-window="widget"],
@@ -47,4 +65,27 @@ select {
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+@layer utilities {
+  .shadow-keycap {
+    box-shadow:
+      inset 1px 1px 2px rgba(255, 255, 255, 0.8),
+      inset -1px -2px 3px rgba(56, 65, 58, 0.12),
+      2px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .material-frosted {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .keyboard-frame {
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(0, 0, 0, 0.035)),
+      radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.055) 1px, transparent 0);
+    background-size: auto, 18px 18px;
+    box-shadow: inset 0 -8px 18px rgba(52, 59, 50, 0.09);
+  }
+
 }
