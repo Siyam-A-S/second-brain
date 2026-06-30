@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell } from "electron";
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, screen, shell } from "electron";
 import path from "node:path";
 import {
   boardChannels,
@@ -107,6 +107,7 @@ function createMainWindow(): BrowserWindow {
     minWidth: 420,
     minHeight: 360,
     frame: false,
+    autoHideMenuBar: true,
     show: false,
     backgroundColor: "#FFFAF0",
     titleBarStyle: "hidden",
@@ -144,6 +145,7 @@ function createWidgetWindow(): BrowserWindow {
     resizable: false,
     movable: true,
     frame: false,
+    autoHideMenuBar: true,
     transparent: true,
     hasShadow: false,
     alwaysOnTop: true,
@@ -575,6 +577,8 @@ function registerIpc(
 }
 
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null);
+
   const userDataPath = app.getPath("userData");
   const aiSettings = new AiSettingsService(userDataPath);
   const runtimeDependencies = new DependencyRuntimeService();

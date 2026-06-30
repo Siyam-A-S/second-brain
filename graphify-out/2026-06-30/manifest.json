@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782630216.2412374,
-    "ast_hash": "eae64d745603138782acef51226bb8bb",
+    "mtime": 1782855634.0516725,
+    "ast_hash": "471849034e1d3bf8fd60c3f9e860671d",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/release.yml": {
-    "mtime": 1781550668.3810825,
-    "ast_hash": "5ccb3e0d984d2adbbe69a3faf080a853",
+    "mtime": 1782855210.8920727,
+    "ast_hash": "d435f006f0c6a1300b1b061ffd3cf854",
     "semantic_hash": ""
   },
   "README.md": {
@@ -375,13 +375,18 @@
     "semantic_hash": ""
   },
   "electron-builder.yml": {
-    "mtime": 1782630216.2392375,
-    "ast_hash": "49ee437dd557492290436dd053bc94bb",
+    "mtime": 1782854876.1221623,
+    "ast_hash": "254c15340a98549717f361a458cf053c",
     "semantic_hash": ""
   },
   "dev/plans.md": {
     "mtime": 1782633436.4578526,
     "ast_hash": "8a99de11fb42719b29096a2feb588346",
+    "semantic_hash": ""
+  },
+  "MAC_TESTING_GUIDE.md": {
+    "mtime": 1782854876.1221623,
+    "ast_hash": "1ed1fb41c32b30212594dc6f38cf7959",
     "semantic_hash": ""
   }
 }

@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "src/main/main.ts": {
-    "mtime": 1782236608.996808,
-    "ast_hash": "cdd56aaafd38c75a618ae8ffe2d90aa4",
+    "mtime": 1782857648.3576112,
+    "ast_hash": "2ec94b499dcf826d5133a19ade32b620",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1781835694.5304284,
-    "ast_hash": "948e6268128d5800eec8126b2820d2c5",
+    "mtime": 1782857729.2799046,
+    "ast_hash": "fcd17f44a8975d9270cd0fdf74dfe1a9",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
-    "mtime": 1781842126.8677647,
-    "ast_hash": "b71760687aa3ce876f6e381291676efb",
+    "mtime": 1782857753.7788577,
+    "ast_hash": "7c19962e077bad5f29734197445d2634",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {

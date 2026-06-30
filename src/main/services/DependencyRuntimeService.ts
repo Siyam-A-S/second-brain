@@ -1,26 +1,135 @@
 import { execFile } from "node:child_process";
 import type { ExecFileOptions } from "node:child_process";
 import { stat } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import type { DependencyRuntimeStatus, RuntimeDependencyCheck } from "../../shared/brain";
 
 const graphifyToolPackage = "graphifyy[all]";
 const timeoutMs = 180_000;
 const maxBuffer = 2 * 1024 * 1024;
+const isWindows = process.platform === "win32";
+const isMac = process.platform === "darwin";
+
+type RuntimeCommandCandidate = {
+  command: string;
+  args: string[];
+  shell?: boolean | undefined;
+};
 
 function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
 function repairCommandText(): string {
-  return process.platform === "win32"
-    ? [
-        "winget install -e --id Python.Python.3.12 --scope user --silent --accept-package-agreements --accept-source-agreements",
-        'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
-        `uv tool install --upgrade "${graphifyToolPackage}"`,
-        "uv tool ensurepath"
-      ].join("\n")
-    : [`uv tool install --upgrade "${graphifyToolPackage}"`, "uv tool ensurepath"].join("\n");
+  if (isWindows) {
+    return [
+      "winget install -e --id Python.Python.3.12 --scope user --silent --accept-package-agreements --accept-source-agreements",
+      'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
+      `uv tool install --upgrade "${graphifyToolPackage}"`,
+      "uv tool ensurepath"
+    ].join("\n");
+  }
+
+  if (isMac) {
+    return [
+      "brew install python uv",
+      `uv tool install --upgrade "${graphifyToolPackage}"`,
+      "uv tool ensurepath"
+    ].join("\n");
+  }
+
+  return [`uv tool install --upgrade "${graphifyToolPackage}"`, "uv tool ensurepath"].join("\n");
+}
+
+function uniqueCandidates<T extends RuntimeCommandCandidate>(candidates: T[]): T[] {
+  const seen = new Set<string>();
+  return candidates.filter((candidate) => {
+    const key = `${candidate.command}\0${candidate.args.join("\0")}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function windowsUserBin(fileName: string): string {
+  return path.join(process.env.USERPROFILE || os.homedir(), ".local", "bin", fileName);
+}
+
+function windowsPythonCandidates(): Array<{ command: string; args: string[] }> {
+  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const programFilesX86 = process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+
+  return [
+    { command: "py", args: ["-3.10", "--version"] },
+    { command: "python", args: ["--version"] },
+    { command: path.join(localAppData, "Programs", "Python", "Python312", "python.exe"), args: ["--version"] },
+    { command: path.join(localAppData, "Programs", "Python", "Python311", "python.exe"), args: ["--version"] },
+    { command: path.join(programFiles, "Python312", "python.exe"), args: ["--version"] },
+    { command: path.join(programFiles, "Python311", "python.exe"), args: ["--version"] },
+    { command: path.join(programFilesX86, "Python312", "python.exe"), args: ["--version"] }
+  ];
+}
+
+function macBinaryCandidates(binaryName: string): string[] {
+  return [
+    `/opt/homebrew/bin/${binaryName}`,
+    `/usr/local/bin/${binaryName}`,
+    `/usr/bin/${binaryName}`,
+    path.join(os.homedir(), ".local", "bin", binaryName),
+    binaryName
+  ];
+}
+
+function pythonCandidates(): Array<{ command: string; args: string[] }> {
+  if (isWindows) {
+    return windowsPythonCandidates();
+  }
+
+  if (isMac) {
+    return macBinaryCandidates("python3")
+      .map((command) => ({ command, args: ["--version"] }))
+      .concat([{ command: "python", args: ["--version"] }]);
+  }
+
+  return [
+    { command: "python3", args: ["--version"] },
+    { command: "python", args: ["--version"] }
+  ];
+}
+
+function uvCandidates(): Array<{ command: string; args: string[] }> {
+  if (isWindows) {
+    return [
+      { command: windowsUserBin("uv.exe"), args: ["--version"] },
+      { command: "uv", args: ["--version"] }
+    ];
+  }
+
+  if (isMac) {
+    return macBinaryCandidates("uv").map((command) => ({ command, args: ["--version"] }));
+  }
+
+  return [{ command: "uv", args: ["--version"] }];
+}
+
+function graphifyPathCandidates(): string[] {
+  if (isWindows) {
+    return [
+      windowsUserBin("graphify.exe"),
+      windowsUserBin("graphify.cmd"),
+      "graphify"
+    ];
+  }
+
+  if (isMac) {
+    return macBinaryCandidates("graphify");
+  }
+
+  return [path.join(os.homedir(), ".local", "bin", "graphify"), "graphify"];
 }
 
 function parsePythonVersion(value: string): { version: string; ok: boolean } {
@@ -62,7 +171,7 @@ export class DependencyRuntimeService {
     const pythonAvailable = current.dependencies.find((dependency) => dependency.name === "python")?.available;
     const uvAvailable = current.dependencies.find((dependency) => dependency.name === "uv")?.available;
 
-    if (!pythonAvailable && process.platform === "win32") {
+    if (!pythonAvailable && isWindows) {
       commands.push({
         command: "winget",
         args: [
@@ -79,7 +188,7 @@ export class DependencyRuntimeService {
       });
     }
 
-    if (!uvAvailable && process.platform === "win32") {
+    if (!uvAvailable && isWindows) {
       commands.push({
         command: "powershell.exe",
         args: ["-ExecutionPolicy", "ByPass", "-Command", "irm https://astral.sh/uv/install.ps1 | iex"]
@@ -114,16 +223,7 @@ export class DependencyRuntimeService {
   }
 
   private async checkPython(): Promise<RuntimeDependencyCheck> {
-    const candidates =
-      process.platform === "win32"
-        ? [
-            { command: "py", args: ["-3.10", "--version"] },
-            { command: "python", args: ["--version"] }
-          ]
-        : [
-            { command: "python3", args: ["--version"] },
-            { command: "python", args: ["--version"] }
-          ];
+    const candidates = uniqueCandidates(pythonCandidates());
 
     for (const candidate of candidates) {
       try {
@@ -134,6 +234,7 @@ export class DependencyRuntimeService {
             name: "python",
             available: true,
             version: parsed.version,
+            path: candidate.command,
             required: true,
             guidance: ""
           };
@@ -148,39 +249,53 @@ export class DependencyRuntimeService {
       available: false,
       version: "",
       required: true,
-      guidance: "Install Python 3.10 or newer and enable Add Python to PATH."
+      guidance: isMac
+        ? "Install Python 3.10 or newer with Homebrew (`brew install python`) or make sure python3 is available in /opt/homebrew/bin or /usr/local/bin."
+        : "Install Python 3.10 or newer and enable Add Python to PATH."
     };
   }
 
   private async checkUv(): Promise<RuntimeDependencyCheck> {
-    try {
-      const output = await this.run("uv", ["--version"]);
-      return {
-        name: "uv",
-        available: true,
-        version: output.trim().split(/\r?\n/)[0] ?? "uv",
-        required: true,
-        guidance: ""
-      };
-    } catch {
-      return {
-        name: "uv",
-        available: false,
-        version: "",
-        required: true,
-        guidance: "Install uv with the Astral installer, then restart Second Brain."
-      };
+    const candidates = uniqueCandidates(uvCandidates());
+
+    for (const candidate of candidates) {
+      try {
+        const output = await this.run(candidate.command, candidate.args);
+        return {
+          name: "uv",
+          available: true,
+          version: output.trim().split(/\r?\n/)[0] ?? "uv",
+          path: candidate.command,
+          required: true,
+          guidance: ""
+        };
+      } catch {
+        // Try the next candidate.
+      }
     }
+
+    return {
+      name: "uv",
+      available: false,
+      version: "",
+      required: true,
+      guidance: isMac
+        ? "Install uv with Homebrew (`brew install uv`) or the Astral installer, then restart Second Brain."
+        : "Install uv with the Astral installer, then restart Second Brain."
+    };
   }
 
   private async checkGraphify(): Promise<RuntimeDependencyCheck> {
     const direct = process.env.SECOND_BRAIN_GRAPHIFY_BIN?.trim();
     const uvTool = await this.findUvToolGraphifyCommand();
-    const candidates = [
+    const graphifyCandidates: Array<RuntimeCommandCandidate | null> = [
       direct ? { command: direct, args: ["--help"], shell: isCmdShim(direct) } : null,
       uvTool ? { command: uvTool, args: ["--help"], shell: isCmdShim(uvTool) } : null,
-      { command: "graphify", args: ["--help"] }
-    ].filter((value): value is { command: string; args: string[]; shell?: boolean } => Boolean(value));
+      ...graphifyPathCandidates().map((command) => ({ command, args: ["--help"], shell: isCmdShim(command) }))
+    ];
+    const candidates = uniqueCandidates(
+      graphifyCandidates.filter((value): value is RuntimeCommandCandidate => Boolean(value))
+    );
 
     for (const candidate of candidates) {
       try {
@@ -208,8 +323,13 @@ export class DependencyRuntimeService {
   }
 
   private async findUvToolGraphifyCommand(): Promise<string | null> {
+    const uv = await this.findUvCommand();
+    if (!uv) {
+      return null;
+    }
+
     try {
-      const uvToolDir = (await this.run("uv", ["tool", "dir"])).trim().split(/\r?\n/)[0] ?? "";
+      const uvToolDir = (await this.run(uv, ["tool", "dir"], { shell: isCmdShim(uv) })).trim().split(/\r?\n/)[0] ?? "";
       const candidates = [
         path.join(uvToolDir, "graphifyy", "Scripts", "graphify.exe"),
         path.join(uvToolDir, "graphifyy", "Scripts", "graphify.cmd"),
@@ -223,6 +343,19 @@ export class DependencyRuntimeService {
       }
     } catch {
       // uv is not available.
+    }
+
+    return null;
+  }
+
+  private async findUvCommand(): Promise<string | null> {
+    for (const candidate of uniqueCandidates(uvCandidates())) {
+      try {
+        await this.run(candidate.command, candidate.args, { shell: isCmdShim(candidate.command) });
+        return candidate.command;
+      } catch {
+        // Try the next candidate.
+      }
     }
 
     return null;
