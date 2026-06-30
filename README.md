@@ -1,15 +1,15 @@
 # Second Brain
 
-**Release: Second Brain 0.1.2**
+**Release: Second Brain 0.1.3**
 
 Second Brain is a local-first desktop app for turning dropped notes, code, documents, images, and research material into a browsable knowledge graph with chat, source exploration, and Graphify-powered ingestion.
 
-[Open the Second Brain 0.1.2 release](https://github.com/Siyam-A-S/second-brain/releases/tag/v0.1.2)
+[Open the Second Brain 0.1.3 release](https://github.com/Siyam-A-S/second-brain/releases/tag/v0.1.3)
 
 ## Download
 
-- Windows: [Second-Brain-0.1.2-latest-win-unpacked.zip](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.2/Second-Brain-0.1.2-latest-win-unpacked.zip)
-- macOS Apple Silicon beta: [Second.Brain-0.1.2-mac-arm64.dmg](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.2/Second.Brain-0.1.2-mac-arm64.dmg)
+- Windows: [Second-Brain-0.1.3-latest-win-unpacked.zip](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.3/Second-Brain-0.1.3-latest-win-unpacked.zip)
+- macOS Apple Silicon beta: [Second.Brain-0.1.3-mac-arm64.dmg](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.3/Second.Brain-0.1.3-mac-arm64.dmg)
 
 ## Windows Get Started
 
@@ -119,4 +119,4 @@ npm run package:win
 npm run package:mac:adhoc
 ```
 
-Pushing the `v0.1.2` tag, or manually running the **Release Second Brain** GitHub Action, publishes the Windows zip and macOS Apple Silicon DMG to the 0.1.2 release.
+Pushing the `v0.1.3` tag, or manually running the **Release Second Brain** GitHub Action, publishes the Windows zip and macOS Apple Silicon DMG to the 0.1.3 release.

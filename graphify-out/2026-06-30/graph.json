@@ -869,7 +869,7 @@
       "label": "createWidgetWindow()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L133",
+      "source_location": "L134",
       "_origin": "ast",
       "id": "main_main_createwidgetwindow",
       "community": 11,
@@ -879,7 +879,7 @@
       "label": "clampWidgetBounds()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L173",
+      "source_location": "L175",
       "_origin": "ast",
       "id": "main_main_clampwidgetbounds",
       "community": 11,
@@ -889,7 +889,7 @@
       "label": "showWidget()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L195",
+      "source_location": "L197",
       "_origin": "ast",
       "id": "main_main_showwidget",
       "community": 11,
@@ -899,7 +899,7 @@
       "label": "restoreMainWindow()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L205",
+      "source_location": "L207",
       "_origin": "ast",
       "id": "main_main_restoremainwindow",
       "community": 11,
@@ -909,7 +909,7 @@
       "label": "clipboardFilePathsFromText()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L221",
+      "source_location": "L223",
       "_origin": "ast",
       "id": "main_main_clipboardfilepathsfromtext",
       "community": 11,
@@ -919,7 +919,7 @@
       "label": "readClipboardIngestibleItems()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L240",
+      "source_location": "L242",
       "_origin": "ast",
       "id": "main_main_readclipboardingestibleitems",
       "community": 11,
@@ -929,7 +929,7 @@
       "label": "requireRuntime()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L294",
+      "source_location": "L296",
       "_origin": "ast",
       "id": "main_main_requireruntime",
       "community": 11,
@@ -939,7 +939,7 @@
       "label": "createProjectRuntime()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L302",
+      "source_location": "L304",
       "_origin": "ast",
       "id": "main_main_createprojectruntime",
       "community": 11,
@@ -949,7 +949,7 @@
       "label": "switchProjectRuntime()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L355",
+      "source_location": "L357",
       "_origin": "ast",
       "id": "main_main_switchprojectruntime",
       "community": 11,
@@ -959,7 +959,7 @@
       "label": "registerIpc()",
       "file_type": "code",
       "source_file": "src/main/main.ts",
-      "source_location": "L372",
+      "source_location": "L374",
       "_origin": "ast",
       "id": "main_main_registeripc",
       "community": 11,
@@ -972,7 +972,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentcontroller",
-      "community": 0,
+      "community": 32,
       "norm_label": "agentcontroller.ts"
     },
     {
@@ -982,7 +982,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "services_agentcontroller_graphifyprovider",
-      "community": 0,
+      "community": 32,
       "norm_label": "graphifyprovider"
     },
     {
@@ -1042,7 +1042,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentruntimeconfig",
-      "community": 51,
+      "community": 32,
       "norm_label": "agentruntimeconfig.ts"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "services_agentruntimeconfig_agentprompts",
-      "community": 51,
+      "community": 32,
       "norm_label": "agentprompts"
     },
     {
@@ -1942,7 +1942,7 @@
       "source_location": "L354",
       "_origin": "ast",
       "id": "services_chatservice_chatservice_constructor",
-      "community": 57,
+      "community": 41,
       "norm_label": ".constructor()"
     },
     {
@@ -2266,10 +2266,20 @@
       "norm_label": "dependencyruntimeservice.ts"
     },
     {
+      "label": "RuntimeCommandCandidate",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_runtimecommandcandidate",
+      "community": 37,
+      "norm_label": "runtimecommandcandidate"
+    },
+    {
       "label": "errorText()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L11",
+      "source_location": "L20",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_errortext",
       "community": 37,
@@ -2279,17 +2289,87 @@
       "label": "repairCommandText()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L15",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_repaircommandtext",
       "community": 37,
       "norm_label": "repaircommandtext()"
     },
     {
+      "label": "uniqueCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L45",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_uniquecandidates",
+      "community": 37,
+      "norm_label": "uniquecandidates()"
+    },
+    {
+      "label": "windowsUserBin()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L57",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_windowsuserbin",
+      "community": 37,
+      "norm_label": "windowsuserbin()"
+    },
+    {
+      "label": "windowsPythonCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L61",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_windowspythoncandidates",
+      "community": 37,
+      "norm_label": "windowspythoncandidates()"
+    },
+    {
+      "label": "macBinaryCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L77",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_macbinarycandidates",
+      "community": 37,
+      "norm_label": "macbinarycandidates()"
+    },
+    {
+      "label": "pythonCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L87",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_pythoncandidates",
+      "community": 37,
+      "norm_label": "pythoncandidates()"
+    },
+    {
+      "label": "uvCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L104",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_uvcandidates",
+      "community": 37,
+      "norm_label": "uvcandidates()"
+    },
+    {
+      "label": "graphifyPathCandidates()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L119",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_graphifypathcandidates",
+      "community": 37,
+      "norm_label": "graphifypathcandidates()"
+    },
+    {
       "label": "parsePythonVersion()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L26",
+      "source_location": "L135",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_parsepythonversion",
       "community": 37,
@@ -2299,7 +2379,7 @@
       "label": "DependencyRuntimeService",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L40",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice",
       "community": 37,
@@ -2309,7 +2389,7 @@
       "label": ".getStatus()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L43",
+      "source_location": "L152",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_getstatus",
       "community": 37,
@@ -2319,7 +2399,7 @@
       "label": ".installOrRepair()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L58",
+      "source_location": "L167",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_installorrepair",
       "community": 37,
@@ -2329,7 +2409,7 @@
       "label": ".checkPython()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L116",
+      "source_location": "L225",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_checkpython",
       "community": 37,
@@ -2339,7 +2419,7 @@
       "label": ".checkUv()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L155",
+      "source_location": "L258",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_checkuv",
       "community": 37,
@@ -2349,7 +2429,7 @@
       "label": ".checkGraphify()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L176",
+      "source_location": "L288",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_checkgraphify",
       "community": 37,
@@ -2359,17 +2439,27 @@
       "label": ".findUvToolGraphifyCommand()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L210",
+      "source_location": "L325",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_finduvtoolgraphifycommand",
       "community": 37,
       "norm_label": ".finduvtoolgraphifycommand()"
     },
     {
+      "label": ".findUvCommand()",
+      "file_type": "code",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L351",
+      "_origin": "ast",
+      "id": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "community": 37,
+      "norm_label": ".finduvcommand()"
+    },
+    {
       "label": ".run()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L231",
+      "source_location": "L364",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_run",
       "community": 37,
@@ -2379,7 +2469,7 @@
       "label": ".fileExists()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L256",
+      "source_location": "L389",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_dependencyruntimeservice_fileexists",
       "community": 37,
@@ -2389,7 +2479,7 @@
       "label": "isCmdShim()",
       "file_type": "code",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
-      "source_location": "L266",
+      "source_location": "L399",
       "_origin": "ast",
       "id": "services_dependencyruntimeservice_iscmdshim",
       "community": 37,
@@ -4662,7 +4752,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "services_graphifycontroller_safefilepart",
-      "community": 26,
+      "community": 3,
       "norm_label": "safefilepart()"
     },
     {
@@ -4742,7 +4832,7 @@
       "source_location": "L223",
       "_origin": "ast",
       "id": "services_graphifycontroller_parseargs",
-      "community": 25,
+      "community": 54,
       "norm_label": "parseargs()"
     },
     {
@@ -4842,7 +4932,7 @@
       "source_location": "L305",
       "_origin": "ast",
       "id": "services_graphifycontroller_iscmdshim",
-      "community": 25,
+      "community": 54,
       "norm_label": "iscmdshim()"
     },
     {
@@ -4872,7 +4962,7 @@
       "source_location": "L317",
       "_origin": "ast",
       "id": "services_graphifycontroller_iscollapsibletextsource",
-      "community": 26,
+      "community": 3,
       "norm_label": "iscollapsibletextsource()"
     },
     {
@@ -4892,7 +4982,7 @@
       "source_location": "L326",
       "_origin": "ast",
       "id": "services_graphifycontroller_sanitizeinlinecommentbody",
-      "community": 26,
+      "community": 3,
       "norm_label": "sanitizeinlinecommentbody()"
     },
     {
@@ -4902,7 +4992,7 @@
       "source_location": "L334",
       "_origin": "ast",
       "id": "services_graphifycontroller_stripinlinesourcecomment",
-      "community": 26,
+      "community": 3,
       "norm_label": "stripinlinesourcecomment()"
     },
     {
@@ -4912,7 +5002,7 @@
       "source_location": "L339",
       "_origin": "ast",
       "id": "services_graphifycontroller_writeinlinesourcecomment",
-      "community": 26,
+      "community": 3,
       "norm_label": "writeinlinesourcecomment()"
     },
     {
@@ -5052,7 +5142,7 @@
       "source_location": "L484",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readgraphhtml",
-      "community": 40,
+      "community": 3,
       "norm_label": ".readgraphhtml()"
     },
     {
@@ -5162,7 +5252,7 @@
       "source_location": "L872",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listmcptools",
-      "community": 25,
+      "community": 54,
       "norm_label": ".listmcptools()"
     },
     {
@@ -5352,7 +5442,7 @@
       "source_location": "L1527",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldexportgraphhtml",
-      "community": 40,
+      "community": 25,
       "norm_label": ".shouldexportgraphhtml()"
     },
     {
@@ -5362,7 +5452,7 @@
       "source_location": "L1536",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycommandwithretry",
-      "community": 52,
+      "community": 25,
       "norm_label": ".rungraphifycommandwithretry()"
     },
     {
@@ -5402,7 +5492,7 @@
       "source_location": "L1666",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_closeserver",
-      "community": 25,
+      "community": 52,
       "norm_label": ".closeserver()"
     },
     {
@@ -5442,7 +5532,7 @@
       "source_location": "L1780",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyinvocations",
-      "community": 25,
+      "community": 54,
       "norm_label": ".getgraphifyinvocations()"
     },
     {
@@ -5452,7 +5542,7 @@
       "source_location": "L1839",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifypythoninvocations",
-      "community": 25,
+      "community": 54,
       "norm_label": ".getgraphifypythoninvocations()"
     },
     {
@@ -5462,7 +5552,7 @@
       "source_location": "L1893",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_finduvtoolgraphifycommand",
-      "community": 25,
+      "community": 54,
       "norm_label": ".finduvtoolgraphifycommand()"
     },
     {
@@ -5472,7 +5562,7 @@
       "source_location": "L1926",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_finduvtoolgraphifypythoncommand",
-      "community": 25,
+      "community": 54,
       "norm_label": ".finduvtoolgraphifypythoncommand()"
     },
     {
@@ -5482,7 +5572,7 @@
       "source_location": "L1958",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_findbundledgraphifycommand",
-      "community": 25,
+      "community": 54,
       "norm_label": ".findbundledgraphifycommand()"
     },
     {
@@ -5492,7 +5582,7 @@
       "source_location": "L1976",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_findbundledgraphifypythoncommand",
-      "community": 25,
+      "community": 54,
       "norm_label": ".findbundledgraphifypythoncommand()"
     },
     {
@@ -5602,7 +5692,7 @@
       "source_location": "L2181",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyretrymaxtokens",
-      "community": 52,
+      "community": 25,
       "norm_label": ".getgraphifyretrymaxtokens()"
     },
     {
@@ -5622,7 +5712,7 @@
       "source_location": "L2192",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getstrictretrysettings",
-      "community": 52,
+      "community": 25,
       "norm_label": ".getstrictretrysettings()"
     },
     {
@@ -5632,7 +5722,7 @@
       "source_location": "L2199",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canretrygraphifycommand",
-      "community": 52,
+      "community": 25,
       "norm_label": ".canretrygraphifycommand()"
     },
     {
@@ -5642,7 +5732,7 @@
       "source_location": "L2206",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldretrywithstrictjson",
-      "community": 52,
+      "community": 25,
       "norm_label": ".shouldretrywithstrictjson()"
     },
     {
@@ -5652,7 +5742,7 @@
       "source_location": "L2212",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_enrichgraphifyerror",
-      "community": 52,
+      "community": 25,
       "norm_label": ".enrichgraphifyerror()"
     },
     {
@@ -5662,7 +5752,7 @@
       "source_location": "L2232",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_ensuremcpclient",
-      "community": 25,
+      "community": 54,
       "norm_label": ".ensuremcpclient()"
     },
     {
@@ -5672,7 +5762,7 @@
       "source_location": "L2274",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifymcpinvocations",
-      "community": 25,
+      "community": 54,
       "norm_label": ".getgraphifymcpinvocations()"
     },
     {
@@ -5722,7 +5812,7 @@
       "source_location": "L2381",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listcallflowhtmlcandidates",
-      "community": 25,
+      "community": 40,
       "norm_label": ".listcallflowhtmlcandidates()"
     },
     {
@@ -5762,7 +5852,7 @@
       "source_location": "L2458",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_hasrawsourcefiles",
-      "community": 26,
+      "community": 25,
       "norm_label": ".hasrawsourcefiles()"
     },
     {
@@ -5782,7 +5872,7 @@
       "source_location": "L2522",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_fileexists",
-      "community": 25,
+      "community": 54,
       "norm_label": ".fileexists()"
     },
     {
@@ -5822,7 +5912,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_llmservice",
-      "community": 54,
+      "community": 32,
       "norm_label": "llmservice.ts"
     },
     {
@@ -5842,7 +5932,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "services_llmservice_graphcarddefinitioninput",
-      "community": 54,
+      "community": 32,
       "norm_label": "graphcarddefinitioninput"
     },
     {
@@ -5852,7 +5942,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "services_llmservice_graphcarddefinition",
-      "community": 54,
+      "community": 32,
       "norm_label": "graphcarddefinition"
     },
     {
@@ -5862,7 +5952,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "services_llmservice_chatmessage",
-      "community": 4,
+      "community": 32,
       "norm_label": "chatmessage"
     },
     {
@@ -5872,7 +5962,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "services_llmservice_plannedlocaltoolcall",
-      "community": 54,
+      "community": 32,
       "norm_label": "plannedlocaltoolcall"
     },
     {
@@ -5882,7 +5972,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "services_llmservice_chatcompletionresponse",
-      "community": 54,
+      "community": 32,
       "norm_label": "chatcompletionresponse"
     },
     {
@@ -5892,7 +5982,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "services_llmservice_proxychatresponse",
-      "community": 54,
+      "community": 32,
       "norm_label": "proxychatresponse"
     },
     {
@@ -5902,7 +5992,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "services_llmservice_chatcompletionchunk",
-      "community": 54,
+      "community": 32,
       "norm_label": "chatcompletionchunk"
     },
     {
@@ -5912,7 +6002,7 @@
       "source_location": "L92",
       "_origin": "ast",
       "id": "services_llmservice_requesttimeoutms",
-      "community": 54,
+      "community": 32,
       "norm_label": "requesttimeoutms"
     },
     {
@@ -5922,7 +6012,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "services_llmservice_aisettingsprovider",
-      "community": 54,
+      "community": 32,
       "norm_label": "aisettingsprovider"
     },
     {
@@ -5932,7 +6022,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "services_llmservice_tokenparametername",
-      "community": 54,
+      "community": 32,
       "norm_label": "tokenparametername"
     },
     {
@@ -5942,7 +6032,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "services_llmservice_chatattemptoptions",
-      "community": 54,
+      "community": 32,
       "norm_label": "chatattemptoptions"
     },
     {
@@ -5952,7 +6042,7 @@
       "source_location": "L107",
       "_origin": "ast",
       "id": "services_llmservice_normalizeoptionalline",
-      "community": 54,
+      "community": 32,
       "norm_label": "normalizeoptionalline()"
     },
     {
@@ -5962,7 +6052,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "services_llmservice_normalizedefinition",
-      "community": 54,
+      "community": 32,
       "norm_label": "normalizedefinition()"
     },
     {
@@ -6032,7 +6122,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "services_llmservice_extractcontentpart",
-      "community": 54,
+      "community": 32,
       "norm_label": "extractcontentpart()"
     },
     {
@@ -6042,7 +6132,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "services_llmservice_extractchatcontent",
-      "community": 54,
+      "community": 32,
       "norm_label": "extractchatcontent()"
     },
     {
@@ -6052,7 +6142,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "services_llmservice_extractproxychatcontent",
-      "community": 54,
+      "community": 32,
       "norm_label": "extractproxychatcontent()"
     },
     {
@@ -6212,7 +6302,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_localmcpserver",
-      "community": 51,
+      "community": 41,
       "norm_label": "localmcpserver.ts"
     },
     {
@@ -6222,7 +6312,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserveroptions",
-      "community": 51,
+      "community": 41,
       "norm_label": "localmcpserveroptions"
     },
     {
@@ -6232,7 +6322,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "services_localmcpserver_tooltext",
-      "community": 51,
+      "community": 41,
       "norm_label": "tooltext()"
     },
     {
@@ -6242,7 +6332,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "services_localmcpserver_readjsonbody",
-      "community": 57,
+      "community": 41,
       "norm_label": "readjsonbody()"
     },
     {
@@ -6252,7 +6342,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver",
-      "community": 57,
+      "community": 41,
       "norm_label": "localmcpserver"
     },
     {
@@ -6262,7 +6352,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_constructor",
-      "community": 51,
+      "community": 41,
       "norm_label": ".constructor()"
     },
     {
@@ -6272,7 +6362,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_start",
-      "community": 57,
+      "community": 41,
       "norm_label": ".start()"
     },
     {
@@ -6282,7 +6372,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_stop",
-      "community": 57,
+      "community": 41,
       "norm_label": ".stop()"
     },
     {
@@ -6292,7 +6382,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_getstatus",
-      "community": 57,
+      "community": 41,
       "norm_label": ".getstatus()"
     },
     {
@@ -6302,7 +6392,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_listtoolspecs",
-      "community": 51,
+      "community": 41,
       "norm_label": ".listtoolspecs()"
     },
     {
@@ -6312,7 +6402,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_calllocaltool",
-      "community": 57,
+      "community": 41,
       "norm_label": ".calllocaltool()"
     },
     {
@@ -6322,7 +6412,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_createmcpserver",
-      "community": 57,
+      "community": 41,
       "norm_label": ".createmcpserver()"
     },
     {
@@ -6332,7 +6422,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "services_localmcpserver_localmcpserver_handlerequest",
-      "community": 57,
+      "community": 41,
       "norm_label": ".handlerequest()"
     },
     {
@@ -6342,7 +6432,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_localtoolregistry",
-      "community": 51,
+      "community": 41,
       "norm_label": "localtoolregistry.ts"
     },
     {
@@ -6352,7 +6442,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "services_localtoolregistry_localtoolname",
-      "community": 51,
+      "community": 41,
       "norm_label": "localtoolname"
     },
     {
@@ -6362,7 +6452,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "services_localtoolregistry_localtoolspec",
-      "community": 51,
+      "community": 41,
       "norm_label": "localtoolspec"
     },
     {
@@ -6372,7 +6462,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_localtoolregistry_localtooldefinition",
-      "community": 51,
+      "community": 41,
       "norm_label": "localtooldefinition"
     },
     {
@@ -6382,7 +6472,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "services_localtoolregistry_searchboardtopologyschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "searchboardtopologyschema"
     },
     {
@@ -6392,7 +6482,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_localtoolregistry_fetchfilesegmentsschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "fetchfilesegmentsschema"
     },
     {
@@ -6402,7 +6492,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "services_localtoolregistry_ingestandroutefragmentschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "ingestandroutefragmentschema"
     },
     {
@@ -6412,7 +6502,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "services_localtoolregistry_exportboardplaintextschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "exportboardplaintextschema"
     },
     {
@@ -6422,7 +6512,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "services_localtoolregistry_querygraphifycontextschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "querygraphifycontextschema"
     },
     {
@@ -6432,7 +6522,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "services_localtoolregistry_explaingraphnodeschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "explaingraphnodeschema"
     },
     {
@@ -6442,7 +6532,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "services_localtoolregistry_tracegraphpathschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "tracegraphpathschema"
     },
     {
@@ -6452,7 +6542,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "services_localtoolregistry_createartifactschema",
-      "community": 51,
+      "community": 41,
       "norm_label": "createartifactschema"
     },
     {
@@ -6462,7 +6552,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "services_localtoolregistry_creategraphragtoolregistry",
-      "community": 51,
+      "community": 41,
       "norm_label": "creategraphragtoolregistry()"
     },
     {
@@ -6472,7 +6562,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "services_localtoolregistry_createlocaltoolregistry",
-      "community": 51,
+      "community": 41,
       "norm_label": "createlocaltoolregistry()"
     },
     {
@@ -6482,7 +6572,7 @@
       "source_location": "L299",
       "_origin": "ast",
       "id": "services_localtoolregistry_filterlocaltoolspecs",
-      "community": 51,
+      "community": 41,
       "norm_label": "filterlocaltoolspecs()"
     },
     {
@@ -7322,7 +7412,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_trackerservice",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerservice.ts"
     },
     {
@@ -7332,7 +7422,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "services_trackerservice_trackerstatuses",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerstatuses"
     },
     {
@@ -7342,7 +7432,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "services_trackerservice_trackerpriorities",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerpriorities"
     },
     {
@@ -7352,7 +7442,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_trackerservice_nowiso",
-      "community": 29,
+      "community": 51,
       "norm_label": "nowiso()"
     },
     {
@@ -7362,7 +7452,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "services_trackerservice_normalizestatus",
-      "community": 29,
+      "community": 51,
       "norm_label": "normalizestatus()"
     },
     {
@@ -7372,7 +7462,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "services_trackerservice_normalizepriority",
-      "community": 29,
+      "community": 51,
       "norm_label": "normalizepriority()"
     },
     {
@@ -7382,7 +7472,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "services_trackerservice_normalizetext",
-      "community": 29,
+      "community": 51,
       "norm_label": "normalizetext()"
     },
     {
@@ -7392,7 +7482,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "services_trackerservice_normalizeoptionaldate",
-      "community": 29,
+      "community": 51,
       "norm_label": "normalizeoptionaldate()"
     },
     {
@@ -7402,7 +7492,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "services_trackerservice_normalizestringarray",
-      "community": 29,
+      "community": 51,
       "norm_label": "normalizestringarray()"
     },
     {
@@ -7412,7 +7502,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "services_trackerservice_comparetickets",
-      "community": 29,
+      "community": 51,
       "norm_label": "comparetickets()"
     },
     {
@@ -7422,7 +7512,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "services_trackerservice_legacytrackertoticket",
-      "community": 29,
+      "community": 51,
       "norm_label": "legacytrackertoticket()"
     },
     {
@@ -7432,7 +7522,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice",
-      "community": 29,
+      "community": 57,
       "norm_label": "trackerservice"
     },
     {
@@ -7442,7 +7532,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_constructor",
-      "community": 29,
+      "community": 57,
       "norm_label": ".constructor()"
     },
     {
@@ -7452,7 +7542,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_initialize",
-      "community": 29,
+      "community": 57,
       "norm_label": ".initialize()"
     },
     {
@@ -7462,7 +7552,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_listtrackers",
-      "community": 29,
+      "community": 57,
       "norm_label": ".listtrackers()"
     },
     {
@@ -7472,7 +7562,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_createtracker",
-      "community": 29,
+      "community": 51,
       "norm_label": ".createtracker()"
     },
     {
@@ -7482,7 +7572,7 @@
       "source_location": "L149",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_updatetracker",
-      "community": 29,
+      "community": 51,
       "norm_label": ".updatetracker()"
     },
     {
@@ -7492,7 +7582,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_removetracker",
-      "community": 29,
+      "community": 57,
       "norm_label": ".removetracker()"
     },
     {
@@ -7502,7 +7592,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_clear",
-      "community": 29,
+      "community": 57,
       "norm_label": ".clear()"
     },
     {
@@ -7512,7 +7602,7 @@
       "source_location": "L187",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_importlegacytrackers",
-      "community": 29,
+      "community": 57,
       "norm_label": ".importlegacytrackers()"
     },
     {
@@ -7522,7 +7612,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_normalizeticket",
-      "community": 29,
+      "community": 51,
       "norm_label": ".normalizeticket()"
     },
     {
@@ -7532,7 +7622,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "services_trackerservice_trackerservice_persist",
-      "community": 29,
+      "community": 57,
       "norm_label": ".persist()"
     },
     {
@@ -8082,7 +8172,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_explorerworkbench",
-      "community": 56,
+      "community": 7,
       "norm_label": "explorerworkbench.tsx"
     },
     {
@@ -8092,7 +8182,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "components_explorerworkbench_explorerworkbenchprops",
-      "community": 56,
+      "community": 7,
       "norm_label": "explorerworkbenchprops"
     },
     {
@@ -8102,7 +8192,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "components_explorerworkbench_loadstate",
-      "community": 56,
+      "community": 7,
       "norm_label": "loadstate"
     },
     {
@@ -8112,7 +8202,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_explorerworkbench_nodeicon",
-      "community": 56,
+      "community": 7,
       "norm_label": "nodeicon()"
     },
     {
@@ -8122,7 +8212,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "components_explorerworkbench_formatdate",
-      "community": 56,
+      "community": 7,
       "norm_label": "formatdate()"
     },
     {
@@ -8132,7 +8222,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "components_explorerworkbench_displaysource",
-      "community": 56,
+      "community": 7,
       "norm_label": "displaysource()"
     },
     {
@@ -8142,7 +8232,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "components_explorerworkbench_kindlabel",
-      "community": 56,
+      "community": 7,
       "norm_label": "kindlabel()"
     },
     {
@@ -8152,7 +8242,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "components_explorerworkbench_emptydetailsnode",
-      "community": 56,
+      "community": 7,
       "norm_label": "emptydetailsnode()"
     },
     {
@@ -8162,7 +8252,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "components_explorerworkbench_treerow",
-      "community": 56,
+      "community": 7,
       "norm_label": "treerow()"
     },
     {
@@ -8172,7 +8262,7 @@
       "source_location": "L197",
       "_origin": "ast",
       "id": "components_explorerworkbench_explorerworkbench",
-      "community": 56,
+      "community": 7,
       "norm_label": "explorerworkbench()"
     },
     {
@@ -8312,7 +8402,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projectlist",
-      "community": 46,
+      "community": 58,
       "norm_label": "projectlist.tsx"
     },
     {
@@ -8322,7 +8412,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_projectlist_projectlistprops",
-      "community": 46,
+      "community": 58,
       "norm_label": "projectlistprops"
     },
     {
@@ -8332,7 +8422,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_projectlist_projectlist",
-      "community": 46,
+      "community": 58,
       "norm_label": "projectlist()"
     },
     {
@@ -8532,7 +8622,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_trackertable",
-      "community": 29,
+      "community": 56,
       "norm_label": "trackertable.tsx"
     },
     {
@@ -8542,7 +8632,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_trackertable_trackertableprops",
-      "community": 29,
+      "community": 56,
       "norm_label": "trackertableprops"
     },
     {
@@ -8552,7 +8642,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_trackertable_loadstate",
-      "community": 29,
+      "community": 56,
       "norm_label": "loadstate"
     },
     {
@@ -8562,7 +8652,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "components_trackertable_statusoptions",
-      "community": 29,
+      "community": 56,
       "norm_label": "statusoptions"
     },
     {
@@ -8572,7 +8662,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "components_trackertable_priorityoptions",
-      "community": 29,
+      "community": 56,
       "norm_label": "priorityoptions"
     },
     {
@@ -8582,7 +8672,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "components_trackertable_titlecase",
-      "community": 29,
+      "community": 56,
       "norm_label": "titlecase()"
     },
     {
@@ -8592,7 +8682,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "components_trackertable_csvcell",
-      "community": 29,
+      "community": 56,
       "norm_label": "csvcell()"
     },
     {
@@ -8602,7 +8692,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "components_trackertable_ticketstocsv",
-      "community": 29,
+      "community": 56,
       "norm_label": "ticketstocsv()"
     },
     {
@@ -8612,7 +8702,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_trackertable_trackertable",
-      "community": 29,
+      "community": 56,
       "norm_label": "trackertable()"
     },
     {
@@ -9012,7 +9102,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "stores_useprojectstore_useprojectstore",
-      "community": 46,
+      "community": 58,
       "norm_label": "useprojectstore"
     },
     {
@@ -9022,7 +9112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "stores_usetrackerstore",
-      "community": 29,
+      "community": 56,
       "norm_label": "usetrackerstore.ts"
     },
     {
@@ -9032,7 +9122,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "stores_usetrackerstore_trackerstate",
-      "community": 29,
+      "community": 56,
       "norm_label": "trackerstate"
     },
     {
@@ -9042,7 +9132,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "stores_usetrackerstore_usetrackerstore",
-      "community": 29,
+      "community": 56,
       "norm_label": "usetrackerstore"
     },
     {
@@ -9272,7 +9362,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "shared_brain_listbrainnodesinput",
-      "community": 53,
+      "community": 36,
       "norm_label": "listbrainnodesinput"
     },
     {
@@ -9352,7 +9442,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "shared_brain_ingestandroutefragmentresult",
-      "community": 0,
+      "community": 5,
       "norm_label": "ingestandroutefragmentresult"
     },
     {
@@ -9392,7 +9482,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "shared_brain_updatenodesignalsinput",
-      "community": 53,
+      "community": 47,
       "norm_label": "updatenodesignalsinput"
     },
     {
@@ -9502,7 +9592,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "shared_brain_appsettings",
-      "community": 35,
+      "community": 4,
       "norm_label": "appsettings"
     },
     {
@@ -9762,7 +9852,7 @@
       "source_location": "L410",
       "_origin": "ast",
       "id": "shared_brain_graphboardneighbor",
-      "community": 12,
+      "community": 53,
       "norm_label": "graphboardneighbor"
     },
     {
@@ -9902,7 +9992,7 @@
       "source_location": "L520",
       "_origin": "ast",
       "id": "shared_brain_trackerstatus",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerstatus"
     },
     {
@@ -9912,7 +10002,7 @@
       "source_location": "L522",
       "_origin": "ast",
       "id": "shared_brain_trackerpriority",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerpriority"
     },
     {
@@ -9922,7 +10012,7 @@
       "source_location": "L524",
       "_origin": "ast",
       "id": "shared_brain_trackerrecord",
-      "community": 29,
+      "community": 51,
       "norm_label": "trackerrecord"
     },
     {
@@ -9932,7 +10022,7 @@
       "source_location": "L538",
       "_origin": "ast",
       "id": "shared_brain_createtrackerinput",
-      "community": 29,
+      "community": 51,
       "norm_label": "createtrackerinput"
     },
     {
@@ -9942,7 +10032,7 @@
       "source_location": "L549",
       "_origin": "ast",
       "id": "shared_brain_updatetrackerinput",
-      "community": 29,
+      "community": 56,
       "norm_label": "updatetrackerinput"
     },
     {
@@ -9952,7 +10042,7 @@
       "source_location": "L561",
       "_origin": "ast",
       "id": "shared_brain_trackeringestionstatus",
-      "community": 29,
+      "community": 56,
       "norm_label": "trackeringestionstatus"
     },
     {
@@ -9982,7 +10072,7 @@
       "source_location": "L579",
       "_origin": "ast",
       "id": "shared_brain_mcpserverstatus",
-      "community": 57,
+      "community": 41,
       "norm_label": "mcpserverstatus"
     },
     {
@@ -10002,7 +10092,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "shared_ipc_windowchannels",
-      "community": 11,
+      "community": 31,
       "norm_label": "windowchannels"
     },
     {
@@ -10022,7 +10112,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "shared_ipc_brainchannels",
-      "community": 0,
+      "community": 32,
       "norm_label": "brainchannels"
     },
     {
@@ -10032,7 +10122,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannels",
-      "community": 0,
+      "community": 32,
       "norm_label": "trackerchannels"
     },
     {
@@ -10082,7 +10172,7 @@
       "source_location": "L225",
       "_origin": "ast",
       "id": "shared_ipc_researchchannels",
-      "community": 11,
+      "community": 31,
       "norm_label": "researchchannels"
     },
     {
@@ -10092,7 +10182,7 @@
       "source_location": "L233",
       "_origin": "ast",
       "id": "shared_ipc_clipboardchannels",
-      "community": 11,
+      "community": 31,
       "norm_label": "clipboardchannels"
     },
     {
@@ -10122,7 +10212,7 @@
       "source_location": "L261",
       "_origin": "ast",
       "id": "shared_ipc_runtimechannels",
-      "community": 31,
+      "community": 11,
       "norm_label": "runtimechannels"
     },
     {
@@ -10302,7 +10392,7 @@
       "source_location": "L306",
       "_origin": "ast",
       "id": "shared_ipc_graphhtmldocument",
-      "community": 1,
+      "community": 3,
       "norm_label": "graphhtmldocument"
     },
     {
@@ -10322,7 +10412,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_jsonobject",
-      "community": 58,
+      "community": 32,
       "norm_label": "jsonobject.ts"
     },
     {
@@ -10332,7 +10422,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_jsonobject_parsedjsonobject",
-      "community": 58,
+      "community": 32,
       "norm_label": "parsedjsonobject"
     },
     {
@@ -10342,7 +10432,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "shared_jsonobject_expectedjsonkeys",
-      "community": 58,
+      "community": 32,
       "norm_label": "expectedjsonkeys"
     },
     {
@@ -10352,7 +10442,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "shared_jsonobject_stripcodefence",
-      "community": 58,
+      "community": 32,
       "norm_label": "stripcodefence()"
     },
     {
@@ -10362,7 +10452,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "shared_jsonobject_extractobjecttext",
-      "community": 58,
+      "community": 32,
       "norm_label": "extractobjecttext()"
     },
     {
@@ -10372,7 +10462,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "shared_jsonobject_escapecontrolcharsinstrings",
-      "community": 58,
+      "community": 32,
       "norm_label": "escapecontrolcharsinstrings()"
     },
     {
@@ -10382,7 +10472,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "shared_jsonobject_repairloosejson",
-      "community": 58,
+      "community": 32,
       "norm_label": "repairloosejson()"
     },
     {
@@ -10392,7 +10482,7 @@
       "source_location": "L108",
       "_origin": "ast",
       "id": "shared_jsonobject_parseexpectedfields",
-      "community": 58,
+      "community": 32,
       "norm_label": "parseexpectedfields()"
     },
     {
@@ -10402,7 +10492,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "shared_jsonobject_parselocalmodeljsonobject",
-      "community": 58,
+      "community": 32,
       "norm_label": "parselocalmodeljsonobject()"
     },
     {
@@ -10492,7 +10582,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_explorer",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorer.ts"
     },
     {
@@ -10502,7 +10592,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "types_explorer_explorernodekind",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorernodekind"
     },
     {
@@ -10512,7 +10602,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "types_explorer_explorerartifactkind",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorerartifactkind"
     },
     {
@@ -10522,7 +10612,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "types_explorer_explorerartifactformat",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorerartifactformat"
     },
     {
@@ -10562,7 +10652,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "types_explorer_explorernodedetails",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorernodedetails"
     },
     {
@@ -10572,7 +10662,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "types_explorer_explorerartifactcontent",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorerartifactcontent"
     },
     {
@@ -10582,7 +10672,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "types_explorer_explorersearchinput",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorersearchinput"
     },
     {
@@ -10592,7 +10682,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "types_explorer_explorersearchresult",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorersearchresult"
     },
     {
@@ -10602,7 +10692,7 @@
       "source_location": "L83",
       "_origin": "ast",
       "id": "types_explorer_explorersourceoption",
-      "community": 31,
+      "community": 7,
       "norm_label": "explorersourceoption"
     },
     {
@@ -11206,40 +11296,60 @@
       "norm_label": "second brain"
     },
     {
-      "label": "Install",
+      "label": "Download",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L11",
+      "source_location": "L9",
       "_origin": "ast",
-      "id": "readme_install",
+      "id": "readme_download",
       "community": 34,
-      "norm_label": "install"
+      "norm_label": "download"
+    },
+    {
+      "label": "Windows Get Started",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "readme_windows_get_started",
+      "community": 34,
+      "norm_label": "windows get started"
+    },
+    {
+      "label": "macOS Apple Silicon Beta Get Started",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "readme_macos_apple_silicon_beta_get_started",
+      "community": 34,
+      "norm_label": "macos apple silicon beta get started"
     },
     {
       "label": "Connect AI",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L40",
+      "source_location": "L67",
       "_origin": "ast",
       "id": "readme_connect_ai",
       "community": 34,
       "norm_label": "connect ai"
     },
     {
-      "label": "Environment Variables",
+      "label": "Runtime Dependencies",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L61",
+      "source_location": "L88",
       "_origin": "ast",
-      "id": "readme_environment_variables",
+      "id": "readme_runtime_dependencies",
       "community": 34,
-      "norm_label": "environment variables"
+      "norm_label": "runtime dependencies"
     },
     {
       "label": "Develop",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": "L92",
+      "source_location": "L104",
       "_origin": "ast",
       "id": "readme_develop",
       "community": 34,
@@ -11947,9 +12057,9 @@
       "source_file": "package.json",
       "source_location": "L18",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "package_scripts",
-      "target": "package_scripts_package_mac_adhoc",
-      "confidence_score": 1.0
+      "target": "package_scripts_package_mac_adhoc"
     },
     {
       "relation": "contains",
@@ -18581,11 +18691,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L119",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_graphifypathcandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
       "source_location": "L247",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_dependencyruntimeservice",
       "target": "services_dependencyruntimeservice_iscmdshim"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_macbinarycandidates",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -18601,11 +18731,71 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_pythoncandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
       "source_location": "L15",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_dependencyruntimeservice",
       "target": "services_dependencyruntimeservice_repaircommandtext"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_runtimecommandcandidate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_uniquecandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_uvcandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_windowspythoncandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_windowsuserbin",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports_from",
@@ -18667,6 +18857,160 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L296",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkgraphify",
+      "target": "services_dependencyruntimeservice_uniquecandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L226",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkpython",
+      "target": "services_dependencyruntimeservice_uniquecandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L259",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkuv",
+      "target": "services_dependencyruntimeservice_uniquecandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L352",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "target": "services_dependencyruntimeservice_uniquecandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_graphifypathcandidates",
+      "target": "services_dependencyruntimeservice_windowsuserbin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_uvcandidates",
+      "target": "services_dependencyruntimeservice_windowsuserbin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_pythoncandidates",
+      "target": "services_dependencyruntimeservice_windowspythoncandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_graphifypathcandidates",
+      "target": "services_dependencyruntimeservice_macbinarycandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_pythoncandidates",
+      "target": "services_dependencyruntimeservice_macbinarycandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_uvcandidates",
+      "target": "services_dependencyruntimeservice_macbinarycandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L226",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkpython",
+      "target": "services_dependencyruntimeservice_pythoncandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L259",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkuv",
+      "target": "services_dependencyruntimeservice_uvcandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L352",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "target": "services_dependencyruntimeservice_uvcandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L294",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_checkgraphify",
+      "target": "services_dependencyruntimeservice_graphifypathcandidates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
       "source_location": "L112",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18712,6 +19056,16 @@
       "confidence_score": 1.0,
       "source": "services_dependencyruntimeservice_dependencyruntimeservice",
       "target": "services_dependencyruntimeservice_dependencyruntimeservice_fileexists"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L351",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice",
+      "target": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "confidence_score": 1.0
     },
     {
       "relation": "method",
@@ -18934,11 +19288,55 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L326",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvtoolgraphifycommand",
+      "target": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
       "source_location": "L193",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvtoolgraphifycommand",
       "target": "services_dependencyruntimeservice_dependencyruntimeservice_run"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L332",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvtoolgraphifycommand",
+      "target": "services_dependencyruntimeservice_iscmdshim",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L354",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "target": "services_dependencyruntimeservice_dependencyruntimeservice_run",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/main/services/DependencyRuntimeService.ts",
+      "source_location": "L354",
+      "weight": 1.0,
+      "source": "services_dependencyruntimeservice_dependencyruntimeservice_finduvcommand",
+      "target": "services_dependencyruntimeservice_iscmdshim",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -40297,9 +40695,9 @@
       "source_file": "MAC_TESTING_GUIDE.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mac_testing_guide",
-      "target": "mac_testing_guide_second_brain_macos_beta_testing_guide",
-      "confidence_score": 1.0
+      "target": "mac_testing_guide_second_brain_macos_beta_testing_guide"
     },
     {
       "relation": "contains",
@@ -40307,9 +40705,9 @@
       "source_file": "MAC_TESTING_GUIDE.md",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mac_testing_guide_second_brain_macos_beta_testing_guide",
-      "target": "mac_testing_guide_allow_in_system_settings",
-      "confidence_score": 1.0
+      "target": "mac_testing_guide_allow_in_system_settings"
     },
     {
       "relation": "contains",
@@ -40317,9 +40715,9 @@
       "source_file": "MAC_TESTING_GUIDE.md",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mac_testing_guide_second_brain_macos_beta_testing_guide",
-      "target": "mac_testing_guide_first_launch",
-      "confidence_score": 1.0
+      "target": "mac_testing_guide_first_launch"
     },
     {
       "relation": "contains",
@@ -40327,9 +40725,9 @@
       "source_file": "MAC_TESTING_GUIDE.md",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mac_testing_guide_second_brain_macos_beta_testing_guide",
-      "target": "mac_testing_guide_if_it_still_does_not_open",
-      "confidence_score": 1.0
+      "target": "mac_testing_guide_if_it_still_does_not_open"
     },
     {
       "relation": "contains",
@@ -40337,9 +40735,9 @@
       "source_file": "MAC_TESTING_GUIDE.md",
       "source_location": "L5",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "mac_testing_guide_second_brain_macos_beta_testing_guide",
-      "target": "mac_testing_guide_install",
-      "confidence_score": 1.0
+      "target": "mac_testing_guide_install"
     },
     {
       "relation": "contains",
@@ -40375,21 +40773,41 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L52",
+      "source_location": "L9",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "readme_second_brain",
-      "target": "readme_environment_variables"
+      "target": "readme_download",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "README.md",
-      "source_location": "L11",
+      "source_location": "L42",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "readme_second_brain",
-      "target": "readme_install"
+      "target": "readme_macos_apple_silicon_beta_get_started",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "readme_second_brain",
+      "target": "readme_runtime_dependencies",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "readme_second_brain",
+      "target": "readme_windows_get_started",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -40833,5 +41251,5 @@
       "source_file": "mockups/second-brain-live-demo/assets/vault-constellation.svg"
     }
   ],
-  "built_at_commit": "7bce52163f43f7b0914091e8559c15882eb8222e"
+  "built_at_commit": "520906d31498126130b80a6be975c7a929c17c3c"
 }

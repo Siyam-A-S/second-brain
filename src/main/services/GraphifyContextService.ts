@@ -5,6 +5,15 @@ import path from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { GraphifyContextCitation, GraphifyContextResult } from "../../shared/brain";
+import {
+  isCmdShim,
+  runtimeGraphifyCommands,
+  runtimePythonCommands,
+  runtimeUvCommands,
+  uniqueRuntimeCandidates,
+  withRuntimePath,
+  withRuntimePathRecord
+} from "./RuntimeCommandPaths";
 
 type GraphifyInvocation = {
   label: string;
@@ -113,10 +122,6 @@ function parseArgs(command: string): string[] {
   }
 
   return args;
-}
-
-function isCmdShim(filePath: string): boolean {
-  return process.platform === "win32" && /\.(cmd|bat)$/i.test(filePath);
 }
 
 function normalizeBudget(value: number | undefined): number {
@@ -436,6 +441,7 @@ export class GraphifyContextService {
         command: invocation.command,
         args: invocation.args,
         cwd: this.rawVaultPath,
+        env: withRuntimePathRecord(process.env),
         stderr: "pipe"
       });
 
@@ -496,13 +502,14 @@ export class GraphifyContextService {
       });
     }
 
-    invocations.push(
-      {
-        label: "uv tool graphifyy[all] Python",
-        command: "uv",
-        args: ["tool", "run", "--from", graphifyToolPackage, "python", ...baseArgs]
-      }
-    );
+    for (const uvCommand of runtimeUvCommands()) {
+      invocations.push({
+        label: `uv tool graphifyy[all] Python (${path.basename(uvCommand)})`,
+        command: uvCommand,
+        args: ["tool", "run", "--from", graphifyToolPackage, "python", ...baseArgs],
+        shell: isCmdShim(uvCommand)
+      });
+    }
 
     const uvPython = await this.findUvToolGraphifyPythonCommand();
     if (uvPython) {
@@ -514,20 +521,16 @@ export class GraphifyContextService {
       });
     }
 
-    invocations.push(
-      {
-        label: "Windows py Graphify MCP",
-        command: "py",
-        args: baseArgs
-      },
-      {
-        label: "python Graphify MCP",
-        command: process.platform === "win32" ? "python" : "python3",
-        args: baseArgs
-      }
-    );
+    for (const pythonCommand of runtimePythonCommands()) {
+      invocations.push({
+        label: `${path.basename(pythonCommand)} Graphify MCP`,
+        command: pythonCommand,
+        args: baseArgs,
+        shell: isCmdShim(pythonCommand)
+      });
+    }
 
-    return invocations;
+    return uniqueRuntimeCandidates(invocations);
   }
 
   private async getGraphifyInvocations(graphifyArgs: string[]): Promise<GraphifyInvocation[]> {
@@ -563,30 +566,34 @@ export class GraphifyContextService {
       });
     }
 
-    invocations.push(
-      {
-        label: "uv tool graphifyy[all]",
-        command: "uv",
-        args: ["tool", "run", "--from", graphifyToolPackage, "graphify", ...graphifyArgs]
-      },
-      {
-        label: "Windows py module",
-        command: "py",
-        args: ["-m", "graphify", ...graphifyArgs]
-      },
-      {
-        label: "python module",
-        command: process.platform === "win32" ? "python" : "python3",
-        args: ["-m", "graphify", ...graphifyArgs]
-      },
-      {
-        label: "PATH graphify",
-        command: "graphify",
-        args: graphifyArgs
-      }
-    );
+    for (const uvCommand of runtimeUvCommands()) {
+      invocations.push({
+        label: `uv tool graphifyy[all] (${path.basename(uvCommand)})`,
+        command: uvCommand,
+        args: ["tool", "run", "--from", graphifyToolPackage, "graphify", ...graphifyArgs],
+        shell: isCmdShim(uvCommand)
+      });
+    }
 
-    return invocations;
+    for (const pythonCommand of runtimePythonCommands()) {
+      invocations.push({
+        label: `${path.basename(pythonCommand)} module`,
+        command: pythonCommand,
+        args: ["-m", "graphify", ...graphifyArgs],
+        shell: isCmdShim(pythonCommand)
+      });
+    }
+
+    for (const graphifyCommand of runtimeGraphifyCommands()) {
+      invocations.push({
+        label: `graphify executable (${path.basename(graphifyCommand)})`,
+        command: graphifyCommand,
+        args: graphifyArgs,
+        shell: isCmdShim(graphifyCommand)
+      });
+    }
+
+    return uniqueRuntimeCandidates(invocations);
   }
 
   private async findBundledGraphifyCommand(): Promise<string | null> {
@@ -629,9 +636,19 @@ export class GraphifyContextService {
   private async findUvToolGraphifyCommand(): Promise<string | null> {
     let uvToolDir = "";
 
-    try {
-      uvToolDir = await this.execCapture("uv", ["tool", "dir"], { cwd: this.rawVaultPath });
-    } catch {
+    for (const uvCommand of runtimeUvCommands()) {
+      try {
+        uvToolDir = await this.execCapture(uvCommand, ["tool", "dir"], {
+          cwd: this.rawVaultPath,
+          shell: isCmdShim(uvCommand)
+        });
+        break;
+      } catch {
+        // Try the next uv candidate.
+      }
+    }
+
+    if (!uvToolDir) {
       return null;
     }
 
@@ -653,9 +670,19 @@ export class GraphifyContextService {
   private async findUvToolGraphifyPythonCommand(): Promise<string | null> {
     let uvToolDir = "";
 
-    try {
-      uvToolDir = await this.execCapture("uv", ["tool", "dir"], { cwd: this.rawVaultPath });
-    } catch {
+    for (const uvCommand of runtimeUvCommands()) {
+      try {
+        uvToolDir = await this.execCapture(uvCommand, ["tool", "dir"], {
+          cwd: this.rawVaultPath,
+          shell: isCmdShim(uvCommand)
+        });
+        break;
+      } catch {
+        // Try the next uv candidate.
+      }
+    }
+
+    if (!uvToolDir) {
       return null;
     }
 
@@ -856,7 +883,7 @@ export class GraphifyContextService {
           ...options,
           maxBuffer: maxExecBuffer,
           windowsHide: true,
-          env: process.env
+          env: withRuntimePath(process.env)
         },
         (error, stdout, stderr) => {
           const combined = [stdout, stderr].filter(Boolean).join("\n").trim();
