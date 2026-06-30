@@ -66,3 +66,57 @@ jobs:
           }
 
           gh release view $tag --json url --jq .url --repo $env:GITHUB_REPOSITORY
+
+  macos-release:
+    name: Build and publish macOS arm64 dmg
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build macOS Apple Silicon ad-hoc DMG
+        run: npm run package:mac:adhoc
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          ASSET="release/Second Brain-$VERSION-mac-arm64.dmg"
+          TITLE="Second Brain $VERSION"
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            TAG="v$VERSION"
+          fi
+
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "Tag $TAG does not match package version $VERSION. Expected v$VERSION."
+            exit 1
+          fi
+
+          if ! [ -f "$ASSET" ]; then
+            echo "Expected release asset was not created: $ASSET"
+            find release -maxdepth 2 -type f -print || true
+            exit 1
+          fi
+
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "$TITLE" --generate-notes --repo "$GITHUB_REPOSITORY" || true
+
+          gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit "$TAG" --title "$TITLE" --repo "$GITHUB_REPOSITORY"
+
+          gh release view "$TAG" --json url --jq .url --repo "$GITHUB_REPOSITORY"

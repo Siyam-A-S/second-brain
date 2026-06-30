@@ -5,6 +5,7 @@ import type { AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } f
 type SettingsPanelProps = {
   open: boolean;
   onClose: () => void;
+  onSettingsSaved?: (settings: AppSettings) => void;
 };
 
 function numberValue(value: string, fallback: number): number {
@@ -12,7 +13,7 @@ function numberValue(value: string, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Element | null {
+export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelProps): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [dependencyReport, setDependencyReport] = useState<ResearchDependencyReport | null>(null);
   const [runtimeStatus, setRuntimeStatus] = useState<DependencyRuntimeStatus | null>(null);
@@ -72,9 +73,11 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
           model: settings.ai.model
         },
         managedProxy: settings.managedProxy,
-        graphify: settings.graphify
+        graphify: settings.graphify,
+        appearance: settings.appearance
       });
       setSettings(saved);
+      onSettingsSaved?.(saved);
       setStatus("Settings saved.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to save settings.";
@@ -170,6 +173,31 @@ export function SettingsPanel({ open, onClose }: SettingsPanelProps): JSX.Elemen
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <div className="grid gap-5 lg:grid-cols-2">
+            <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
+              <div className="mb-4 flex items-center gap-2">
+                <Settings size={17} className="text-slate-500" />
+                <h3 className="text-sm font-semibold text-slate-950">Appearance</h3>
+              </div>
+              <label className="flex items-center justify-between gap-4 rounded-md border border-slate-200 bg-white/65 px-3 py-2 text-sm font-semibold text-slate-700">
+                Flip top bar horizontally
+                <input
+                  checked={settings?.appearance.topBarMirrored ?? false}
+                  className="h-4 w-4 accent-slate-950"
+                  type="checkbox"
+                  onChange={(event) =>
+                    setSettings((current) =>
+                      current
+                        ? {
+                            ...current,
+                            appearance: { ...current.appearance, topBarMirrored: event.target.checked }
+                          }
+                        : current
+                    )
+                  }
+                />
+              </label>
+            </section>
+
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center gap-2">
                 <Cloud size={17} className="text-slate-500" />

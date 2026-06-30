@@ -175,21 +175,28 @@ export type GraphifyRuntimeSettings = {
   paperComponents: boolean;
 };
 
+export type AppearanceSettings = {
+  topBarMirrored: boolean;
+};
+
 export type AppSettings = {
   aiMode: AiMode;
   ai: AiSettings;
   managedProxy: ManagedProxySettings;
   graphify: GraphifyRuntimeSettings;
+  appearance: AppearanceSettings;
   updatedAt: string;
 };
 
 export type UpdateGraphifyRuntimeSettingsInput = Partial<GraphifyRuntimeSettings>;
+export type UpdateAppearanceSettingsInput = Partial<AppearanceSettings>;
 
 export type UpdateAppSettingsInput = {
   aiMode?: AiMode | undefined;
   ai?: UpdateAiSettingsInput | undefined;
   managedProxy?: UpdateManagedProxySettingsInput | undefined;
   graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;
+  appearance?: UpdateAppearanceSettingsInput | undefined;
 };
 
 export type GraphifyContextCitation = {

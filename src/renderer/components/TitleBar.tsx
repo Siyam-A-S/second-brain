@@ -4,6 +4,7 @@ export type ThemeMode = "classic" | "keypiphy";
 
 type TitleBarProps = {
   accentHue: number;
+  mirrored: boolean;
   onOpenSettings: () => void;
   onAccentHueChange: (hue: number) => void;
   onThemeModeChange: (mode: ThemeMode) => void;
@@ -12,13 +13,18 @@ type TitleBarProps = {
 
 export function TitleBar({
   accentHue,
+  mirrored,
   onOpenSettings,
   onAccentHueChange,
   onThemeModeChange,
   themeMode
 }: TitleBarProps): JSX.Element {
   return (
-    <header className="drag-region material-frosted flex h-11 shrink-0 items-center justify-between border-b border-black/10 bg-frame px-3">
+    <header
+      className={`drag-region material-frosted flex h-11 shrink-0 items-center justify-between border-b border-black/10 bg-frame px-3 ${
+        mirrored ? "flex-row-reverse" : ""
+      }`}
+    >
       <div className="flex items-center gap-3">
         <div className="h-3 w-3 rounded-full bg-led shadow-[0_0_8px_var(--color-led-status),inset_0_1px_1px_rgba(255,255,255,0.7)]" />
         <span className="font-mono text-sm font-semibold tracking-normal text-led">Second Brain</span>

@@ -119,3 +119,40 @@ For **topic and subtopic cards**, Graphify itself gives the raw ingredients, not
 - `god_nodes` from report/analysis -> likely pinned or high-importance cards
 
 Important: the app does **not yet convert Graphify communities into board topic/subtopic cards**. It currently updates Graphify and uses MCP for Job Tracker extraction. The next architectural step is a `GraphifyBoardService` that reads `graph.json`, maps communities to `OrganizedBoardTopic[]`, and lets you configure clustering/card rules like “community as topic”, “source file as topic”, or “job/company as topic.”
+
+
+
+-------
+
+When structuring a production-ready application that queries large amounts of graph data, **Option 1 (Quick, frequent calls with short payloads) is significantly more economical** than dumping large, infrequent payloads into the context window.
+
+Here is the breakdown of the token economics on Vertex AI and how to optimize your proxy server's architecture for the lowest cost.
+
+### 1. The Math Behind Short/Frequent Calls
+
+Input tokens on Gemini Flash models are extraordinarily cheap, but output tokens are more expensive. Using a "pre-flight" or query-rewriting step is a classic cost-saving pattern.
+
+If you make a fast, focused call to extract 3–6 search keywords (using maybe 50–100 input tokens and generating 10 output tokens), the cost is fractions of a cent. However, this tiny investment allows you to query your semantic graph with high precision. By only pulling the exact nodes and edges the user cares about into the final generation prompt, you might reduce your primary prompt from 80,000 input tokens down to 2,000. The tokens saved on the final generation heavily outweigh the tiny cost of the quick pre-flight call.
+
+### 2. The Trap of Large/Infrequent Payloads
+
+Because Gemini Flash has a massive context window (1M+ tokens), it is tempting to just dump the conversational history, the unoptimized user prompt, and a huge swath of graph context into a single call and let the LLM sort it out.
+
+The problem is that you pay for every input token. If your backend is processing massive PDFs, spreadsheets, or long transcripts, sending unoptimized "fat" payloads will quickly burn through your token budget, hit rate limits, and artificially increase latency, negating the speed benefits of the Flash architecture.
+
+### 3. The Exception: Vertex AI Context Caching
+
+There is one scenario where large payloads become highly economical: **Static Context Caching**.
+
+Vertex AI natively supports Context Caching (both implicit and explicit). If your proxy server handles requests by passing a massive, unchanging payload—such as deep system instructions, global schema definitions, or a static baseline knowledge graph—Vertex AI recognizes the repeated prefix.
+
+* **The Discount:** Cached input tokens receive a **~90% discount** compared to standard input pricing.
+* **How to use it:** If you structure your proxy to always put the massive, static context at the very top of the prompt, and append the short, dynamic conversational turns at the bottom, Vertex will automatically cache the heavy top portion.
+
+### The Ideal Architecture
+
+For the most economical scaling, combine both strategies in your proxy endpoint:
+
+1. **Pre-flight:** Use a quick, zero-temperature Flash call to formulate precise search queries from the user's prompt.
+2. **Focused Retrieval:** Use those keywords to extract a tight, relevant subgraph.
+3. **Cached System Prompt:** When sending the final generation call, keep the heavy system instructions and formatting rules perfectly static at the top of the prompt to trigger Vertex AI's 90% caching discount, appending only the focused graph data and the user's question at the bottom.

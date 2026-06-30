@@ -15,8 +15,11 @@ import type {
   ProcessDroppedItem,
   SaveChatArtifactInput
 } from "../../shared/brain";
-import { LlmService, type ChatMessage as LlmChatMessage } from "./LlmService";
+import { parseLocalModelJsonObject } from "../../shared/jsonObject";
+import type { CreateToolArtifactInput } from "./ArtifactToolService";
+import { LlmService, type ChatMessage as LlmChatMessage, type PlannedLocalToolCall } from "./LlmService";
 import { LocalMcpServer } from "./LocalMcpServer";
+import type { LocalToolName, LocalToolSpec } from "./LocalToolRegistry";
 
 type AppSettingsProvider = () => Promise<AppSettings>;
 type ArtifactIngestor = (items: ProcessDroppedItem[]) => Promise<GraphifyIngestionResult>;
@@ -104,8 +107,16 @@ type ToolArtifactResultLike = {
 
 const defaultContextBudget = 2600;
 const requestTimeoutMs = Number(process.env.SECOND_BRAIN_MANAGED_PROXY_TIMEOUT_MS ?? 180_000);
+const artifactPlanTimeoutMs = Number(process.env.SECOND_BRAIN_ARTIFACT_PLAN_TIMEOUT_MS ?? 30_000);
 const maxStoredMessagesPerThread = 80;
 const artifactDirectoryName = "artifacts";
+const artifactToolNames: LocalToolName[] = [
+  "create_markdown_artifact",
+  "create_pdf_artifact",
+  "create_docx_artifact",
+  "create_xlsx_artifact",
+  "create_image_artifact"
+];
 
 function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -151,6 +162,22 @@ function extractProxyText(payload: ProxyResponse): string {
     choice?.text?.trim() ||
     ""
   );
+}
+
+function normalizeSearchQuery(value: string, fallback: string): string {
+  const cleaned = value
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/^(keywords?|query|search query):\s*/i, "")
+    .replace(/^[\s*•-]+/gm, "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/[,\[\]"]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned || fallback;
 }
 
 function errorMessage(error: unknown): string {
@@ -235,10 +262,42 @@ function requestedArtifactFor(question: string): RequestedArtifact | null {
   return null;
 }
 
+function requestedDocumentType(question: string): string {
+  const normalized = question.toLowerCase();
+  if (/\b(cover letter|letter)\b/.test(normalized)) {
+    return "letter";
+  }
+  if (/\b(resume|résumé|cv|curriculum vitae)\b/.test(normalized)) {
+    return "resume";
+  }
+  if (/\b(summary|summarize|brief)\b/.test(normalized)) {
+    return "summary";
+  }
+  if (/\b(report|analysis|memo)\b/.test(normalized)) {
+    return "report";
+  }
+  if (/\b(proposal|pitch)\b/.test(normalized)) {
+    return "proposal";
+  }
+  if (/\b(invoice|receipt)\b/.test(normalized)) {
+    return "invoice";
+  }
+  if (/\b(spreadsheet|xlsx|excel|table)\b/.test(normalized)) {
+    return "spreadsheet";
+  }
+  if (/\b(image|diagram|svg|picture)\b/.test(normalized)) {
+    return "diagram";
+  }
+  return "document";
+}
+
 function artifactTitleFromQuestion(question: string): string {
   return (
     compact(question)
-      .replace(/\b(please|create|generate|make|build|export|downloadable|file|pdf|docx|xlsx|markdown|image|diagram)\b/gi, " ")
+      .replace(
+        /\b(please|create|generate|make|build|export|downloadable|file|pdf|docx|xlsx|markdown|image|diagram|resume|summary|letter|report|proposal)\b/gi,
+        " "
+      )
       .replace(/[^\w .-]+/g, " ")
       .replace(/\s+/g, " ")
       .trim()
@@ -249,6 +308,41 @@ function artifactTitleFromQuestion(question: string): string {
 function artifactFileName(title: string, extension: string): string {
   const base = safeFilePart(title).replace(/\.[^.]+$/, "");
   return `${base || "chat-artifact"}${extension}`;
+}
+
+function artifactPlannerSystemPrompt(tools: LocalToolSpec[]): string {
+  return [
+    "You are Second Brain's local artifact planner.",
+    "Choose exactly one enabled local MCP artifact tool and return one raw JSON object only.",
+    "Schema: {\"tool\":\"tool_name\",\"input\":{\"title\":\"string\",\"filename\":\"string\",\"documentType\":\"letter|summary|resume|report|proposal|invoice|spreadsheet|diagram|document\",\"text\":\"complete artifact body as Markdown or SVG\"},\"reason\":\"short reason\"}.",
+    "The artifact body must be the actual downloadable document content, not a transcript of the chat answer.",
+    "For PDF, DOCX, and Markdown, write structured Markdown with headings, sections, bullets, and tables where useful.",
+    "For letters, use date, recipient or salutation when known, body paragraphs, closing, and signature placeholder.",
+    "For summaries, use Overview, Key Points, Details, and Next Steps.",
+    "For resumes, use name/contact if known, Professional Summary, Skills, Experience, Education, and Projects or Certifications when useful.",
+    "For reports, use Executive Summary, Findings, Recommendations, and Appendix/Notes when useful.",
+    "For spreadsheets, make the text a Markdown table.",
+    "For diagrams/images, provide complete SVG markup in text unless binary contentBase64 is available.",
+    "Use the enabled tool schema literally. Do not include prose, markdown fences, or explanations outside JSON.",
+    "",
+    "Enabled local artifact tools:",
+    JSON.stringify(
+      tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchemaJson
+      }))
+    )
+  ].join("\n");
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function stringField(record: Record<string, unknown>, key: string): string {
+  const value = record[key];
+  return typeof value === "string" ? value.trim() : "";
 }
 
 export class ChatService {
@@ -382,8 +476,10 @@ export class ChatService {
     };
     thread.messages.push(userMessage);
 
-    const graphify = await this.queryGraphify(text, input.budget);
-    const assistant = await this.completeWithSelectedProvider(thread, text, graphify);
+    const settings = await this.settingsProvider();
+    const searchQuery = await this.formulateSearchQuery(thread, text, settings);
+    const graphify = await this.queryGraphify(searchQuery, input.budget);
+    const assistant = await this.completeWithSelectedProvider(thread, text, graphify, settings);
     thread.messages.push(assistant);
     thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
     thread.updatedAt = new Date().toISOString();
@@ -446,7 +542,9 @@ export class ChatService {
     });
 
     try {
-      const graphify = await this.queryGraphify(text, input.budget);
+      const settings = await this.settingsProvider();
+      const searchQuery = await this.formulateSearchQuery(thread, text, settings);
+      const graphify = await this.queryGraphify(searchQuery, input.budget);
       assistant.grounding = { graphify };
       emit({
         type: "grounding",
@@ -459,7 +557,6 @@ export class ChatService {
         assistant.content = "Graphify context retrieval failed, so I did not send this question to the configured AI endpoint.";
         assistant.error = graphify.error;
       } else {
-        const settings = await this.settingsProvider();
         if (settings.aiMode === "proxy") {
           const response = await this.requestProxy(thread, text, graphify, settings);
           const model = proxyModel(settings);
@@ -474,7 +571,10 @@ export class ChatService {
             api: proxyResponseMetadata(response, model)
           };
           assistant.artifacts = await this.createProxyArtifacts(thread.id, assistant.id, response);
-          const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, content);
+          const toolArtifact =
+            assistant.artifacts.length === 0
+              ? await this.createRequestedArtifact(thread.id, assistant.id, text, content, graphify, settings)
+              : null;
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
           }
@@ -510,7 +610,7 @@ export class ChatService {
             },
             abortController.signal
           );
-          const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, assistant.content);
+          const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, assistant.content, graphify, settings);
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
             emit({ type: "artifact", generationId, messageId: assistant.id, artifact: toolArtifact });
@@ -565,14 +665,95 @@ export class ChatService {
   private async completeWithSelectedProvider(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult
+    graphify: GraphifyContextResult,
+    settings?: AppSettings
   ): Promise<ChatMessage> {
-    const settings = await this.settingsProvider();
-    if (settings.aiMode !== "proxy") {
-      return this.completeWithLocalEndpoint(thread, question, graphify, settings);
+    const effectiveSettings = settings ?? (await this.settingsProvider());
+    if (effectiveSettings.aiMode !== "proxy") {
+      return this.completeWithLocalEndpoint(thread, question, graphify, effectiveSettings);
     }
 
-    return this.completeWithManagedProxy(thread, question, graphify, settings);
+    return this.completeWithManagedProxy(thread, question, graphify, effectiveSettings);
+  }
+
+  private async formulateSearchQuery(thread: ChatThread, question: string, settings: AppSettings): Promise<string> {
+    const history = thread.messages;
+    const recentHistory =
+      history.length > 0 && history[history.length - 1]?.role === "user" && history[history.length - 1]?.content.trim() === question
+        ? history.slice(0, -1)
+        : history;
+    const messages: LlmChatMessage[] = [
+      {
+        role: "system",
+        content:
+          "You are a search optimizer. Generate a concise search query (3-6 keywords) to find relevant context for the user's latest message in a semantic graph. Consider the conversation history. Do NOT answer the question. Return ONLY the keywords separated by spaces, without quotes or conversational filler."
+      },
+      ...recentHistory.slice(-4).map<LlmChatMessage>((message) => ({
+        role: message.role === "assistant" ? "assistant" : "user",
+        content: message.content
+      })),
+      { role: "user", content: question }
+    ];
+
+    try {
+      if (settings.aiMode === "proxy") {
+        const proxy = settings.managedProxy;
+        const secret = proxySecret(settings);
+        const model = proxyModel(settings);
+        if (!proxy.endpoint.trim() || !secret) {
+          return question;
+        }
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const requestId = randomUUID();
+        try {
+          const response = await fetch(proxy.endpoint, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${secret}`,
+              "Content-Type": "application/json",
+              "X-Second-Brain-Request-Id": requestId
+            },
+            body: JSON.stringify({
+              userIdOrKey: secret,
+              model,
+              requestId,
+              messages,
+              temperature: 0.1,
+              max_tokens: 30
+            }),
+            signal: controller.signal
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) {
+            console.warn(`Proxy search formulation failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 500)}`);
+            return question;
+          }
+
+          const parsed = JSON.parse(responseText) as ProxyResponse;
+          const text = extractProxyText(parsed);
+          return text ? normalizeSearchQuery(text, question) : question;
+        } catch (error) {
+          console.warn("Proxy search formulation failed, falling back to original question.", error);
+        } finally {
+          clearTimeout(timeout);
+        }
+
+        return question;
+      }
+
+      const llm = new LlmService(async () => settings.ai);
+      const text = await llm.completeText({
+        messages,
+        method: { temperature: 0.1, maxTokens: 30 }
+      });
+      return normalizeSearchQuery(text, question);
+    } catch (error) {
+      console.warn("Search formulation failed, using raw question.", error);
+      return question;
+    }
   }
 
   private async completeWithLocalEndpoint(
@@ -604,7 +785,7 @@ export class ChatService {
         messages: this.buildGroundedMessages(thread, question, graphify)
       });
       const messageId = randomUUID();
-      const artifacts = await this.createRequestedArtifactList(thread.id, messageId, question, text);
+      const artifacts = await this.createRequestedArtifactList(thread.id, messageId, question, text, graphify, settings);
 
       return {
         id: messageId,
@@ -681,7 +862,8 @@ export class ChatService {
 
       const messageId = randomUUID();
       const artifacts = await this.createProxyArtifacts(thread.id, messageId, response);
-      const toolArtifact = await this.createRequestedArtifact(thread.id, messageId, question, text);
+      const toolArtifact =
+        artifacts.length === 0 ? await this.createRequestedArtifact(thread.id, messageId, question, text, graphify, settings) : null;
       const allArtifacts = toolArtifact ? [...artifacts, toolArtifact] : artifacts;
 
       return {
@@ -772,8 +954,9 @@ export class ChatService {
           "You are Second Brain Chat.",
           "Answer using the local Graphify context first.",
           "If the context is insufficient, say what is missing.",
-          "You can create downloadable files through Second Brain local artifact tools.",
-          "When the user asks for a PDF, DOCX, XLSX, image, or Markdown file, draft the complete artifact content in your answer; the app will attach the requested file automatically.",
+          "You can create downloadable files through Second Brain local artifact tools after your answer.",
+          "When the user asks for a PDF, DOCX, XLSX, image, or Markdown file, do not refuse; answer briefly and include the essential requirements or source details needed for the artifact.",
+          "Second Brain will run a local artifact planning tool after generation to create the formatted downloadable file.",
           "Do not say you cannot create or save files just because you are text-based.",
           "Preserve source grounding from the provided Graphify output.",
           "Use the Relevant local excerpts section as the only quoted source text.",
@@ -852,9 +1035,11 @@ export class ChatService {
     threadId: string,
     messageId: string,
     question: string,
-    content: string
+    content: string,
+    graphify: GraphifyContextResult,
+    settings: AppSettings
   ): Promise<ChatArtifact[]> {
-    const artifact = await this.createRequestedArtifact(threadId, messageId, question, content);
+    const artifact = await this.createRequestedArtifact(threadId, messageId, question, content, graphify, settings);
     return artifact ? [artifact] : [];
   }
 
@@ -862,25 +1047,33 @@ export class ChatService {
     threadId: string,
     messageId: string,
     question: string,
-    content: string
+    content: string,
+    graphify: GraphifyContextResult,
+    settings: AppSettings
   ): Promise<ChatArtifact | null> {
     const request = requestedArtifactFor(question);
     if (!request || !content.trim()) {
       return null;
     }
 
-    const availableTools = new Set<string>(this.mcpServer.listToolSpecs().map((tool) => tool.name));
+    const availableTools = new Set<string>(this.mcpServer.listToolSpecs(artifactToolNames).map((tool) => tool.name));
     if (!availableTools.has(request.tool)) {
       return null;
     }
 
-    const title = artifactTitleFromQuestion(question);
-    const result = (await this.mcpServer.callLocalTool(request.tool, {
+    const planned = await this.planRequestedArtifact(question, content, graphify, settings, request);
+    const title = planned?.input.title?.trim() || artifactTitleFromQuestion(question);
+    const toolName = planned?.tool && availableTools.has(planned.tool) ? planned.tool : request.tool;
+    const input: CreateToolArtifactInput = {
       title,
-      filename: artifactFileName(title, request.extension),
-      text: content,
-      mimeType: request.mimeType
-    })) as ToolArtifactResultLike;
+      filename: planned?.input.filename?.trim() || artifactFileName(title, request.extension),
+      text: planned?.input.text?.trim() || content,
+      contentBase64: planned?.input.contentBase64,
+      mimeType: planned?.input.mimeType?.trim() || request.mimeType,
+      documentType: planned?.input.documentType?.trim() || requestedDocumentType(question)
+    };
+
+    const result = (await this.mcpServer.callLocalTool(toolName, input)) as ToolArtifactResultLike;
 
     const storagePath = typeof result.storagePath === "string" ? result.storagePath : "";
     if (!storagePath) {
@@ -901,6 +1094,154 @@ export class ChatService {
       storagePath,
       createdAt: typeof result.createdAt === "string" ? result.createdAt : new Date().toISOString(),
       source: "local-tool"
+    };
+  }
+
+  private async planRequestedArtifact(
+    question: string,
+    answer: string,
+    graphify: GraphifyContextResult,
+    settings: AppSettings,
+    request: RequestedArtifact
+  ): Promise<{ tool: string; input: CreateToolArtifactInput } | null> {
+    const tools = this.mcpServer.listToolSpecs(artifactToolNames);
+    if (tools.length === 0) {
+      return null;
+    }
+
+    const prompt = JSON.stringify({
+      user_request: question,
+      preferred_tool: request.tool,
+      preferred_document_type: requestedDocumentType(question),
+      preferred_filename: artifactFileName(artifactTitleFromQuestion(question), request.extension),
+      assistant_answer: answer,
+      graphify_context_excerpt: graphify.stdout.slice(0, 5000),
+      instruction:
+        "Create the actual artifact content. Keep chat framing out of the artifact. Preserve useful source facts, but write a polished document layout for the requested artifact type."
+    });
+
+    try {
+      const planned =
+        settings.aiMode === "proxy"
+          ? await this.planProxyArtifactToolCall(settings, tools, prompt)
+          : await new LlmService(async () => settings.ai).planLocalToolCall({
+              systemPrompt: artifactPlannerSystemPrompt(tools),
+              userPrompt: prompt,
+              tools,
+              method: {
+                temperature: 0.2,
+                maxTokens: 3500,
+                jsonMode: true
+              }
+            });
+
+      return this.normalizeArtifactPlan(planned, request, question, answer);
+    } catch (error) {
+      console.warn("Artifact planning failed, falling back to formatted assistant content.", error);
+      return null;
+    }
+  }
+
+  private async planProxyArtifactToolCall(
+    settings: AppSettings,
+    tools: LocalToolSpec[],
+    userPrompt: string
+  ): Promise<PlannedLocalToolCall> {
+    const proxy = settings.managedProxy;
+    const secret = proxySecret(settings);
+    const model = proxyModel(settings);
+    if (!proxy.endpoint.trim() || !secret) {
+      throw new Error("Managed proxy artifact planning is not configured.");
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), artifactPlanTimeoutMs);
+    const requestId = randomUUID();
+
+    try {
+      const response = await fetch(proxy.endpoint, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${secret}`,
+          "Content-Type": "application/json",
+          "X-Second-Brain-Request-Id": requestId
+        },
+        body: JSON.stringify({
+          userIdOrKey: secret,
+          model,
+          requestId,
+          messages: [
+            {
+              role: "system",
+              content: artifactPlannerSystemPrompt(tools)
+            },
+            {
+              role: "user",
+              content: userPrompt
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 3500
+        }),
+        signal: controller.signal
+      });
+
+      const responseText = await response.text();
+      if (!response.ok) {
+        throw new Error(`Managed proxy artifact planning failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 1000)}`);
+      }
+
+      const parsed = parseLocalModelJsonObject(extractProxyText(JSON.parse(responseText) as ProxyResponse) || responseText);
+      const tool = parsed.tool ?? parsed.name;
+      const input = parsed.input ?? parsed.arguments ?? parsed.parameters;
+      if (typeof tool !== "string" || !tool.trim() || !input || typeof input !== "object" || Array.isArray(input)) {
+        throw new Error("Managed proxy did not return a valid local artifact tool call.");
+      }
+
+      return {
+        tool: tool.trim(),
+        input,
+        reason: typeof parsed.reason === "string" ? parsed.reason : undefined
+      };
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(`Managed proxy artifact planning timed out after ${Math.round(artifactPlanTimeoutMs / 1000)} seconds.`);
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private normalizeArtifactPlan(
+    planned: PlannedLocalToolCall,
+    request: RequestedArtifact,
+    question: string,
+    answer: string
+  ): { tool: string; input: CreateToolArtifactInput } | null {
+    const inputRecord = asRecord(planned.input);
+    if (!inputRecord) {
+      return null;
+    }
+
+    const title = stringField(inputRecord, "title") || artifactTitleFromQuestion(question);
+    const text = stringField(inputRecord, "text") || stringField(inputRecord, "markdown") || stringField(inputRecord, "content") || answer;
+    const documentType = stringField(inputRecord, "documentType") || stringField(inputRecord, "document_type") || requestedDocumentType(question);
+    const filename = stringField(inputRecord, "filename") || artifactFileName(title, request.extension);
+    const mimeType = stringField(inputRecord, "mimeType") || stringField(inputRecord, "mime_type") || request.mimeType;
+    const contentBase64 = stringField(inputRecord, "contentBase64") || stringField(inputRecord, "content_base64") || undefined;
+
+    return {
+      tool: planned.tool || request.tool,
+      input: {
+        title,
+        filename,
+        text,
+        contentBase64,
+        mimeType,
+        documentType
+      }
     };
   }
 

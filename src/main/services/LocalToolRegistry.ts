@@ -78,7 +78,8 @@ const createArtifactSchema = {
   title: z.string().optional(),
   text: z.string().optional(),
   contentBase64: z.string().optional(),
-  mimeType: z.string().optional()
+  mimeType: z.string().optional(),
+  documentType: z.string().optional()
 };
 
 export function createGraphRagToolRegistry(graphRag: GraphRagService): LocalToolDefinition[] {
@@ -234,7 +235,11 @@ export function createLocalToolRegistry(options: {
           title: { type: "string" },
           text: { type: "string" },
           contentBase64: { type: "string" },
-          mimeType: { type: "string" }
+          mimeType: { type: "string" },
+          documentType: {
+            type: "string",
+            description: "Document layout hint such as letter, summary, resume, report, proposal, invoice, spreadsheet, or diagram."
+          }
         }
       },
       execute: async (input) =>
@@ -253,28 +258,28 @@ export function createLocalToolRegistry(options: {
       artifactTool(
         "create_markdown_artifact",
         "Create Markdown artifact",
-        "Create a Markdown chat artifact from text.",
+        "Create a Markdown chat artifact from structured Markdown text. Use documentType to request letter, summary, resume, report, proposal, or similar layout.",
         ".md",
         "text/markdown"
       ),
       artifactTool(
         "create_pdf_artifact",
         "Create PDF artifact",
-        "Create a PDF artifact. Prefer contentBase64 containing PDF bytes; text is saved as a fallback.",
+        "Create a formatted PDF artifact from structured Markdown text, or from contentBase64 containing PDF bytes. Use documentType for letter, summary, resume, report, proposal, or similar layout.",
         ".pdf",
         "application/pdf"
       ),
       artifactTool(
         "create_docx_artifact",
         "Create DOCX artifact",
-        "Create a DOCX artifact. Prefer contentBase64 containing DOCX bytes; text is saved as a fallback.",
+        "Create a formatted DOCX artifact from structured Markdown text, or from contentBase64 containing DOCX bytes. Use documentType for letter, summary, resume, report, proposal, or similar layout.",
         ".docx",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ),
       artifactTool(
         "create_xlsx_artifact",
         "Create XLSX artifact",
-        "Create an XLSX artifact. Prefer contentBase64 containing XLSX bytes; text is saved as a fallback.",
+        "Create an XLSX artifact from a Markdown table or structured rows in text, or from contentBase64 containing XLSX bytes.",
         ".xlsx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       ),

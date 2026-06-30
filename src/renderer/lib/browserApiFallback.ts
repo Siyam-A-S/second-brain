@@ -86,6 +86,9 @@ let browserAppSettings: AppSettings = {
     cardDefinitionMaxPerPass: 24,
     paperComponents: true
   },
+  appearance: {
+    topBarMirrored: false
+  },
   updatedAt: new Date().toISOString()
 };
 const browserThreads: ChatThread[] = [];
@@ -690,6 +693,10 @@ const browserApiFallback: SecondBrainApi = {
         graphify: {
           ...browserAppSettings.graphify,
           ...input.graphify
+        },
+        appearance: {
+          ...browserAppSettings.appearance,
+          ...input.appearance
         },
         managedProxy: {
           ...browserAppSettings.managedProxy,

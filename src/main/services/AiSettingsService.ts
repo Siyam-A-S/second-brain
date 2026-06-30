@@ -3,6 +3,7 @@ import path from "node:path";
 import type {
   AiMode,
   AiSettings,
+  AppearanceSettings,
   AppSettings,
   GraphifyRuntimeSettings,
   ManagedProxySettings,
@@ -25,6 +26,9 @@ const defaultGraphifySettings: GraphifyRuntimeSettings = {
   cardDefinitions: true,
   cardDefinitionMaxPerPass: 24,
   paperComponents: true
+};
+const defaultAppearanceSettings: AppearanceSettings = {
+  topBarMirrored: false
 };
 
 function normalizeEndpoint(value: string | undefined): string {
@@ -137,6 +141,14 @@ function normalizeGraphifySettings(value: unknown, useEnvironment = true): Graph
   };
 }
 
+function normalizeAppearanceSettings(value: unknown): AppearanceSettings {
+  const parsed = asRecord(value);
+
+  return {
+    topBarMirrored: booleanSetting(parsed.topBarMirrored, defaultAppearanceSettings.topBarMirrored)
+  };
+}
+
 export class AiSettingsService {
   private readonly settingsPath: string;
 
@@ -202,6 +214,7 @@ export class AiSettingsService {
         },
         managedProxy: legacyProxy,
         graphify: normalizeGraphifySettings(parsed.graphify),
+        appearance: normalizeAppearanceSettings(parsed.appearance),
         updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
       };
 
@@ -250,6 +263,10 @@ export class AiSettingsService {
         ...current.graphify,
         ...input.graphify
       }, false),
+      appearance: normalizeAppearanceSettings({
+        ...current.appearance,
+        ...input.appearance
+      }),
       updatedAt: new Date().toISOString()
     };
 
@@ -270,6 +287,7 @@ export class AiSettingsService {
       },
       managedProxy: normalizeManagedProxySettings(undefined),
       graphify: normalizeGraphifySettings(undefined),
+      appearance: normalizeAppearanceSettings(undefined),
       updatedAt: new Date().toISOString()
     };
   }

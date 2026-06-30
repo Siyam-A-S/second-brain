@@ -8,6 +8,7 @@ export type CreateToolArtifactInput = {
   text?: string | undefined;
   contentBase64?: string | undefined;
   mimeType?: string | undefined;
+  documentType?: string | undefined;
 };
 
 export type ToolArtifactResult = {
@@ -131,7 +132,15 @@ function zipStore(entries: Array<{ name: string; content: string | Buffer }>): B
 }
 
 function pdfEscape(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  return value
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/[^\t\n\r\x20-\x7E]/g, " ")
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
 }
 
 function wrapLines(value: string, max = 86): string[] {
@@ -150,30 +159,166 @@ function wrapLines(value: string, max = 86): string[] {
     }
     lines.push(current);
   }
-  return lines.slice(0, 46);
+  return lines;
 }
 
-function renderPdf(text: string, title: string): Buffer {
-  const lines = wrapLines(`# ${title}\n\n${text || "Generated artifact."}`);
-  const content = [
-    "BT",
-    "/F1 11 Tf",
-    "50 760 Td",
-    ...lines.flatMap((line, index) => [
-      index === 0 ? "" : "0 -16 Td",
-      `(${pdfEscape(line)}) Tj`
-    ]),
-    "ET"
-  ]
-    .filter(Boolean)
-    .join("\n");
+type DocumentLine = {
+  kind: "heading1" | "heading2" | "heading3" | "bullet" | "numbered" | "blank" | "paragraph";
+  text: string;
+};
 
+function normalizedDocumentType(value: string | undefined): string {
+  const normalized = (value ?? "").toLowerCase().replace(/[^a-z0-9 -]+/g, " ").trim();
+  if (/cover letter|letter/.test(normalized)) {
+    return "letter";
+  }
+  if (/resume|cv|curriculum/.test(normalized)) {
+    return "resume";
+  }
+  if (/summary|brief/.test(normalized)) {
+    return "summary";
+  }
+  if (/report|analysis/.test(normalized)) {
+    return "report";
+  }
+  if (/proposal/.test(normalized)) {
+    return "proposal";
+  }
+  if (/invoice/.test(normalized)) {
+    return "invoice";
+  }
+  return normalized || "document";
+}
+
+function hasSectionStructure(value: string): boolean {
+  return /^#{1,3}\s+\S/m.test(value) || /^\s*[-*]\s+\S/m.test(value) || /^\s*\|.+\|\s*$/m.test(value);
+}
+
+function applyDocumentLayout(text: string, title: string, documentType: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return `# ${title}\n\nGenerated artifact.`;
+  }
+
+  if (hasSectionStructure(trimmed)) {
+    return /^#\s+/m.test(trimmed) ? trimmed : `# ${title}\n\n${trimmed}`;
+  }
+
+  const paragraphs = trimmed
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const body = paragraphs.join("\n\n");
+
+  if (documentType === "letter") {
+    return [`# ${title}`, "", new Date().toLocaleDateString("en-US"), "", "Dear Recipient,", "", body, "", "Sincerely,", "", "[Your Name]"].join("\n");
+  }
+
+  if (documentType === "resume") {
+    return [`# ${title}`, "", "## Professional Summary", "", body, "", "## Skills", "", "- Add relevant skills", "", "## Experience", "", "- Add relevant experience", "", "## Education", "", "- Add education details"].join("\n");
+  }
+
+  if (documentType === "summary") {
+    return [`# ${title}`, "", "## Overview", "", body, "", "## Key Points", "", "- Main point", "- Supporting detail", "", "## Next Steps", "", "- Follow up as needed"].join("\n");
+  }
+
+  if (documentType === "proposal") {
+    return [`# ${title}`, "", "## Objective", "", body, "", "## Approach", "", "- Proposed work", "", "## Deliverables", "", "- Deliverable", "", "## Timeline", "", "- Next milestone"].join("\n");
+  }
+
+  if (documentType === "report") {
+    return [`# ${title}`, "", "## Executive Summary", "", body, "", "## Findings", "", "- Finding", "", "## Recommendations", "", "- Recommendation"].join("\n");
+  }
+
+  return `# ${title}\n\n${body}`;
+}
+
+function parseDocumentLines(markdown: string): DocumentLine[] {
+  return markdown.replace(/\r/g, "").split("\n").map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      return { kind: "blank", text: "" };
+    }
+    const heading = /^(#{1,3})\s+(.+)$/.exec(trimmed);
+    if (heading) {
+      const level = heading[1]?.length ?? 1;
+      return {
+        kind: level === 1 ? "heading1" : level === 2 ? "heading2" : "heading3",
+        text: heading[2]?.trim() ?? ""
+      };
+    }
+    const bullet = /^[-*]\s+(.+)$/.exec(trimmed);
+    if (bullet) {
+      return { kind: "bullet", text: bullet[1]?.trim() ?? "" };
+    }
+    const numbered = /^\d+[.)]\s+(.+)$/.exec(trimmed);
+    if (numbered) {
+      return { kind: "numbered", text: numbered[1]?.trim() ?? "" };
+    }
+    return { kind: "paragraph", text: trimmed };
+  });
+}
+
+function renderPdf(markdown: string, title: string): Buffer {
+  const document = parseDocumentLines(markdown || `# ${title}\n\nGenerated artifact.`);
+  const pageStreams: string[] = [];
+  let operations: string[] = [];
+  let y = 760;
+  let ordered = 1;
+
+  function newPage(): void {
+    if (operations.length > 0) {
+      pageStreams.push(operations.join("\n"));
+    }
+    operations = [];
+    y = 760;
+    ordered = 1;
+  }
+
+  function drawLine(text: string, font: "F1" | "F2", size: number, x: number): void {
+    if (y < 58) {
+      newPage();
+    }
+    operations.push("BT", `/${font} ${size} Tf`, `${x} ${y} Td`, `(${pdfEscape(text)}) Tj`, "ET");
+    y -= Math.round(size * 1.55);
+  }
+
+  for (const line of document) {
+    if (line.kind === "blank") {
+      y -= 8;
+      continue;
+    }
+
+    const font = line.kind.startsWith("heading") ? "F2" : "F1";
+    const size = line.kind === "heading1" ? 20 : line.kind === "heading2" ? 15 : line.kind === "heading3" ? 12 : 11;
+    const prefix = line.kind === "bullet" ? "- " : line.kind === "numbered" ? `${ordered++}. ` : "";
+    const max = line.kind.startsWith("heading") ? 54 : 86;
+    for (const wrapped of wrapLines(`${prefix}${line.text}`, max)) {
+      drawLine(wrapped, font, size, line.kind === "bullet" || line.kind === "numbered" ? 66 : 50);
+    }
+    if (line.kind.startsWith("heading")) {
+      y -= 4;
+    }
+  }
+
+  if (operations.length > 0 || pageStreams.length === 0) {
+    pageStreams.push(operations.join("\n"));
+  }
+
+  const pageStart = 5;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    `<< /Type /Pages /Kids [${pageStreams.map((_, index) => `${pageStart + index * 2} 0 R`).join(" ")}] /Count ${pageStreams.length} >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    `<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+    ...pageStreams.flatMap((content, index) => {
+      const pageObjectId = pageStart + index * 2;
+      const contentObjectId = pageObjectId + 1;
+      return [
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentObjectId} 0 R >>`,
+        `<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`
+      ];
+    })
   ];
   const chunks = ["%PDF-1.4\n"];
   const offsets = [0];
@@ -190,10 +335,23 @@ function renderPdf(text: string, title: string): Buffer {
   return Buffer.from(chunks.join(""), "binary");
 }
 
-function renderDocx(text: string, title: string): Buffer {
-  const paragraphs = [`# ${title}`, "", text || "Generated artifact."].join("\n").split(/\n+/);
-  const body = paragraphs
-    .map((paragraph) => `<w:p><w:r><w:t xml:space="preserve">${escapeXml(paragraph)}</w:t></w:r></w:p>`)
+function docxParagraph(line: DocumentLine, orderedIndex: number): string {
+  if (line.kind === "blank") {
+    return "<w:p/>";
+  }
+
+  const isHeading = line.kind.startsWith("heading");
+  const size = line.kind === "heading1" ? "32" : line.kind === "heading2" ? "26" : line.kind === "heading3" ? "22" : "22";
+  const prefix = line.kind === "bullet" ? "- " : line.kind === "numbered" ? `${orderedIndex}. ` : "";
+  const runProperties = `<w:rPr>${isHeading ? "<w:b/>" : ""}<w:sz w:val="${size}"/></w:rPr>`;
+  const paragraphProperties = `<w:pPr><w:spacing w:after="${isHeading ? "180" : "100"}"/></w:pPr>`;
+  return `<w:p>${paragraphProperties}<w:r>${runProperties}<w:t xml:space="preserve">${escapeXml(prefix + line.text)}</w:t></w:r></w:p>`;
+}
+
+function renderDocx(markdown: string, title: string): Buffer {
+  let ordered = 1;
+  const body = parseDocumentLines(markdown || `# ${title}\n\nGenerated artifact.`)
+    .map((line) => docxParagraph(line, line.kind === "numbered" ? ordered++ : ordered))
     .join("");
   return zipStore([
     {
@@ -213,12 +371,45 @@ function renderDocx(text: string, title: string): Buffer {
   ]);
 }
 
-function renderXlsx(text: string, title: string): Buffer {
-  const rows = [`# ${title}`, "", text || "Generated artifact."]
-    .join("\n")
-    .split(/\n/)
+function markdownTableRows(markdown: string): string[][] {
+  const tableLines = markdown
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|") && line.endsWith("|") && !/^\|?\s*:?-{3,}/.test(line.replace(/\|/g, "")));
+
+  return tableLines.map((line) =>
+    line
+      .replace(/^\||\|$/g, "")
+      .split("|")
+      .map((cell) => cell.trim())
+  );
+}
+
+function columnName(index: number): string {
+  let value = "";
+  let current = index + 1;
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    value = String.fromCharCode(65 + remainder) + value;
+    current = Math.floor((current - 1) / 26);
+  }
+  return value;
+}
+
+function renderXlsx(markdown: string, title: string): Buffer {
+  const rows = markdownTableRows(markdown);
+  const fallbackRows = parseDocumentLines(markdown || `# ${title}\n\nGenerated artifact.`)
+    .filter((line) => line.kind !== "blank")
     .slice(0, 200)
-    .map((line, index) => `<row r="${index + 1}"><c r="A${index + 1}" t="inlineStr"><is><t>${escapeXml(line)}</t></is></c></row>`)
+    .map((line) => [line.kind.startsWith("heading") ? line.text : line.kind === "bullet" ? `- ${line.text}` : line.text]);
+  const sheetRows = (rows.length > 0 ? rows : fallbackRows).slice(0, 500);
+  const sheetData = sheetRows
+    .map(
+      (cells, rowIndex) =>
+        `<row r="${rowIndex + 1}">${cells
+          .map((cell, cellIndex) => `<c r="${columnName(cellIndex)}${rowIndex + 1}" t="inlineStr"><is><t>${escapeXml(cell)}</t></is></c>`)
+          .join("")}</row>`
+    )
     .join("");
   return zipStore([
     {
@@ -243,12 +434,16 @@ function renderXlsx(text: string, title: string): Buffer {
     },
     {
       name: "xl/worksheets/sheet1.xml",
-      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${rows}</sheetData></worksheet>`
+      content: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetData}</sheetData></worksheet>`
     }
   ]);
 }
 
 function renderSvg(text: string, title: string): Buffer {
+  if (/^\s*<svg[\s>]/i.test(text)) {
+    return Buffer.from(text, "utf8");
+  }
+
   const lines = wrapLines(text || "Generated artifact.", 58).slice(0, 12);
   const textNodes = lines
     .map((line, index) => `<text x="40" y="${116 + index * 28}" font-size="18" fill="#0f172a">${escapeXml(line)}</text>`)
@@ -278,18 +473,20 @@ export class ArtifactToolService {
 
     const parsed = path.parse(filename);
     const outputPath = path.join(directory, `${parsed.name}-${Date.now()}-${randomUUID().slice(0, 8)}${parsed.ext}`);
+    const documentType = normalizedDocumentType(input.documentType);
     const text = input.text ?? defaults.fallbackText ?? "";
+    const laidOutText = applyDocumentLayout(text, title, documentType);
     const buffer = input.contentBase64
       ? bufferFromInput(input, text)
       : defaults.extension === ".pdf"
-        ? renderPdf(text, title)
+        ? renderPdf(laidOutText, title)
         : defaults.extension === ".docx"
-          ? renderDocx(text, title)
+          ? renderDocx(laidOutText, title)
           : defaults.extension === ".xlsx"
-            ? renderXlsx(text, title)
+            ? renderXlsx(laidOutText, title)
             : defaults.extension === ".svg"
               ? renderSvg(text, title)
-              : bufferFromInput(input, text);
+              : bufferFromInput({ ...input, text: laidOutText }, laidOutText);
     await writeFile(outputPath, buffer);
     const fileStat = await stat(outputPath);
 

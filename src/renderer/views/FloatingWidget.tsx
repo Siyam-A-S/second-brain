@@ -330,8 +330,8 @@ export function FloatingWidget(): JSX.Element {
           backgroundColor: toneColors[tone],
           boxShadow:
             isDropActive || isIngesting
-              ? "0 28px 70px rgba(69, 55, 35, 0.3)"
-              : "0 20px 54px rgba(69, 55, 35, 0.18)",
+              ? "0 16px 34px rgba(69, 55, 35, 0.2)"
+              : "0 12px 26px rgba(69, 55, 35, 0.12)",
           scale: isDropActive || isDragging || isIngesting ? 1.25 : 1
         }}
         className="relative grid h-14 w-14 place-items-center rounded-full border border-white/80"
@@ -341,7 +341,7 @@ export function FloatingWidget(): JSX.Element {
           damping: 20
         }}
         whileHover={{
-          boxShadow: "0 30px 76px rgba(69, 55, 35, 0.32)",
+          boxShadow: "0 18px 38px rgba(69, 55, 35, 0.22)",
           scale: 1.25
         }}
       >

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ProcessDroppedItemsResult } from "../../shared/ipc";
+import type { AppSettings, ProcessDroppedItemsResult } from "../../shared/ipc";
 import type { ThemeMode } from "../components/TitleBar";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
@@ -14,6 +14,9 @@ type ActiveView = "graph" | "chat" | "explorer" | "tracker";
 
 const themeStorageKey = "second-brain.themeMode";
 const accentHueStorageKey = "second-brain.accentHue";
+const activeViewStorageKey = "second-brain.activeView";
+const leftPanelCollapsedStorageKey = "second-brain.leftPanelCollapsed";
+const topBarMirroredStorageKey = "second-brain.topBarMirrored";
 const defaultAccentHue = 110;
 const themeVariableNames = [
   "--color-frame",
@@ -49,6 +52,24 @@ function initialAccentHue(): number {
   return Number.isFinite(stored) && stored >= 0 && stored <= 360 ? stored : defaultAccentHue;
 }
 
+function initialActiveView(): ActiveView {
+  if (typeof window === "undefined") {
+    return "graph";
+  }
+
+  const stored = window.localStorage.getItem(activeViewStorageKey);
+  return stored === "graph" || stored === "chat" || stored === "explorer" || stored === "tracker" ? stored : "graph";
+}
+
+function initialStoredBoolean(storageKey: string, fallback = false): boolean {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  const stored = window.localStorage.getItem(storageKey);
+  return stored === null ? fallback : stored === "true";
+}
+
 function wrapHue(hue: number): number {
   return ((hue % 360) + 360) % 360;
 }
@@ -71,11 +92,12 @@ function keypiphyPaletteFromHue(hue: number): Record<string, string> {
 
 export function MainApp(): JSX.Element {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [activeView, setActiveView] = useState<ActiveView>("graph");
+  const [activeView, setActiveView] = useState<ActiveView>(initialActiveView);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(() => initialStoredBoolean(leftPanelCollapsedStorageKey));
   const [themeMode, setThemeMode] = useState<ThemeMode>(initialThemeMode);
   const [accentHue, setAccentHue] = useState(initialAccentHue);
+  const [topBarMirrored, setTopBarMirrored] = useState(() => initialStoredBoolean(topBarMirroredStorageKey));
 
   useEffect(() => {
     const root = document.documentElement;
@@ -94,6 +116,34 @@ export function MainApp(): JSX.Element {
     window.localStorage.setItem(themeStorageKey, themeMode);
     window.localStorage.setItem(accentHueStorageKey, String(accentHue));
   }, [accentHue, themeMode]);
+
+  useEffect(() => {
+    window.localStorage.setItem(activeViewStorageKey, activeView);
+  }, [activeView]);
+
+  useEffect(() => {
+    window.localStorage.setItem(leftPanelCollapsedStorageKey, String(leftPanelCollapsed));
+  }, [leftPanelCollapsed]);
+
+  useEffect(() => {
+    window.localStorage.setItem(topBarMirroredStorageKey, String(topBarMirrored));
+  }, [topBarMirrored]);
+
+  useEffect(() => {
+    let mounted = true;
+    void window.api.settings
+      .getApp()
+      .then((settings) => {
+        if (mounted) {
+          setTopBarMirrored(settings.appearance.topBarMirrored);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -124,13 +174,17 @@ export function MainApp(): JSX.Element {
 
   function handleProjectChanged(): void {
     setRefreshKey((key) => key + 1);
-    setActiveView("graph");
+  }
+
+  function handleSettingsSaved(settings: AppSettings): void {
+    setTopBarMirrored(settings.appearance.topBarMirrored);
   }
 
   return (
     <div className="keyboard-frame flex h-full flex-col bg-frame text-textMain">
       <TitleBar
         accentHue={accentHue}
+        mirrored={topBarMirrored}
         themeMode={themeMode}
         onAccentHueChange={setAccentHue}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -186,18 +240,25 @@ export function MainApp(): JSX.Element {
               Tracker
             </button>
           </div>
-          {activeView === "graph" ? (
-            <GraphBoardRenderer refreshKey={refreshKey} />
-          ) : activeView === "chat" ? (
-            <ChatWorkbench refreshKey={refreshKey} />
-          ) : activeView === "explorer" ? (
-            <ExplorerWorkbench refreshKey={refreshKey} />
-          ) : (
-            <TrackerTable refreshKey={refreshKey} />
-          )}
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+            <section className={activeView === "graph" ? "flex min-h-0 min-w-0 flex-1 flex-col" : "hidden min-h-0 min-w-0 flex-1 flex-col"}>
+              <GraphBoardRenderer refreshKey={refreshKey} />
+            </section>
+            <section className={activeView === "chat" ? "flex min-h-0 min-w-0 flex-1 flex-col" : "hidden min-h-0 min-w-0 flex-1 flex-col"}>
+              <ChatWorkbench refreshKey={refreshKey} />
+            </section>
+            <section
+              className={activeView === "explorer" ? "flex min-h-0 min-w-0 flex-1 flex-col" : "hidden min-h-0 min-w-0 flex-1 flex-col"}
+            >
+              <ExplorerWorkbench refreshKey={refreshKey} />
+            </section>
+            <section className={activeView === "tracker" ? "flex min-h-0 min-w-0 flex-1 flex-col" : "hidden min-h-0 min-w-0 flex-1 flex-col"}>
+              <TrackerTable refreshKey={refreshKey} />
+            </section>
+          </div>
         </div>
       </div>
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} onSettingsSaved={handleSettingsSaved} />
     </div>
   );
 }
