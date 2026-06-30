@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782855360.239919,
-    "ast_hash": "be40b07311d39e90fc3b85244bb63546",
+    "mtime": 1782855634.0516725,
+    "ast_hash": "471849034e1d3bf8fd60c3f9e860671d",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
