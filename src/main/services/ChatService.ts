@@ -126,6 +126,21 @@ function titleFromMessage(value: string): string {
   return compact(value).slice(0, 80) || "New Chat";
 }
 
+function createFreshThread(title = "New Chat"): ChatThread {
+  const now = new Date().toISOString();
+  return {
+    id: randomUUID(),
+    title,
+    messages: [],
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function isFreshUnusedThread(thread: ChatThread): boolean {
+  return thread.messages.length === 0;
+}
+
 function extractContentPart(value: unknown): string {
   if (typeof value === "string") {
     return value;
@@ -373,14 +388,12 @@ export class ChatService {
 
   async createThread(input: { title?: string | undefined } = {}): Promise<ChatThread> {
     const state = await this.requireState();
-    const now = new Date().toISOString();
-    const thread: ChatThread = {
-      id: randomUUID(),
-      title: input.title?.trim() || "New Chat",
-      messages: [],
-      createdAt: now,
-      updatedAt: now
-    };
+    const existingFreshThread = state.threads.find(isFreshUnusedThread);
+    if (existingFreshThread) {
+      return existingFreshThread;
+    }
+
+    const thread = createFreshThread(input.title?.trim() || "New Chat");
 
     state.threads.unshift(thread);
     await this.writeState();
@@ -1320,6 +1333,13 @@ export class ChatService {
       };
     } catch {
       this.state = { threads: [] };
+    }
+
+    const freshThread = this.state.threads.find(isFreshUnusedThread);
+    if (freshThread) {
+      freshThread.updatedAt = new Date().toISOString();
+    } else {
+      this.state.threads.unshift(createFreshThread());
     }
   }
 

@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/TitleBar.tsx": {
-    "mtime": 1782847631.7068799,
-    "ast_hash": "20353a8ada3788ba1ea097500de03419",
+    "mtime": 1782945251.196378,
+    "ast_hash": "173668c4f21d64ebb185e3404c2b85a7",
     "semantic_hash": ""
   },
   "src/renderer/components/TopicCanvas.tsx": {
@@ -80,8 +80,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1782847576.089294,
-    "ast_hash": "6115ced74fa01489b6119a7d0edb80a8",
+    "mtime": 1782945277.30853,
+    "ast_hash": "44f6d66399dc5e37479d1eff9bbb8820",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -100,7 +100,7 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1782847620.8927684,
+    "mtime": 1782945272.1535,
     "ast_hash": "12ebc9653330fca42aef5c67dfd7e370",
     "semantic_hash": ""
   },
@@ -315,23 +315,23 @@
     "semantic_hash": ""
   },
   "src/main/services/ExplorerService.ts": {
-    "mtime": 1782236619.1598415,
-    "ast_hash": "357b53f4a19dd0847b6bae44874e0f7c",
+    "mtime": 1782945227.9242423,
+    "ast_hash": "24424df184da110afeef6d4083b53a52",
     "semantic_hash": ""
   },
   "src/renderer/components/ExplorerWorkbench.tsx": {
-    "mtime": 1782236632.6178856,
-    "ast_hash": "610612ab6d6926e2feec142920a2cee5",
+    "mtime": 1782945316.7907593,
+    "ast_hash": "4b55be268bbf5ab959e8b8e1de2474cf",
     "semantic_hash": ""
   },
   "src/shared/types/explorer.ts": {
-    "mtime": 1781762647.5752172,
-    "ast_hash": "595076858bc02549c87a8631080026fe",
+    "mtime": 1782945216.7831771,
+    "ast_hash": "44da85f9e8c74dad0eef5621f458e667",
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1782881743.6018717,
-    "ast_hash": "75b71267a0bee049201cdc88c1d4b58b",
+    "mtime": 1782945341.7049038,
+    "ast_hash": "1d404b907094f02fedf8a2a9dde61d4c",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782269067.4060473,
-    "ast_hash": "7265afe38b8c8611a98bf7569d22366c",
+    "mtime": 1782945262.9484465,
+    "ast_hash": "2fb7810e028bf386f6c7b61d89758981",
     "semantic_hash": ""
   },
   "proxy/main.py": {

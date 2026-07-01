@@ -57,6 +57,46 @@ const browserExplorerTree: ExplorerNode[] = [
     summary: "Browser preview source.",
     childrenCount: 1,
     isExpandable: true
+  },
+  {
+    id: "source:architecture-brief.pdf",
+    title: "architecture-brief.pdf",
+    kind: "source",
+    sourceFile: "research/architecture-brief.pdf",
+    type: "PDF",
+    summary: "Preview PDF source.",
+    childrenCount: 1,
+    isExpandable: true
+  },
+  {
+    id: "source:interface-snapshot.png",
+    title: "interface-snapshot.png",
+    kind: "source",
+    sourceFile: "images/interface-snapshot.png",
+    type: "PNG",
+    summary: "Preview image source.",
+    childrenCount: 1,
+    isExpandable: true
+  },
+  {
+    id: "source:survey-results.xlsx",
+    title: "survey-results.xlsx",
+    kind: "source",
+    sourceFile: "data/survey-results.xlsx",
+    type: "XLSX",
+    summary: "Preview spreadsheet source.",
+    childrenCount: 1,
+    isExpandable: true
+  },
+  {
+    id: "source:demo-walkthrough.mov",
+    title: "demo-walkthrough.mov",
+    kind: "source",
+    sourceFile: "clips/demo-walkthrough.mov",
+    type: "MOV",
+    summary: "Preview video source.",
+    childrenCount: 1,
+    isExpandable: true
   }
 ];
 let browserAiSettings = {
@@ -91,7 +131,47 @@ let browserAppSettings: AppSettings = {
   },
   updatedAt: new Date().toISOString()
 };
-const browserThreads: ChatThread[] = [];
+function createBrowserPreviewThread(title = "New Chat"): ChatThread {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    title,
+    messages: [],
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function unusedFreshThread(): ChatThread | undefined {
+  return browserThreads.find((thread) => thread.messages.length === 0);
+}
+
+const browserThreads: ChatThread[] = [createBrowserPreviewThread()];
+
+function browserExplorerNode(nodeId: string): ExplorerNode | undefined {
+  return browserExplorerTree.find((node) => node.id === nodeId);
+}
+
+function browserExplorerChild(node: ExplorerNode): ExplorerNode {
+  const base = node.sourceFile ?? node.title;
+  const title = base.split(/[\\/]/).filter(Boolean).at(-1) ?? node.title;
+  return {
+    id: `graph:${encodeURIComponent(base)}`,
+    title: `${title.replace(/\.[^.]+$/, "")} context`,
+    kind: "entity",
+    sourceFile: base,
+    graphNodeId: `browser-preview:${base}`,
+    type: node.type ?? "source",
+    summary: "Preview-only graph node.",
+    childrenCount: 0,
+    isExpandable: false
+  };
+}
+
+function browserExplorerChildren(nodeId: string): ExplorerNode[] {
+  const node = browserExplorerNode(nodeId);
+  return node?.isExpandable ? [browserExplorerChild(node)] : [];
+}
 
 function browserEffectiveAiSettings() {
   if (browserAppSettings.aiMode === "proxy") {
@@ -586,25 +666,11 @@ const browserApiFallback: SecondBrainApi = {
   },
   explorer: {
     getRoot: async () => browserExplorerTree,
-    getChildren: async (nodeId: string) =>
-      nodeId === "source:browser-preview.txt"
-        ? [
-            {
-              id: "graph:browser-preview-fragment",
-              title: "Browser Preview Fragment",
-              kind: "entity",
-              sourceFile: "browser-preview.txt",
-              graphNodeId: "browser-preview-fragment",
-              type: "fragment",
-              summary: "Preview-only graph node.",
-              childrenCount: 0,
-              isExpandable: false
-            }
-          ]
-        : [],
+    getChildren: async (nodeId: string) => browserExplorerChildren(nodeId),
     getDetails: async (nodeId: string) => ({
       node:
-        browserExplorerTree.find((node) => node.id === nodeId) ?? {
+        browserExplorerNode(nodeId) ??
+        browserExplorerTree.map(browserExplorerChild).find((node) => node.id === nodeId) ?? {
           id: nodeId,
           title: "Browser Preview Fragment",
           kind: "entity",
@@ -618,15 +684,13 @@ const browserApiFallback: SecondBrainApi = {
       relationGroups: []
     }),
     search: async (input: ExplorerSearchInput) =>
-      browserExplorerTree
+      [...browserExplorerTree, ...browserExplorerTree.map(browserExplorerChild)]
         .filter((node) => node.title.toLowerCase().includes(input.query.trim().toLowerCase()))
         .map((node) => ({ ...node, score: 1 })),
-    getSourceOptions: async () => [
-      {
-        sourceFile: "browser-preview.txt",
-        title: "browser-preview.txt"
-      }
-    ],
+    getSourceOptions: async () => browserExplorerTree.map((node) => ({
+      sourceFile: node.sourceFile ?? node.title,
+      title: node.title
+    })),
     getArtifactContent: async (artifactId: string) => ({
       artifactId,
       title: "Browser Preview Artifact",
@@ -723,8 +787,18 @@ const browserApiFallback: SecondBrainApi = {
     }
   },
   chat: {
-    listThreads: async () => browserThreads,
+    listThreads: async () => {
+      if (browserThreads.length === 0) {
+        browserThreads.unshift(createBrowserPreviewThread());
+      }
+      return browserThreads;
+    },
     createThread: async (input) => {
+      const existingFreshThread = unusedFreshThread();
+      if (existingFreshThread) {
+        return existingFreshThread;
+      }
+
       const now = new Date().toISOString();
       const thread: ChatThread = {
         id: crypto.randomUUID(),
@@ -748,6 +822,10 @@ const browserApiFallback: SecondBrainApi = {
           updatedAt: now
         };
         browserThreads.unshift(thread);
+      }
+
+      if (thread.messages.length === 0 && (thread.title === "New Chat" || thread.title === "Browser Preview Chat")) {
+        thread.title = input.message.slice(0, 80) || "Browser Preview Chat";
       }
 
       thread.messages.push({

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { app } from "electron";
 import type {
   ExplorerArtifactContent,
   ExplorerArtifactFormat,
@@ -263,6 +264,8 @@ function compactPreview(content: string): string {
 }
 
 export class ExplorerService {
+  private readonly fileIconCache = new Map<string, string | undefined>();
+
   constructor(
     private readonly rawVaultPath: string,
     private readonly graphPath: string
@@ -652,6 +655,7 @@ export class ExplorerService {
       type: path.extname(sourceFile).replace(/^\./, "").toUpperCase() || "FILE",
       summary: comment || sourceFile,
       modifiedAt,
+      systemIconDataUrl: await this.fileIconDataUrl(sourceFile),
       childrenCount,
       isExpandable: childrenCount > 0
     };
@@ -1122,6 +1126,23 @@ export class ExplorerService {
       return await readFile(path.join(this.rawVaultPath, sourceCommentDirectoryName, sourceCommentFileName(sourceFile)), "utf8");
     } catch {
       return "";
+    }
+  }
+
+  private async fileIconDataUrl(sourceFile: string): Promise<string | undefined> {
+    const absolutePath = this.resolveRawPath(sourceFile);
+    if (this.fileIconCache.has(absolutePath)) {
+      return this.fileIconCache.get(absolutePath);
+    }
+
+    try {
+      const icon = await app.getFileIcon(absolutePath, { size: "small" });
+      const dataUrl = icon.isEmpty() ? undefined : icon.toDataURL();
+      this.fileIconCache.set(absolutePath, dataUrl);
+      return dataUrl;
+    } catch {
+      this.fileIconCache.set(absolutePath, undefined);
+      return undefined;
     }
   }
 

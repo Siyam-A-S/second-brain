@@ -4,6 +4,8 @@ export type ThemeMode = "classic" | "keypiphy";
 
 type TitleBarProps = {
   accentHue: number;
+  colorizeLabel?: string | undefined;
+  mirrorControlOrder?: boolean | undefined;
   mirrored: boolean;
   onOpenSettings: () => void;
   onAccentHueChange: (hue: number) => void;
@@ -13,6 +15,8 @@ type TitleBarProps = {
 
 export function TitleBar({
   accentHue,
+  colorizeLabel = "Colorize",
+  mirrorControlOrder = true,
   mirrored,
   onOpenSettings,
   onAccentHueChange,
@@ -25,13 +29,13 @@ export function TitleBar({
         mirrored ? "flex-row-reverse" : ""
       }`}
     >
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center gap-3 ${mirrored && mirrorControlOrder ? "flex-row-reverse" : ""}`}>
         <div className="h-3 w-3 rounded-full bg-led shadow-[0_0_8px_var(--color-led-status),inset_0_1px_1px_rgba(255,255,255,0.7)]" />
         <span className="font-mono text-sm font-semibold tracking-normal text-led">Second Brain</span>
       </div>
 
-      <div className="no-drag flex items-center gap-2">
-        <div className="hidden items-center rounded-xl bg-keycap p-1 shadow-keycap min-[760px]:flex">
+      <div className={`no-drag flex items-center gap-2 ${mirrored && mirrorControlOrder ? "flex-row-reverse" : ""}`}>
+        <div className={`hidden items-center rounded-xl bg-keycap p-1 shadow-keycap min-[760px]:flex ${mirrored && mirrorControlOrder ? "flex-row-reverse" : ""}`}>
           <button
             className={`rounded-lg px-2 py-1 font-mono text-[11px] font-semibold transition active:translate-y-[1px] ${
               themeMode === "classic" ? "bg-white/70 text-highlight shadow-inner" : "text-legend hover:text-highlight"
@@ -48,17 +52,17 @@ export function TitleBar({
             type="button"
             onClick={() => onThemeModeChange("keypiphy")}
           >
-            Keypiphy
+            {colorizeLabel}
           </button>
           <label
-            className={`ml-1 flex items-center overflow-hidden rounded-lg bg-white/35 shadow-inner transition-[max-width,opacity,padding,transform] duration-200 ease-out ${
+            className={`${mirrored && mirrorControlOrder ? "mr-1" : "ml-1"} flex items-center overflow-hidden rounded-lg bg-white/35 shadow-inner transition-[max-width,opacity,padding,transform] duration-200 ease-out ${
               themeMode === "keypiphy"
                 ? "max-w-32 translate-y-0 px-2 py-1 opacity-100"
                 : "pointer-events-none max-w-0 translate-y-2 px-0 py-1 opacity-0"
             }`}
           >
             <input
-              aria-label="Keypiphy color"
+              aria-label={`${colorizeLabel} color`}
               className="h-2 w-24 shrink-0 cursor-pointer accent-[var(--color-highlight)]"
               max={360}
               min={0}

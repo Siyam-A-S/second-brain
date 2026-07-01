@@ -116,6 +116,24 @@ function emptyDetailsNode(): ExplorerNode {
   };
 }
 
+function NodeIcon({ className = "", node, size }: { className?: string; node: ExplorerNode; size: number }): JSX.Element {
+  if (node.systemIconDataUrl) {
+    return (
+      <img
+        alt=""
+        aria-hidden="true"
+        className={`shrink-0 rounded-sm object-contain ${className}`}
+        height={size}
+        src={node.systemIconDataUrl}
+        width={size}
+      />
+    );
+  }
+
+  const Icon = nodeIcon(node);
+  return <Icon className={className} size={size} />;
+}
+
 function TreeRow({
   node,
   depth,
@@ -137,7 +155,6 @@ function TreeRow({
   onSelect: (node: ExplorerNode) => void;
   onOpen: (node: ExplorerNode) => void;
 }): JSX.Element {
-  const Icon = nodeIcon(node);
   const isExpanded = expanded.has(node.id);
   const isLoading = loadingIds.has(node.id);
   const children = childrenById.get(node.id) ?? [];
@@ -166,7 +183,7 @@ function TreeRow({
             <ChevronRight className={`transition ${isExpanded ? "rotate-90" : ""}`} size={15} />
           ) : null}
         </span>
-        <Icon className="shrink-0 text-slate-400" size={16} />
+        <NodeIcon className="shrink-0 text-slate-400" node={node} size={16} />
         <span className="min-w-0 flex-1 truncate font-medium">
           {node.kind === "source" ? displaySource(node.sourceFile ?? node.title) : node.title}
         </span>
@@ -531,10 +548,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                   onClick={() => void selectNode(result)}
                   onDoubleClick={() => void openNode(result)}
                 >
-                  {(() => {
-                    const Icon = nodeIcon(result);
-                    return <Icon size={14} className="shrink-0 text-slate-400" />;
-                  })()}
+                  <NodeIcon className="shrink-0 text-slate-400" node={result} size={14} />
                   <span className="min-w-0 flex-1 truncate">{result.title}</span>
                   <span className="text-xs text-slate-400">{kindLabel(result)}</span>
                 </button>
@@ -573,10 +587,7 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                   />
                 ) : (
                   <div className="flex min-w-0 items-center gap-2">
-                    {(() => {
-                      const Icon = nodeIcon(selectedNode);
-                      return <Icon className="shrink-0 text-slate-400" size={20} />;
-                    })()}
+                    <NodeIcon className="shrink-0 text-slate-400" node={selectedNode} size={20} />
                     <h2 className="truncate text-xl font-semibold text-slate-950">{selectedNode.title}</h2>
                   </div>
                 )}

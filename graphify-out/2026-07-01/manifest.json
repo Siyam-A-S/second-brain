@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782865249.800476,
-    "ast_hash": "10bf147910b890735629eba2bcaad99f",
+    "mtime": 1782883379.393382,
+    "ast_hash": "4d08ca8a1802515db8a3b7cce7bcc1f5",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/TitleBar.tsx": {
-    "mtime": 1782847631.7068799,
-    "ast_hash": "20353a8ada3788ba1ea097500de03419",
+    "mtime": 1782944853.9340234,
+    "ast_hash": "478c99ac1023d06b23a415f54514ce3a",
     "semantic_hash": ""
   },
   "src/renderer/components/TopicCanvas.tsx": {
@@ -80,8 +80,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1782847576.089294,
-    "ast_hash": "6115ced74fa01489b6119a7d0edb80a8",
+    "mtime": 1782944937.6105275,
+    "ast_hash": "cfd66c041ffb6ec30367b9a42883d9d0",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1782847620.8927684,
-    "ast_hash": "12ebc9653330fca42aef5c67dfd7e370",
+    "mtime": 1782944863.791083,
+    "ast_hash": "641ebc1e48306f308b4fd8790638e934",
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782861640.5480828,
-    "ast_hash": "35e71f776bf1e934f0815b171ddf0248",
+    "mtime": 1782883390.9335387,
+    "ast_hash": "af9bad3f103b7ffef421f917eb019889",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
@@ -340,13 +340,13 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782881832.6714184,
-    "ast_hash": "f75a7df79a51e9eba29aaad63e02ba69",
+    "mtime": 1782881957.5161762,
+    "ast_hash": "ebd42a1221821fd1dfa019fd3c9fb02c",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782269067.4060473,
-    "ast_hash": "7265afe38b8c8611a98bf7569d22366c",
+    "mtime": 1782944945.1195724,
+    "ast_hash": "4e787dd30d596f355c608af9d2b36e2e",
     "semantic_hash": ""
   },
   "proxy/main.py": {
@@ -392,6 +392,11 @@
   "src/main/services/RuntimeCommandPaths.ts": {
     "mtime": 1782859205.1481922,
     "ast_hash": "66f037eee79007e0cfad0e9953a60d30",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/runtimeMode.ts": {
+    "mtime": 1782944809.2427518,
+    "ast_hash": "8787edbb782f7ce46856f7450f0cdebd",
     "semantic_hash": ""
   }
 }

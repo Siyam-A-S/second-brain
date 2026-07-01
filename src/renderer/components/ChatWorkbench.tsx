@@ -42,6 +42,10 @@ function sortedThreads(threads: ChatThread[]): ChatThread[] {
   return [...threads].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
 
+function isFreshUnusedThread(thread: ChatThread | null | undefined): boolean {
+  return Boolean(thread && thread.messages.length === 0);
+}
+
 function formatTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -394,14 +398,15 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const [isSending, setIsSending] = useState(false);
   const [selectedGrounding, setSelectedGrounding] = useState<GraphifyContextResult | null>(null);
   const [artifactBusyId, setArtifactBusyId] = useState("");
-  const [historyCollapsed, setHistoryCollapsed] = useState(false);
-  const [groundingCollapsed, setGroundingCollapsed] = useState(false);
+  const [historyCollapsed, setHistoryCollapsed] = useState(true);
+  const [groundingCollapsed, setGroundingCollapsed] = useState(true);
   const [activeGenerationId, setActiveGenerationId] = useState("");
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? threads[0] ?? null,
     [activeThreadId, threads]
   );
+  const hasFreshUnusedThread = useMemo(() => threads.some(isFreshUnusedThread), [threads]);
 
   useEffect(() => {
     void loadThreads();
@@ -498,6 +503,14 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   }
 
   async function createThread(): Promise<void> {
+    const existingFreshThread = threads.find(isFreshUnusedThread);
+    if (existingFreshThread) {
+      setActiveThreadId(existingFreshThread.id);
+      setSelectedGrounding(null);
+      setStatus("Fresh chat already open.");
+      return;
+    }
+
     try {
       const thread = await window.api.chat.createThread();
       setThreads((current) => sortedThreads([thread, ...current]));
@@ -647,7 +660,13 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
           </div>
           <div className="flex items-center gap-1">
             <button
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white/75 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-white"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 bg-white/75 px-2.5 text-xs font-semibold text-slate-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={hasFreshUnusedThread}
+              title={
+                hasFreshUnusedThread
+                  ? "Use the fresh chat before opening another one"
+                  : "Open new chat"
+              }
               type="button"
               onClick={() => void createThread()}
             >

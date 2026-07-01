@@ -33,6 +33,7 @@ export type ExplorerNode = {
   page?: number | undefined;
   preview?: string | undefined;
   llmFormat?: ExplorerArtifactFormat | undefined;
+  systemIconDataUrl?: string | undefined;
   childrenCount: number;
   isExpandable: boolean;
 };
