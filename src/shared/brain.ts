@@ -203,6 +203,29 @@ export type GraphifyContextCitation = {
   sourceFile: string;
   sourceLocation?: string | undefined;
   label?: string | undefined;
+  nodeId?: string | undefined;
+  nodeLabel?: string | undefined;
+  startLine?: number | undefined;
+  endLine?: number | undefined;
+};
+
+export type GraphifyContextNodeHit = {
+  id: string;
+  label: string;
+  sourceFile?: string | undefined;
+  sourceLocation?: string | undefined;
+  community?: string | undefined;
+  confidence?: string | undefined;
+  rank: number;
+};
+
+export type GraphifyContextSourceExcerpt = {
+  sourceFile: string;
+  sourceLocation?: string | undefined;
+  startLine?: number | undefined;
+  endLine?: number | undefined;
+  nodeIds: string[];
+  text: string;
 };
 
 export type GraphifyContextResult = {
@@ -212,6 +235,9 @@ export type GraphifyContextResult = {
   command: string;
   graphPath: string;
   citations: GraphifyContextCitation[];
+  expandedTokens?: string[] | undefined;
+  nodeHits?: GraphifyContextNodeHit[] | undefined;
+  sourceExcerpts?: GraphifyContextSourceExcerpt[] | undefined;
   error?: string | undefined;
 };
 
@@ -256,6 +282,13 @@ export type ChatSendInput = {
   threadId?: string | undefined;
   message: string;
   budget?: number | undefined;
+};
+
+export type SaveGraphifyResultInput = {
+  question: string;
+  answer: string;
+  type?: string | undefined;
+  nodes?: string[] | undefined;
 };
 
 export type ChatResponse = {

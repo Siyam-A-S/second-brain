@@ -480,6 +480,7 @@ export class ChatService {
     const searchQuery = await this.formulateSearchQuery(thread, text, settings);
     const graphify = await this.queryGraphify(searchQuery, input.budget);
     const assistant = await this.completeWithSelectedProvider(thread, text, graphify, settings);
+    await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
     thread.messages.push(assistant);
     thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
     thread.updatedAt = new Date().toISOString();
@@ -624,6 +625,7 @@ export class ChatService {
       if (thread.title === "New Chat") {
         thread.title = titleFromMessage(text);
       }
+      await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
       await this.writeState();
       emit({ type: "done", generationId, thread, message: assistant });
 
@@ -660,6 +662,29 @@ export class ChatService {
     })) as GraphifyContextResult;
 
     return result;
+  }
+
+  private async saveGraphifyResultBestEffort(
+    question: string,
+    answer: string,
+    graphify: GraphifyContextResult,
+    assistantError?: string | undefined
+  ): Promise<void> {
+    if (assistantError || graphify.error || !answer.trim()) {
+      return;
+    }
+
+    const nodes = [...new Set((graphify.nodeHits ?? []).map((hit) => hit.id).filter(Boolean))].slice(0, 24);
+    try {
+      await this.mcpServer.callLocalTool("save_graphify_result", {
+        question,
+        answer,
+        type: "query",
+        nodes
+      });
+    } catch (error) {
+      console.warn("Unable to save Graphify chat result.", error);
+    }
   }
 
   private async completeWithSelectedProvider(

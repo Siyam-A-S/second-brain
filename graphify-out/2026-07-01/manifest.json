@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782883379.393382,
-    "ast_hash": "4d08ca8a1802515db8a3b7cce7bcc1f5",
+    "mtime": 1782865249.800476,
+    "ast_hash": "10bf147910b890735629eba2bcaad99f",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782883390.9335387,
-    "ast_hash": "af9bad3f103b7ffef421f917eb019889",
+    "mtime": 1782861640.5480828,
+    "ast_hash": "35e71f776bf1e934f0815b171ddf0248",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782881957.5161762,
-    "ast_hash": "ebd42a1221821fd1dfa019fd3c9fb02c",
+    "mtime": 1782881832.6714184,
+    "ast_hash": "f75a7df79a51e9eba29aaad63e02ba69",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
