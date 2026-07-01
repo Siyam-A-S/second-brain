@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782855634.0516725,
-    "ast_hash": "471849034e1d3bf8fd60c3f9e860671d",
+    "mtime": 1782861600.4849951,
+    "ast_hash": "eb0bf7a177d00692140f2ed0555c9e94",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -220,8 +220,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1782629929.2277946,
-    "ast_hash": "196f21f085c35d8905e0f7b5b64d80a4",
+    "mtime": 1782859210.2072122,
+    "ast_hash": "ea1485da1a1f8c351d3798f3f5470248",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782857729.2799046,
-    "ast_hash": "fcd17f44a8975d9270cd0fdf74dfe1a9",
+    "mtime": 1782861640.5480828,
+    "ast_hash": "35e71f776bf1e934f0815b171ddf0248",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/main/services/GraphifyContextService.ts": {
-    "mtime": 1782629929.2577949,
-    "ast_hash": "90bc102ce5a7c018549782dff46ac156",
+    "mtime": 1782859215.0242314,
+    "ast_hash": "322127eac86fe27188a8272b10037277",
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
@@ -387,6 +387,11 @@
   "MAC_TESTING_GUIDE.md": {
     "mtime": 1782854876.1221623,
     "ast_hash": "1ed1fb41c32b30212594dc6f38cf7959",
+    "semantic_hash": ""
+  },
+  "src/main/services/RuntimeCommandPaths.ts": {
+    "mtime": 1782859205.1481922,
+    "ast_hash": "66f037eee79007e0cfad0e9953a60d30",
     "semantic_hash": ""
   }
 }

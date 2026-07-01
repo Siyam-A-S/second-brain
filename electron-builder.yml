@@ -5,6 +5,8 @@ directories:
   output: release
   buildResources: build
 
+icon: icon.png
+
 files:
   - dist/**/*
   - package.json
@@ -12,6 +14,7 @@ files:
 asar: true
 
 mac:
+  icon: icon.icns
   category: public.app-category.productivity
   identity: null
   target:
@@ -22,6 +25,7 @@ mac:
   gatekeeperAssess: false
 
 win:
+  icon: icon.ico
   target:
     - target: nsis
       arch:

@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782861600.4849951,
-    "ast_hash": "eb0bf7a177d00692140f2ed0555c9e94",
+    "mtime": 1782865249.800476,
+    "ast_hash": "10bf147910b890735629eba2bcaad99f",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "electron-builder.yml": {
-    "mtime": 1782854876.1221623,
-    "ast_hash": "254c15340a98549717f361a458cf053c",
+    "mtime": 1782865349.928982,
+    "ast_hash": "662d31c15d0488b57350ac0d8505ca1b",
     "semantic_hash": ""
   },
   "dev/plans.md": {

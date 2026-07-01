@@ -1,4 +1,4 @@
-const { existsSync, readdirSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } = require("node:fs");
 const { spawnSync } = require("node:child_process");
 const path = require("node:path");
 
@@ -24,6 +24,7 @@ const electronBuilderBin = path.join(
   ".bin",
   process.platform === "win32" ? "electron-builder.cmd" : "electron-builder"
 );
+const windowsIconPath = path.join(rootDir, "build", "icon.ico");
 
 const appLayout = {
   mac: {
@@ -36,6 +37,7 @@ const appLayout = {
     unpackedDir: path.join(releaseDir, "win-unpacked"),
     appAsarPath: path.join(releaseDir, "win-unpacked", "resources", "app.asar"),
     buildInfoDir: path.join(releaseDir, "win-unpacked"),
+    executablePath: path.join(releaseDir, "win-unpacked", "Second Brain.exe"),
     label: "Windows portable build"
   },
   linux: {
@@ -77,6 +79,10 @@ if (buildResult.status !== 0) {
 if (!hasFreshBundle) {
   console.error(`electron-builder finished but did not create ${appLayout.appAsarPath}.`);
   process.exit(1);
+}
+
+if (target === "win") {
+  patchWindowsExecutableIcon(appLayout.executablePath, windowsIconPath);
 }
 
 const rendererAssets = path.join(rootDir, "dist", "renderer", "assets");
@@ -127,3 +133,36 @@ if (target === "win" && args.has("--zip")) {
 }
 
 console.log(`${appLayout.label} ready: ${appLayout.unpackedDir}`);
+
+function patchWindowsExecutableIcon(executablePath, iconPath) {
+  if (!existsSync(executablePath)) {
+    console.error(`Windows executable was not created: ${executablePath}`);
+    process.exit(1);
+  }
+  if (!existsSync(iconPath)) {
+    console.error(`Windows icon was not generated: ${iconPath}`);
+    process.exit(1);
+  }
+
+  const ResEdit = require("resedit");
+  const executable = ResEdit.NtExecutable.from(readFileSync(executablePath), { ignoreCert: true });
+  const resources = ResEdit.NtExecutableResource.from(executable);
+  const iconFile = ResEdit.Data.IconFile.from(readFileSync(iconPath));
+  const existingGroups = ResEdit.Resource.IconGroupEntry.fromEntries(resources.entries);
+  const targetGroups = existingGroups.length > 0
+    ? existingGroups.map((group) => ({ id: group.id, lang: group.lang }))
+    : [{ id: 1, lang: 1033 }];
+
+  for (const group of targetGroups) {
+    ResEdit.Resource.IconGroupEntry.replaceIconsForResource(
+      resources.entries,
+      group.id,
+      group.lang,
+      iconFile.icons.map((icon) => icon.data)
+    );
+  }
+
+  resources.outputResource(executable);
+  writeFileSync(executablePath, Buffer.from(executable.generate()));
+  console.log(`Applied Windows executable icon: ${path.relative(rootDir, iconPath)}`);
+}
