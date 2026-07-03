@@ -35,6 +35,7 @@ import type {
   UpdateNodeSignalsInput,
   SaveResearchNodeNoteInput,
   UpdateResearchPaperStatusInput,
+  TrackerListInput,
   UpdateTrackerInput,
   WriteBrainNodeInput
 } from "../shared/brain";
@@ -54,6 +55,7 @@ import { ExplorerService } from "./services/ExplorerService";
 import { GraphRagService } from "./services/GraphRagService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
 import { LlmService } from "./services/LlmService";
+import { NotificationService } from "./services/NotificationService";
 import { ProjectService } from "./services/ProjectService";
 import { ResearchService } from "./services/ResearchService";
 import { StorageService } from "./services/StorageService";
@@ -63,6 +65,7 @@ let mainWindow: BrowserWindow | null = null;
 let widgetWindow: BrowserWindow | null = null;
 let mcpServer: LocalMcpServer | null = null;
 let graphifyController: GraphifyController | null = null;
+let notificationService: NotificationService | null = null;
 
 type ProjectRuntime = {
   storage: StorageService;
@@ -315,7 +318,10 @@ async function createProjectRuntime(
   const graphRag = new GraphRagService(storage, embeddings);
   const graphifyContext = new GraphifyContextService(graphify.getRawVaultPath());
   const artifactTools = new ArtifactToolService(project.rootPath);
-  const tracker = new TrackerService(project.trackerPath);
+  const tracker = new TrackerService(path.join(app.getPath("userData"), "tracker.sqlite"), {
+    id: project.id,
+    name: project.name
+  });
   const nextMcpServer = new LocalMcpServer({
     graphRag,
     graphifyContext,
@@ -332,6 +338,9 @@ async function createProjectRuntime(
   await research.initialize();
   await tracker.initialize(storage);
   await chat.initialize();
+  notificationService?.stop();
+  notificationService = new NotificationService(tracker);
+  notificationService.start();
 
   try {
     await nextMcpServer.start();
@@ -361,6 +370,8 @@ async function switchProjectRuntime(
 ): Promise<ProjectRuntime> {
   const previous = projectRuntime;
   if (previous) {
+    notificationService?.stop();
+    notificationService = null;
     await previous.graphify.stopMcp();
     await previous.mcpServer.stop();
   }
@@ -402,6 +413,15 @@ function registerIpc(
 
   ipcMain.handle(windowChannels.restore, () => {
     restoreMainWindow();
+  });
+
+  ipcMain.handle(windowChannels.openExternal, async (_event, url: string) => {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || parsed.hostname !== "www.downloadsecondbrain.com") {
+      throw new Error("External link is not allowed.");
+    }
+
+    await shell.openExternal(parsed.toString());
   });
 
   ipcMain.handle(windowChannels.getWidgetBounds, () => {
@@ -448,7 +468,7 @@ function registerIpc(
   ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) =>
     requireRuntime().storage.updateNodeSignals(input)
   );
-  ipcMain.handle(trackerChannels.list, () => requireRuntime().tracker.listTrackers());
+  ipcMain.handle(trackerChannels.list, (_event, input?: TrackerListInput) => requireRuntime().tracker.listTrackers(input));
   ipcMain.handle(trackerChannels.create, (_event, input: CreateTrackerInput) => requireRuntime().tracker.createTracker(input));
   ipcMain.handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => requireRuntime().tracker.updateTracker(input));
   ipcMain.handle(trackerChannels.remove, (_event, uuid: string) => requireRuntime().tracker.removeTracker(uuid));
@@ -572,6 +592,13 @@ function registerIpc(
 
     return requireRuntime().chat.downloadArtifact(messageId, artifact.id, result.filePath);
   });
+  ipcMain.handle(chatChannels.openArtifact, async (_event, messageId: string, artifactId: string) => {
+    const filePath = await requireRuntime().chat.getArtifactPath(messageId, artifactId);
+    const error = await shell.openPath(filePath);
+    if (error) {
+      throw new Error(error);
+    }
+  });
   ipcMain.handle(runtimeChannels.getDependencyStatus, () => runtimeDependencies.getStatus());
   ipcMain.handle(runtimeChannels.installOrRepairDependencies, () => runtimeDependencies.installOrRepair());
 }
@@ -612,6 +639,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  notificationService?.stop();
   void mcpServer?.stop();
   void graphifyController?.stopMcp();
 });

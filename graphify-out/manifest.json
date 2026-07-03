@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "src/main/main.ts": {
-    "mtime": 1782857648.3576112,
-    "ast_hash": "2ec94b499dcf826d5133a19ade32b620",
+    "mtime": 1783031200.2907872,
+    "ast_hash": "421d2125d304f5e765d1a04aa7d5a7f8",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1782236604.8497944,
-    "ast_hash": "7c6b51131c059b8eaa6beb9d267aa857",
+    "mtime": 1783030946.3966672,
+    "ast_hash": "b56e816eb70d9ad14fa32e9f367f42db",
     "semantic_hash": ""
   },
   "src/renderer/components/DropTarget.tsx": {
@@ -80,8 +80,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1782945277.30853,
-    "ast_hash": "44f6d66399dc5e37479d1eff9bbb8820",
+    "mtime": 1783031220.676879,
+    "ast_hash": "73585bc3bf4557859b36882638bc3bb3",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -105,13 +105,13 @@
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1782881727.14377,
-    "ast_hash": "c5d72c8cab0fc29ba65bb8783505296c",
+    "mtime": 1783033794.7581863,
+    "ast_hash": "773e88efa0ce91473fc2d41740e13047",
     "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1782267382.3610764,
-    "ast_hash": "16f7d1ca2e1d81b92d33f61b3a7e6dff",
+    "mtime": 1783031391.1266522,
+    "ast_hash": "739df4975d4ed5f17a213d60cb5f2c9c",
     "semantic_hash": ""
   },
   "src/vite-env.d.ts": {
@@ -245,18 +245,18 @@
     "semantic_hash": ""
   },
   "src/main/services/AiSettingsService.ts": {
-    "mtime": 1782847564.9021723,
-    "ast_hash": "62b8a08493ec90511bf646f3ca5e67d8",
+    "mtime": 1782946561.6066217,
+    "ast_hash": "6450e270e299b695d3ac0a9c158d1b45",
     "semantic_hash": ""
   },
   "src/main/services/TrackerService.ts": {
-    "mtime": 1781676780.7630491,
-    "ast_hash": "f24359f7706b04947418c5c3bcd90248",
+    "mtime": 1783033853.7615027,
+    "ast_hash": "024a13a641d452c7026e52fb5845b22c",
     "semantic_hash": ""
   },
   "src/renderer/components/TrackerTable.tsx": {
-    "mtime": 1781676758.3879547,
-    "ast_hash": "46601158eb53ed3f37b75717472eb1fd",
+    "mtime": 1783033935.756009,
+    "ast_hash": "b3d289e6b61b3ac5d98bdac8e39f9255",
     "semantic_hash": ""
   },
   "src/renderer/stores/useTrackerStore.ts": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
-    "mtime": 1782847641.8699837,
-    "ast_hash": "b7e4b4ceec459f22bc31345730800d87",
+    "mtime": 1782946670.1610637,
+    "ast_hash": "3153101e166f285f0d6cb2a05905650b",
     "semantic_hash": ""
   },
   "src/main/services/GraphBoardService.ts": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1782945341.7049038,
-    "ast_hash": "1d404b907094f02fedf8a2a9dde61d4c",
+    "mtime": 1783033846.0464616,
+    "ast_hash": "dde3f5d42545c10e23514caf41c45c49",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1782945262.9484465,
-    "ast_hash": "2fb7810e028bf386f6c7b61d89758981",
+    "mtime": 1783033876.2106369,
+    "ast_hash": "861dce7793d44cf3ce6400ae70314d1b",
     "semantic_hash": ""
   },
   "proxy/main.py": {
@@ -392,6 +392,11 @@
   "src/main/services/RuntimeCommandPaths.ts": {
     "mtime": 1782859205.1481922,
     "ast_hash": "66f037eee79007e0cfad0e9953a60d30",
+    "semantic_hash": ""
+  },
+  "src/main/services/NotificationService.ts": {
+    "mtime": 1783030816.4331136,
+    "ast_hash": "533b0f9440e48481cfda54e732018ee9",
     "semantic_hash": ""
   }
 }

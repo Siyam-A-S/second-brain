@@ -23,6 +23,7 @@ import type {
   UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
+  TrackerListInput,
   UpdateTrackerInput,
   WidgetMovePayload,
   WriteBrainNodeInput
@@ -34,7 +35,8 @@ const windowChannels = {
   close: "window-close",
   restore: "window-restore",
   getWidgetBounds: "widget-get-bounds",
-  moveWidget: "widget-move"
+  moveWidget: "widget-move",
+  openExternal: "window-open-external"
 } as const;
 
 const fileChannels = {
@@ -131,7 +133,8 @@ const chatChannels = {
   getGrounding: "chat-get-grounding",
   saveMessageArtifact: "chat-save-message-artifact",
   ingestArtifact: "chat-ingest-artifact",
-  downloadArtifact: "chat-download-artifact"
+  downloadArtifact: "chat-download-artifact",
+  openArtifact: "chat-open-artifact"
 } as const;
 
 const runtimeChannels = {
@@ -146,7 +149,8 @@ const api: SecondBrainApi = {
     close: () => ipcRenderer.invoke(windowChannels.close),
     restore: () => ipcRenderer.invoke(windowChannels.restore),
     getWidgetBounds: () => ipcRenderer.invoke(windowChannels.getWidgetBounds),
-    moveWidget: (payload: WidgetMovePayload) => ipcRenderer.invoke(windowChannels.moveWidget, payload)
+    moveWidget: (payload: WidgetMovePayload) => ipcRenderer.invoke(windowChannels.moveWidget, payload),
+    openExternal: (url: string) => ipcRenderer.invoke(windowChannels.openExternal, url)
   },
   files: {
     dropped: (payload: FilesDroppedPayload) => ipcRenderer.invoke(fileChannels.dropped, payload)
@@ -163,7 +167,7 @@ const api: SecondBrainApi = {
     updateNodeSignals: (input: UpdateNodeSignalsInput) => ipcRenderer.invoke(brainChannels.updateNodeSignals, input)
   },
   tracker: {
-    list: () => ipcRenderer.invoke(trackerChannels.list),
+    list: (input?: TrackerListInput) => ipcRenderer.invoke(trackerChannels.list, input),
     create: (input: CreateTrackerInput) => ipcRenderer.invoke(trackerChannels.create, input),
     update: (input: UpdateTrackerInput) => ipcRenderer.invoke(trackerChannels.update, input),
     remove: (uuid: string) => ipcRenderer.invoke(trackerChannels.remove, uuid),
@@ -257,7 +261,8 @@ const api: SecondBrainApi = {
     ingestArtifact: (messageId: string, artifactId: string) =>
       ipcRenderer.invoke(chatChannels.ingestArtifact, messageId, artifactId),
     downloadArtifact: (messageId: string, artifactId: string) =>
-      ipcRenderer.invoke(chatChannels.downloadArtifact, messageId, artifactId)
+      ipcRenderer.invoke(chatChannels.downloadArtifact, messageId, artifactId),
+    openArtifact: (messageId: string, artifactId: string) => ipcRenderer.invoke(chatChannels.openArtifact, messageId, artifactId)
   },
   runtime: {
     getDependencyStatus: () => ipcRenderer.invoke(runtimeChannels.getDependencyStatus),

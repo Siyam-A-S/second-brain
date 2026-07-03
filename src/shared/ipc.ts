@@ -2,15 +2,20 @@ import type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AccountAccessStatus,
+  AccountSettings,
+  AccountUsageSnapshot,
   AiSettings,
   AiMode,
   AppSettings,
   ClipboardIngestibleItemsResult,
   ChatArtifactActionResult,
+  ChatSemanticRouting,
   ChatResponse,
   ChatSendInput,
   ChatStreamEvent,
   ChatThread,
+  ChatMessage,
   CallflowHtmlDocument,
   CreateProjectInput,
   CreateTrackerInput,
@@ -25,6 +30,7 @@ import type {
   ManagedProxySettings,
   OrganizedBoardTopic,
   ProcessDroppedItem,
+  ProposedTrackerDraft,
   ProcessDroppedItemsResult,
   ListBrainNodesInput,
   McpServerStatus,
@@ -39,10 +45,14 @@ import type {
   SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
+  TrackerListInput,
+  TrackerListScope,
   TrackerPriority,
   TrackerRecord,
   TrackerStatus,
+  SemanticRouterIntent,
   UpdateAiSettingsInput,
+  UpdateAccountSettingsInput,
   UpdateAppSettingsInput,
   UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
@@ -70,6 +80,9 @@ export type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AccountAccessStatus,
+  AccountSettings,
+  AccountUsageSnapshot,
   AiSettings,
   AiMode,
   AppSettings,
@@ -78,6 +91,8 @@ export type {
   ChatSendInput,
   ChatStreamEvent,
   ChatThread,
+  ChatMessage,
+  ChatSemanticRouting,
   ChatArtifact,
   ChatArtifactActionResult,
   ChatArtifactSource,
@@ -99,6 +114,7 @@ export type {
   ManagedProxySettings,
   OrganizedBoardTopic,
   ProcessDroppedItem,
+  ProposedTrackerDraft,
   ProcessDroppedItemsResult,
   ListBrainNodesInput,
   McpServerStatus,
@@ -117,10 +133,14 @@ export type {
   SaveResearchNodeNoteInput,
   SearchBrainNodesInput,
   TrackerIngestionStatus,
+  TrackerListInput,
+  TrackerListScope,
   TrackerPriority,
   TrackerRecord,
   TrackerStatus,
+  SemanticRouterIntent,
   UpdateAiSettingsInput,
+  UpdateAccountSettingsInput,
   UpdateAppSettingsInput,
   UpdateManagedProxySettingsInput,
   UpdateNodeSignalsInput,
@@ -158,7 +178,8 @@ export const windowChannels = {
   close: "window-close",
   restore: "window-restore",
   getWidgetBounds: "widget-get-bounds",
-  moveWidget: "widget-move"
+  moveWidget: "widget-move",
+  openExternal: "window-open-external"
 } as const;
 
 export const fileChannels = {
@@ -255,7 +276,8 @@ export const chatChannels = {
   getGrounding: "chat-get-grounding",
   saveMessageArtifact: "chat-save-message-artifact",
   ingestArtifact: "chat-ingest-artifact",
-  downloadArtifact: "chat-download-artifact"
+  downloadArtifact: "chat-download-artifact",
+  openArtifact: "chat-open-artifact"
 } as const;
 
 export const runtimeChannels = {
@@ -317,6 +339,7 @@ export type SecondBrainApi = {
     restore: () => Promise<void>;
     getWidgetBounds: () => Promise<WidgetBounds | null>;
     moveWidget: (payload: WidgetMovePayload) => Promise<WidgetBounds | null>;
+    openExternal: (url: string) => Promise<void>;
   };
   files: {
     dropped: (payload: FilesDroppedPayload) => Promise<GraphifyIngestionResult | void>;
@@ -333,7 +356,7 @@ export type SecondBrainApi = {
     updateNodeSignals: (input: UpdateNodeSignalsInput) => Promise<BrainNode>;
   };
   tracker: {
-    list: () => Promise<TrackerRecord[]>;
+    list: (input?: TrackerListInput | undefined) => Promise<TrackerRecord[]>;
     create: (input: CreateTrackerInput) => Promise<TrackerRecord>;
     update: (input: UpdateTrackerInput) => Promise<TrackerRecord>;
     remove: (uuid: string) => Promise<void>;
@@ -403,6 +426,7 @@ export type SecondBrainApi = {
     saveMessageArtifact: (input: SaveChatArtifactInput) => Promise<ChatArtifactActionResult>;
     ingestArtifact: (messageId: string, artifactId: string) => Promise<ChatArtifactActionResult>;
     downloadArtifact: (messageId: string, artifactId: string) => Promise<ChatArtifactActionResult>;
+    openArtifact: (messageId: string, artifactId: string) => Promise<void>;
   };
   runtime: {
     getDependencyStatus: () => Promise<DependencyRuntimeStatus>;

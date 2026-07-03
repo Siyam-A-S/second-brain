@@ -157,6 +157,31 @@ export type ManagedProxySettings = {
   updatedAt: string;
 };
 
+export type AccountAccessStatus = "unknown" | "trialing" | "active" | "past_due" | "canceled" | "expired";
+
+export type AccountUsageSnapshot = {
+  label: string;
+  used: number;
+  limit: number;
+  resetAt?: string | undefined;
+  updatedAt?: string | undefined;
+};
+
+export type AccountSettings = {
+  email: string;
+  secretKey: string;
+  status: AccountAccessStatus;
+  planName: string;
+  trialEndsAt: string;
+  subscriptionRenewsAt: string;
+  usage: AccountUsageSnapshot | null;
+  websiteUrl: string;
+  accountUrl: string;
+  checkoutUrl: string;
+  lastVerifiedAt: string;
+  updatedAt: string;
+};
+
 export type UpdateAiSettingsInput = {
   endpoint?: string | undefined;
   apiKey?: string | undefined;
@@ -164,6 +189,7 @@ export type UpdateAiSettingsInput = {
 };
 
 export type UpdateManagedProxySettingsInput = Partial<Omit<ManagedProxySettings, "updatedAt">>;
+export type UpdateAccountSettingsInput = Partial<Omit<AccountSettings, "updatedAt">>;
 
 export type GraphifyRuntimeSettings = {
   graphifyBin: string;
@@ -182,6 +208,7 @@ export type AppearanceSettings = {
 export type AppSettings = {
   aiMode: AiMode;
   ai: AiSettings;
+  account: AccountSettings;
   managedProxy: ManagedProxySettings;
   graphify: GraphifyRuntimeSettings;
   appearance: AppearanceSettings;
@@ -194,6 +221,7 @@ export type UpdateAppearanceSettingsInput = Partial<AppearanceSettings>;
 export type UpdateAppSettingsInput = {
   aiMode?: AiMode | undefined;
   ai?: UpdateAiSettingsInput | undefined;
+  account?: UpdateAccountSettingsInput | undefined;
   managedProxy?: UpdateManagedProxySettingsInput | undefined;
   graphify?: UpdateGraphifyRuntimeSettingsInput | undefined;
   appearance?: UpdateAppearanceSettingsInput | undefined;
@@ -257,6 +285,24 @@ export type ChatArtifact = {
   source: ChatArtifactSource;
 };
 
+export type SemanticRouterIntent = "ARTIFACT" | "TRACKER" | "RESEARCH";
+
+export type ProposedTrackerDraft = {
+  id: string;
+  title: string;
+  dueDate?: string | undefined;
+  confidence: number;
+  contextKeywords: string[];
+  linkedNodeIds: string[];
+  grounding: "grounded" | "floating";
+};
+
+export type ChatSemanticRouting = {
+  intent: SemanticRouterIntent;
+  searchKeywords: string[];
+  proposedTrackers: ProposedTrackerDraft[];
+};
+
 export type ChatMessage = {
   id: string;
   role: ChatRole;
@@ -268,6 +314,7 @@ export type ChatMessage = {
     api?: unknown;
   } | undefined;
   error?: string | undefined;
+  semantic?: ChatSemanticRouting | undefined;
 };
 
 export type ChatThread = {
@@ -303,6 +350,12 @@ export type ChatStreamEvent =
       thread: ChatThread;
       userMessage: ChatMessage;
       assistantMessage: ChatMessage;
+    }
+  | {
+      type: "semantic";
+      generationId: string;
+      messageId: string;
+      semantic: ChatSemanticRouting;
     }
   | {
       type: "grounding";
@@ -553,9 +606,12 @@ export type CallflowHtmlDocument = {
 export type TrackerStatus = "backlog" | "todo" | "in_progress" | "blocked" | "done";
 
 export type TrackerPriority = "low" | "medium" | "high" | "urgent";
+export type TrackerListScope = "project" | "all";
 
 export type TrackerRecord = {
   uuid: string;
+  projectId: string;
+  projectName: string;
   title: string;
   description: string;
   status: TrackerStatus;
@@ -566,6 +622,10 @@ export type TrackerRecord = {
   sourceFiles: string[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type TrackerListInput = {
+  scope?: TrackerListScope | undefined;
 };
 
 export type CreateTrackerInput = {

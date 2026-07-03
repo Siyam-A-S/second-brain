@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Cloud, Cpu, RefreshCcw, Save, Settings, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Cloud,
+  Cpu,
+  CreditCard,
+  ExternalLink,
+  KeyRound,
+  RefreshCcw,
+  Save,
+  Settings,
+  UserRound,
+  X
+} from "lucide-react";
 import type { AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } from "../../shared/ipc";
 
 type SettingsPanelProps = {
@@ -11,6 +24,49 @@ type SettingsPanelProps = {
 function numberValue(value: string, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function formatAccountDate(value: string): string {
+  if (!value) {
+    return "Not synced";
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Not synced"
+    : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function statusLabel(status: AppSettings["account"]["status"]): string {
+  switch (status) {
+    case "trialing":
+      return "Trial";
+    case "active":
+      return "Active";
+    case "past_due":
+      return "Past due";
+    case "canceled":
+      return "Canceled";
+    case "expired":
+      return "Expired";
+    default:
+      return "Not connected";
+  }
+}
+
+function statusTone(status: AppSettings["account"]["status"]): string {
+  switch (status) {
+    case "trialing":
+    case "active":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "past_due":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+    case "canceled":
+    case "expired":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600";
+  }
 }
 
 export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelProps): JSX.Element | null {
@@ -73,6 +129,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
           model: settings.ai.model
         },
         managedProxy: settings.managedProxy,
+        account: settings.account,
         graphify: settings.graphify,
         appearance: settings.appearance
       });
@@ -89,6 +146,22 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
 
   const aiMode = settings?.aiMode ?? "proxy";
   const isProxyMode = aiMode === "proxy";
+  const account = settings?.account;
+  const usagePercent =
+    account?.usage && account.usage.limit > 0
+      ? Math.min(100, Math.round((account.usage.used / account.usage.limit) * 100))
+      : null;
+
+  async function openAccountUrl(url: string | undefined): Promise<void> {
+    const target = url || "https://www.downloadsecondbrain.com";
+    try {
+      await window.api.window.openExternal(target);
+    } catch (error) {
+      window.open(target, "_blank", "noopener,noreferrer");
+      const message = error instanceof Error ? error.message : "Opening account portal in browser.";
+      setStatus(message);
+    }
+  }
 
   async function refreshDependencyStatus(): Promise<void> {
     setIsCheckingDependencies(true);
@@ -199,9 +272,116 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <UserRound size={17} className="text-slate-500" />
+                  <h3 className="text-sm font-semibold text-slate-950">Second Brain Account</h3>
+                </div>
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${statusTone(
+                    account?.status ?? "unknown"
+                  )}`}
+                >
+                  {statusLabel(account?.status ?? "unknown")}
+                </span>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-slate-200 bg-white/65 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Access</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">{account?.planName || "Second Brain"}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Trial ends {formatAccountDate(account?.trialEndsAt ?? "")}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Renews {formatAccountDate(account?.subscriptionRenewsAt ?? "")}
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white/65 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                    {account?.usage?.label ?? "Usage"}
+                  </p>
+                  {account?.usage ? (
+                    <>
+                      <p className="mt-2 text-sm font-semibold text-slate-950">
+                        {account.usage.used.toLocaleString()} / {account.usage.limit.toLocaleString()}
+                      </p>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-slate-950" style={{ width: `${usagePercent ?? 0}%` }} />
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">Resets {formatAccountDate(account.usage.resetAt ?? "")}</p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-500">Usage sync will appear here when the account API is available.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <label className="block text-xs font-semibold text-slate-500">
+                  Account email
+                  <input
+                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                    placeholder="you@downloadsecondbrain.com"
+                    type="email"
+                    value={account?.email ?? ""}
+                    onChange={(event) =>
+                      setSettings((current) =>
+                        current
+                          ? {
+                              ...current,
+                              account: { ...current.account, email: event.target.value }
+                            }
+                          : current
+                      )
+                    }
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-slate-500">
+                  Access key
+                  <input
+                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                    type="password"
+                    value={account?.secretKey ?? ""}
+                    onChange={(event) =>
+                      setSettings((current) =>
+                        current
+                          ? {
+                              ...current,
+                              account: { ...current.account, secretKey: event.target.value },
+                              managedProxy: { ...current.managedProxy, secretKey: event.target.value, enabled: true }
+                            }
+                          : current
+                      )
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
+                  type="button"
+                  onClick={() => void openAccountUrl(account?.accountUrl)}
+                >
+                  <ExternalLink size={15} />
+                  Sign in on web
+                </button>
+                <button
+                  className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  type="button"
+                  onClick={() => void openAccountUrl(account?.checkoutUrl)}
+                >
+                  <CreditCard size={15} />
+                  Manage trial
+                </button>
+              </div>
+            </section>
+
+            <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center gap-2">
                 <Cloud size={17} className="text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-950">AI Mode</h3>
+                <h3 className="text-sm font-semibold text-slate-950">AI Access</h3>
               </div>
               <div className="grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-white/65 p-1">
                 <button
@@ -215,7 +395,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                     )
                   }
                 >
-                  Use Proxy AI
+                  Account Cloud
                 </button>
                 <button
                   className={`h-9 rounded text-sm font-semibold transition ${
@@ -228,70 +408,24 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                     )
                   }
                 >
-                  Use Local AI
+                  Local Runtime
                 </button>
               </div>
 
               {isProxyMode ? (
-                <label className="mt-4 block text-xs font-semibold text-slate-500">
-                  Secret key
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    type="password"
-                    value={settings?.managedProxy.secretKey ?? ""}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              managedProxy: { ...current.managedProxy, secretKey: event.target.value, enabled: true }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
+                <div className="mt-4 rounded-md border border-slate-200 bg-white/65 p-3 text-sm leading-6 text-slate-600">
+                  <div className="flex items-start gap-2">
+                    <KeyRound className="mt-0.5 text-slate-500" size={16} />
+                    <p>
+                      Cloud AI is authenticated with the account access key above. Model and endpoint details are managed by
+                      Second Brain for production users.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <label className="block text-xs font-semibold text-slate-500 md:col-span-3">
-                    Base URL
-                    <input
-                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                      type="url"
-                      value={settings?.ai.endpoint ?? ""}
-                      onChange={(event) =>
-                        setSettings((current) =>
-                          current ? { ...current, ai: { ...current.ai, endpoint: event.target.value } } : current
-                        )
-                      }
-                    />
-                  </label>
-                  <label className="block text-xs font-semibold text-slate-500 md:col-span-2">
-                    Model
-                    <input
-                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                      type="text"
-                      value={settings?.ai.model ?? ""}
-                      onChange={(event) =>
-                        setSettings((current) =>
-                          current ? { ...current, ai: { ...current.ai, model: event.target.value } } : current
-                        )
-                      }
-                    />
-                  </label>
-                  <label className="block text-xs font-semibold text-slate-500">
-                    API key
-                    <input
-                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                      type="password"
-                      value={settings?.ai.apiKey ?? ""}
-                      onChange={(event) =>
-                        setSettings((current) =>
-                          current ? { ...current, ai: { ...current.ai, apiKey: event.target.value } } : current
-                        )
-                      }
-                    />
-                  </label>
+                <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950">
+                  Local runtime uses the saved developer defaults and installed Graphify runtime on this device. Endpoint,
+                  model, and API key fields are intentionally hidden from the production interface.
                 </div>
               )}
             </section>

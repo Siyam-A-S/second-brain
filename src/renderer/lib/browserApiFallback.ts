@@ -18,6 +18,7 @@ import type {
   ExplorerSearchInput,
   ExplorerNode,
   TrackerIngestionStatus,
+  TrackerListInput,
   TrackerPriority,
   TrackerRecord,
   TrackerStatus,
@@ -32,6 +33,8 @@ const chatStreamHandlers = new Set<(event: ChatStreamEvent) => void>();
 const browserTrackers: TrackerRecord[] = [];
 const browserProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
 const browserProxyChatEndpoint = `${browserProxyOrigin}/chat`;
+const browserAccountUrl = "https://www.downloadsecondbrain.com/login";
+const browserCheckoutUrl = "https://www.downloadsecondbrain.com/checkout";
 let activeProjectId = "browser-default";
 const browserProjects: ProjectRecord[] = [
   {
@@ -109,6 +112,20 @@ let browserAiSettings = {
 let browserAppSettings: AppSettings = {
   aiMode: "proxy",
   ai: browserAiSettings,
+  account: {
+    email: "",
+    secretKey: "",
+    status: "unknown",
+    planName: "Second Brain",
+    trialEndsAt: "",
+    subscriptionRenewsAt: "",
+    usage: null,
+    websiteUrl: "https://www.downloadsecondbrain.com",
+    accountUrl: browserAccountUrl,
+    checkoutUrl: browserCheckoutUrl,
+    lastVerifiedAt: "",
+    updatedAt: new Date().toISOString()
+  },
   managedProxy: {
     enabled: true,
     endpoint: browserProxyChatEndpoint,
@@ -367,7 +384,10 @@ const browserApiFallback: SecondBrainApi = {
       y: payload.y,
       width: 96,
       height: 96
-    })
+    }),
+    openExternal: async (url: string) => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   },
   files: {
     dropped: async (payload) => {
@@ -422,11 +442,14 @@ const browserApiFallback: SecondBrainApi = {
     })
   },
   tracker: {
-    list: async () => browserTrackers,
+    list: async (input?: TrackerListInput) =>
+      input?.scope === "all" ? browserTrackers : browserTrackers.filter((tracker) => tracker.projectId === activeProjectId),
     create: async (input: CreateTrackerInput) => {
       const now = new Date().toISOString();
       const tracker: TrackerRecord = {
         uuid: `browser-ticket-${crypto.randomUUID()}`,
+        projectId: activeProjectId,
+        projectName: browserProjects.find((project) => project.id === activeProjectId)?.name ?? "Browser Preview",
         title: normalizeLine(input.title, "Untitled ticket"),
         description: normalizeLine(input.description, ""),
         status: normalizeTrackerStatus(input.status),
@@ -754,6 +777,15 @@ const browserApiFallback: SecondBrainApi = {
       browserAppSettings = {
         aiMode: input.aiMode ?? browserAppSettings.aiMode,
         ai: browserAiSettings,
+        account: {
+          ...browserAppSettings.account,
+          ...input.account,
+          secretKey: input.account?.secretKey ?? input.managedProxy?.secretKey ?? browserAppSettings.account.secretKey,
+          websiteUrl: "https://www.downloadsecondbrain.com",
+          accountUrl: browserAccountUrl,
+          checkoutUrl: browserCheckoutUrl,
+          updatedAt: new Date().toISOString()
+        },
         graphify: {
           ...browserAppSettings.graphify,
           ...input.graphify
@@ -765,6 +797,7 @@ const browserApiFallback: SecondBrainApi = {
         managedProxy: {
           ...browserAppSettings.managedProxy,
           ...input.managedProxy,
+          secretKey: input.account?.secretKey ?? input.managedProxy?.secretKey ?? browserAppSettings.managedProxy.secretKey,
           endpoint: browserAppSettings.managedProxy.endpoint,
           updatedAt: new Date().toISOString()
         },
@@ -775,6 +808,11 @@ const browserApiFallback: SecondBrainApi = {
     updateManagedProxy: async (input: UpdateManagedProxySettingsInput) => {
       browserAppSettings = {
         ...browserAppSettings,
+        account: {
+          ...browserAppSettings.account,
+          secretKey: input.secretKey ?? browserAppSettings.account.secretKey,
+          updatedAt: new Date().toISOString()
+        },
         managedProxy: {
           ...browserAppSettings.managedProxy,
           ...input,
@@ -965,7 +1003,8 @@ const browserApiFallback: SecondBrainApi = {
         artifact: saved.message.artifacts?.find((artifact) => artifact.id === artifactId) ?? saved.artifact,
         downloadedPath: "/browser-preview/downloads/browser-preview-response.md"
       };
-    }
+    },
+    openArtifact: async () => undefined
   },
   runtime: {
     getDependencyStatus: async () => browserRuntimeStatus,

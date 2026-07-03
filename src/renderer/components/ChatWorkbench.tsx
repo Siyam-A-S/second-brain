@@ -12,6 +12,7 @@ import {
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Pin,
   Plus,
   RefreshCcw,
   SearchCheck,
@@ -19,7 +20,8 @@ import {
   Trash2,
   User
 } from "lucide-react";
-import type { ChatStreamEvent, ChatThread, GraphifyContextResult } from "../../shared/ipc";
+import type { ChatArtifact, ChatMessage, ChatStreamEvent, ChatThread, GraphifyContextResult, ProposedTrackerDraft } from "../../shared/ipc";
+import { useTrackerStore } from "../stores/useTrackerStore";
 
 type ChatWorkbenchProps = {
   refreshKey: number;
@@ -38,6 +40,16 @@ type ResponseSection = {
   content: string;
 };
 
+function formatBytes(value: number): string {
+  if (value < 1024) {
+    return `${value} B`;
+  }
+  if (value < 1024 * 1024) {
+    return `${(value / 1024).toFixed(1)} KB`;
+  }
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function sortedThreads(threads: ChatThread[]): ChatThread[] {
   return [...threads].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
@@ -55,6 +67,25 @@ function formatTime(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit"
+  }).format(date);
+}
+
+function formatDueDate(value: string | undefined): string {
+  if (!value) {
+    return "No deadline";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(value);
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
+    ...(hasExplicitTime ? { hour: "numeric", minute: "2-digit" } : {})
   }).format(date);
 }
 
@@ -389,6 +420,129 @@ function MessageContent({
   );
 }
 
+function TrackerDraftCards({
+  drafts,
+  busyId,
+  discardedIds,
+  trackedIds,
+  onConfirm,
+  onDiscard
+}: {
+  drafts: ProposedTrackerDraft[];
+  busyId: string;
+  discardedIds: Set<string>;
+  trackedIds: Set<string>;
+  onConfirm: (draft: ProposedTrackerDraft) => void;
+  onDiscard: (draftId: string) => void;
+}): JSX.Element | null {
+  const visible = drafts.filter((draft) => !discardedIds.has(draft.id));
+  if (visible.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 space-y-2">
+      {visible.map((draft) => {
+        const tracked = trackedIds.has(draft.id);
+        const grounded = draft.grounding === "grounded" && draft.linkedNodeIds.length > 0;
+        return (
+          <div key={draft.id} className="rounded-xl border border-teal-200 bg-teal-50/80 p-3 text-sm text-slate-800 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-950">{draft.title}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {formatDueDate(draft.dueDate)} · {Math.round(draft.confidence * 100)}% confidence
+                </p>
+              </div>
+              <Pin className="shrink-0 text-teal-700" size={16} />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span
+                className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                  grounded
+                    ? "border-teal-300 bg-white/80 text-teal-800"
+                    : "border-amber-200 bg-amber-50 text-amber-800"
+                }`}
+              >
+                {grounded ? `Grounded · ${draft.linkedNodeIds.length} nodes` : "Floating task"}
+              </span>
+            </div>
+            {draft.contextKeywords.length ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {draft.contextKeywords.map((keyword) => (
+                  <span key={keyword} className="rounded-full border border-teal-200 bg-white/75 px-2 py-0.5 text-xs font-semibold text-teal-800">
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs font-semibold text-white shadow-keycap transition hover:bg-slate-800 active:translate-y-[2px] active:shadow-inner disabled:opacity-50"
+                disabled={Boolean(busyId) || tracked}
+                type="button"
+                onClick={() => onConfirm(draft)}
+              >
+                {busyId === draft.id ? <Loader2 className="animate-spin" size={13} /> : <Plus size={13} />}
+                {tracked ? "Tracked" : "Confirm & Track"}
+              </button>
+              <button
+                className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white/75 px-3 text-xs font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950 active:translate-y-[2px] active:shadow-inner"
+                type="button"
+                onClick={() => onDiscard(draft.id)}
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function FileCard({
+  artifact,
+  busy,
+  onAdd,
+  onDownload,
+  onOpen
+}: {
+  artifact: ChatArtifact;
+  busy: boolean;
+  onAdd: () => void;
+  onDownload: () => void;
+  onOpen: () => void;
+}): JSX.Element {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white/75 px-3 py-2 text-xs text-slate-600 shadow-sm">
+      <FilePlus size={14} className="shrink-0 text-slate-400" />
+      <button className="min-w-0 flex-1 truncate text-left font-semibold text-slate-800 hover:text-slate-950" type="button" onClick={onOpen}>
+        {artifact.filename}
+        <span className="ml-2 font-normal text-slate-400">{formatBytes(artifact.sizeBytes)}</span>
+      </button>
+      <button
+        className="grid h-7 w-7 place-items-center rounded text-slate-500 transition hover:bg-white hover:text-slate-950 disabled:opacity-50"
+        disabled={busy}
+        title="Add artifact to ingestion"
+        type="button"
+        onClick={onAdd}
+      >
+        {busy ? <Loader2 className="animate-spin" size={13} /> : <Plus size={13} />}
+      </button>
+      <button
+        className="grid h-7 w-7 place-items-center rounded text-slate-500 transition hover:bg-white hover:text-slate-950 disabled:opacity-50"
+        disabled={busy}
+        title="Download artifact"
+        type="button"
+        onClick={onDownload}
+      >
+        <Download size={13} />
+      </button>
+    </div>
+  );
+}
+
 
 export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const [threads, setThreads] = useState<ChatThread[]>([]);
@@ -401,6 +555,10 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const [historyCollapsed, setHistoryCollapsed] = useState(true);
   const [groundingCollapsed, setGroundingCollapsed] = useState(true);
   const [activeGenerationId, setActiveGenerationId] = useState("");
+  const [expandedSuggestionMessageId, setExpandedSuggestionMessageId] = useState("");
+  const [discardedDraftIds, setDiscardedDraftIds] = useState<Set<string>>(() => new Set());
+  const [trackedDraftIds, setTrackedDraftIds] = useState<Set<string>>(() => new Set());
+  const upsertTracker = useTrackerStore((state) => state.upsertTracker);
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? threads[0] ?? null,
@@ -421,7 +579,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     setActiveThreadId(nextThread.id);
   }
 
-  function updateStreamingMessage(event: Extract<ChatStreamEvent, { type: "delta" | "artifact" | "grounding" }>): void {
+  function updateStreamingMessage(event: Extract<ChatStreamEvent, { type: "delta" | "artifact" | "grounding" | "semantic" }>): void {
     setThreads((current) =>
       current.map((thread) => ({
         ...thread,
@@ -436,6 +594,10 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
 
           if (event.type === "grounding") {
             return { ...message, grounding: { ...message.grounding, graphify: event.grounding } };
+          }
+
+          if (event.type === "semantic") {
+            return { ...message, semantic: event.semantic };
           }
 
           return { ...message, artifacts: [...(message.artifacts ?? []), event.artifact] };
@@ -456,6 +618,12 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setSelectedGrounding(event.grounding);
       updateStreamingMessage(event);
       setStatus("Composing answer...");
+      return;
+    }
+
+    if (event.type === "semantic") {
+      updateStreamingMessage(event);
+      setStatus(event.semantic.intent === "TRACKER" ? "Drafting tracker cards..." : "Routing request...");
       return;
     }
 
@@ -639,6 +807,49 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     }
   }
 
+  async function openArtifact(messageId: string, artifactId: string): Promise<void> {
+    setArtifactBusyId(artifactId);
+    try {
+      await window.api.chat.openArtifact(messageId, artifactId);
+      setStatus("Artifact opened.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to open artifact.");
+    } finally {
+      setArtifactBusyId("");
+    }
+  }
+
+  async function confirmTrackerDraft(draft: ProposedTrackerDraft): Promise<void> {
+    setArtifactBusyId(draft.id);
+    try {
+      const tracker = await window.api.tracker.create({
+        title: draft.title,
+        description: draft.contextKeywords.length ? `Suggested from chat: ${draft.contextKeywords.join(", ")}` : "Suggested from chat.",
+        dueDate: draft.dueDate,
+        priority: draft.confidence > 0.9 ? "high" : "medium",
+        status: "todo",
+        labels: ["chat-suggestion", draft.grounding],
+        sourceNodeIds: draft.linkedNodeIds
+      });
+      upsertTracker(tracker);
+      setTrackedDraftIds((current) => new Set([...current, draft.id]));
+      setStatus("Tracker item saved.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save tracker item.");
+    } finally {
+      setArtifactBusyId("");
+    }
+  }
+
+  function discardTrackerDraft(draftId: string): void {
+    setDiscardedDraftIds((current) => new Set([...current, draftId]));
+    setStatus("Tracker draft discarded.");
+  }
+
+  function highConfidenceDrafts(message: ChatMessage): ProposedTrackerDraft[] {
+    return (message.semantic?.proposedTrackers ?? []).filter((draft) => draft.confidence > 0.8);
+  }
+
   return (
     <div
       className={`grid min-h-0 flex-1 border-b border-slate-900/5 bg-floral ${
@@ -793,6 +1004,40 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                     inverted={message.role === "user"}
                     onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
                   />
+                  {message.role === "assistant" && message.semantic?.intent === "TRACKER" ? (
+                    <TrackerDraftCards
+                      busyId={artifactBusyId}
+                      discardedIds={discardedDraftIds}
+                      drafts={message.semantic.proposedTrackers}
+                      trackedIds={trackedDraftIds}
+                      onConfirm={(draft) => void confirmTrackerDraft(draft)}
+                      onDiscard={discardTrackerDraft}
+                    />
+                  ) : null}
+                  {message.role === "assistant" && message.semantic?.intent === "RESEARCH" && highConfidenceDrafts(message).length ? (
+                    <div className="mt-3">
+                      <button
+                        className="inline-flex h-7 items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 text-xs font-semibold text-teal-700 shadow-[0_0_12px_rgba(13,148,136,0.18)] transition hover:bg-teal-100"
+                        type="button"
+                        onClick={() =>
+                          setExpandedSuggestionMessageId((current) => (current === message.id ? "" : message.id))
+                        }
+                      >
+                        <Pin size={12} />
+                        Suggested tracker
+                      </button>
+                      {expandedSuggestionMessageId === message.id ? (
+                        <TrackerDraftCards
+                          busyId={artifactBusyId}
+                          discardedIds={discardedDraftIds}
+                          drafts={highConfidenceDrafts(message)}
+                          trackedIds={trackedDraftIds}
+                          onConfirm={(draft) => void confirmTrackerDraft(draft)}
+                          onDiscard={discardTrackerDraft}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
                   {message.error ? (
                     <p
                       className={`mt-3 flex items-center gap-2 text-xs font-semibold ${
@@ -849,31 +1094,14 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                 {message.artifacts?.length ? (
                   <div className="mt-3 space-y-2">
                     {message.artifacts.map((artifact) => (
-                      <div
+                      <FileCard
                         key={artifact.id}
-                        className="flex items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-2.5 py-2 text-xs text-slate-600"
-                      >
-                        <FilePlus size={13} className="shrink-0 text-slate-400" />
-                        <span className="min-w-0 flex-1 truncate">{artifact.filename}</span>
-                        <button
-                          className="grid h-7 w-7 place-items-center rounded text-slate-500 transition hover:bg-white hover:text-slate-950 disabled:opacity-50"
-                          disabled={Boolean(artifactBusyId)}
-                          title="Add artifact to ingestion"
-                          type="button"
-                          onClick={() => void ingestArtifact(message.id, artifact.id)}
-                        >
-                          {artifactBusyId === artifact.id ? <Loader2 className="animate-spin" size={13} /> : <Plus size={13} />}
-                        </button>
-                        <button
-                          className="grid h-7 w-7 place-items-center rounded text-slate-500 transition hover:bg-white hover:text-slate-950 disabled:opacity-50"
-                          disabled={Boolean(artifactBusyId)}
-                          title="Download artifact"
-                          type="button"
-                          onClick={() => void downloadArtifact(message.id, artifact.id)}
-                        >
-                          <Download size={13} />
-                        </button>
-                      </div>
+                        artifact={artifact}
+                        busy={artifactBusyId === artifact.id}
+                        onAdd={() => void ingestArtifact(message.id, artifact.id)}
+                        onDownload={() => void downloadArtifact(message.id, artifact.id)}
+                        onOpen={() => void openArtifact(message.id, artifact.id)}
+                      />
                     ))}
                   </div>
                 ) : null}

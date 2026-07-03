@@ -6,6 +6,7 @@ import type {
   ChatArtifact,
   ChatArtifactActionResult,
   ChatMessage,
+  ChatSemanticRouting,
   ChatResponse,
   ChatSendInput,
   ChatStreamEvent,
@@ -13,6 +14,7 @@ import type {
   GraphifyContextResult,
   GraphifyIngestionResult,
   ProcessDroppedItem,
+  ProposedTrackerDraft,
   SaveChatArtifactInput
 } from "../../shared/brain";
 import { parseLocalModelJsonObject } from "../../shared/jsonObject";
@@ -193,6 +195,95 @@ function normalizeSearchQuery(value: string, fallback: string): string {
     .trim();
 
   return cleaned || fallback;
+}
+
+function normalizeKeywordList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? Array.from(
+        new Set(
+          value
+            .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+            .map((item) => compact(item).slice(0, 80))
+            .filter(Boolean)
+        )
+      ).slice(0, 8)
+    : [];
+}
+
+function normalizeDueDate(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value.trim()) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  const parsed = new Date(trimmed);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
+}
+
+function normalizeProposedTrackers(value: unknown): ProposedTrackerDraft[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) {
+        return null;
+      }
+
+      const title = stringField(record, "title").slice(0, 120);
+      if (!title) {
+        return null;
+      }
+
+      const confidenceValue = record.confidence;
+      const confidence = Math.max(
+        0,
+        Math.min(1, typeof confidenceValue === "number" ? confidenceValue : Number(confidenceValue) || 0)
+      );
+
+      const draft: ProposedTrackerDraft = {
+        id: String(randomUUID()),
+        title,
+        dueDate: normalizeDueDate(record.due_date ?? record.dueDate),
+        confidence,
+        contextKeywords: normalizeKeywordList(record.context_keywords ?? record.contextKeywords),
+        linkedNodeIds: [],
+        grounding: "floating"
+      };
+      return draft;
+    })
+    .filter((item): item is ProposedTrackerDraft => Boolean(item))
+    .slice(0, 4);
+}
+
+function normalizeSemanticRouting(value: unknown, fallbackQuestion: string): ChatSemanticRouting {
+  const record = asRecord(value);
+  const intent = record?.intent === "ARTIFACT" || record?.intent === "TRACKER" || record?.intent === "RESEARCH"
+    ? record.intent
+    : requestedArtifactFor(fallbackQuestion)
+      ? "ARTIFACT"
+      : "RESEARCH";
+  const searchKeywords = normalizeKeywordList(record?.search_keywords ?? record?.searchKeywords);
+  const proposedTrackers = normalizeProposedTrackers(record?.proposed_trackers ?? record?.proposedTrackers);
+  const fallbackDraft: ProposedTrackerDraft = {
+    id: String(randomUUID()),
+    title: titleFromMessage(fallbackQuestion),
+    confidence: 0.72,
+    contextKeywords: searchKeywords,
+    linkedNodeIds: [],
+    grounding: "floating"
+  };
+
+  return {
+    intent,
+    searchKeywords: searchKeywords.length ? searchKeywords : normalizeSearchQuery(fallbackQuestion, fallbackQuestion).split(/\s+/).slice(0, 6),
+    proposedTrackers: intent === "TRACKER" && proposedTrackers.length === 0 ? [fallbackDraft] : proposedTrackers
+  };
 }
 
 function errorMessage(error: unknown): string {
@@ -461,6 +552,11 @@ export class ChatService {
     return { thread, message, artifact, downloadedPath: destinationPath };
   }
 
+  async getArtifactPath(messageId: string, artifactId: string): Promise<string> {
+    const { message } = await this.findMessage(messageId);
+    return this.requireArtifact(message, artifactId).storagePath;
+  }
+
   async sendMessage(input: ChatSendInput): Promise<ChatResponse> {
     const state = await this.requireState();
     const text = input.message.trim();
@@ -490,10 +586,30 @@ export class ChatService {
     thread.messages.push(userMessage);
 
     const settings = await this.settingsProvider();
-    const searchQuery = await this.formulateSearchQuery(thread, text, settings);
+    const semantic = await this.formulateSemanticRoute(thread, text, settings);
+    const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, text, settings));
     const graphify = await this.queryGraphify(searchQuery, input.budget);
-    const assistant = await this.completeWithSelectedProvider(thread, text, graphify, settings);
-    await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
+    semantic.proposedTrackers = this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify);
+    let assistant: ChatMessage =
+      semantic.intent === "TRACKER"
+        ? {
+            id: randomUUID(),
+            role: "assistant",
+            content:
+              semantic.proposedTrackers.some((draft) => draft.grounding === "grounded")
+                ? "I drafted grounded tracker items for review."
+                : "I drafted a floating tracker item for review.",
+            createdAt: new Date().toISOString(),
+            grounding: graphify.error ? undefined : { graphify },
+            semantic
+          }
+        : semantic.intent === "ARTIFACT"
+          ? await this.completeWithArtifactOnly(thread, text, graphify, settings, semantic)
+          : await this.completeWithSelectedProvider(thread, text, graphify, settings, semantic);
+
+    if (semantic.intent !== "TRACKER") {
+      await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
+    }
     thread.messages.push(assistant);
     thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
     thread.updatedAt = new Date().toISOString();
@@ -557,9 +673,16 @@ export class ChatService {
 
     try {
       const settings = await this.settingsProvider();
-      const searchQuery = await this.formulateSearchQuery(thread, text, settings);
+      const semantic = await this.formulateSemanticRoute(thread, text, settings);
+      assistant.semantic = semantic;
+      emit({ type: "semantic", generationId, messageId: assistant.id, semantic });
+
+      const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, text, settings));
       const graphify = await this.queryGraphify(searchQuery, input.budget);
-      assistant.grounding = { graphify };
+      semantic.proposedTrackers = this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify);
+      assistant.semantic = semantic;
+      assistant.grounding = graphify.error && semantic.intent === "TRACKER" ? undefined : { graphify };
+      emit({ type: "semantic", generationId, messageId: assistant.id, semantic });
       emit({
         type: "grounding",
         generationId,
@@ -567,9 +690,36 @@ export class ChatService {
         grounding: graphify
       });
 
-      if (graphify.error) {
+      if (semantic.intent === "TRACKER") {
+        assistant.content = semantic.proposedTrackers.some((draft) => draft.grounding === "grounded")
+          ? "I drafted grounded tracker items for review."
+          : "I drafted a floating tracker item for review.";
+        emit({
+          type: "delta",
+          generationId,
+          messageId: assistant.id,
+          delta: assistant.content,
+          content: assistant.content
+        });
+      } else if (graphify.error) {
         assistant.content = "Graphify context retrieval failed, so I did not send this question to the configured AI endpoint.";
         assistant.error = graphify.error;
+      } else if (semantic.intent === "ARTIFACT") {
+          const artifactMessage = await this.completeWithArtifactOnly(thread, text, graphify, settings, semantic);
+          assistant.content = artifactMessage.content;
+          assistant.artifacts = artifactMessage.artifacts;
+          assistant.error = artifactMessage.error;
+          assistant.grounding = artifactMessage.grounding;
+          emit({
+            type: "delta",
+            generationId,
+            messageId: assistant.id,
+            delta: assistant.content,
+            content: assistant.content
+          });
+          for (const artifact of assistant.artifacts ?? []) {
+            emit({ type: "artifact", generationId, messageId: assistant.id, artifact });
+          }
       } else {
         if (settings.aiMode === "proxy") {
           const response = await this.requestProxy(thread, text, graphify, settings);
@@ -638,7 +788,9 @@ export class ChatService {
       if (thread.title === "New Chat") {
         thread.title = titleFromMessage(text);
       }
-      await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
+      if (semantic.intent !== "TRACKER") {
+        await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
+      }
       await this.writeState();
       emit({ type: "done", generationId, thread, message: assistant });
 
@@ -677,6 +829,113 @@ export class ChatService {
     return result;
   }
 
+  private async formulateSemanticRoute(
+    thread: ChatThread,
+    question: string,
+    settings: AppSettings
+  ): Promise<ChatSemanticRouting> {
+    const history = thread.messages;
+    const recentHistory =
+      history.length > 0 && history[history.length - 1]?.role === "user" && history[history.length - 1]?.content.trim() === question
+        ? history.slice(0, -1)
+        : history;
+    const messages: LlmChatMessage[] = [
+      {
+        role: "system",
+        content: [
+          "You are Second Brain's fast semantic router.",
+          "Do not answer the user.",
+          "Return exactly one raw JSON object and no markdown.",
+          "Schema: {\"intent\":\"ARTIFACT\"|\"TRACKER\"|\"RESEARCH\",\"search_keywords\":[\"string\"],\"proposed_trackers\":[{\"title\":\"string\",\"due_date\":\"ISO8601 string optional\",\"confidence\":0.0,\"context_keywords\":[\"string\"]}]}",
+          "Use TRACKER only when the user is explicitly asking to remember, schedule, track, follow up, create a task, or set a deadline.",
+          "Use ARTIFACT when the user asks to create/export a file such as PDF, DOCX, XLSX, image, diagram, markdown, resume, letter, or report.",
+          "Use RESEARCH for normal questions and explanations.",
+          "Search keywords must be 3-8 compact terms useful for graph retrieval.",
+          `Current local system time: ${new Date().toString()}. Resolve relative dates from this time.`
+        ].join(" ")
+      },
+      ...recentHistory.slice(-6).map<LlmChatMessage>((message) => ({
+        role: message.role === "assistant" ? "assistant" : "user",
+        content: message.content
+      })),
+      { role: "user", content: question }
+    ];
+
+    try {
+      if (settings.aiMode === "proxy") {
+        const proxy = settings.managedProxy;
+        const secret = proxySecret(settings);
+        const model = proxyModel(settings);
+        if (!proxy.endpoint.trim() || !secret) {
+          return normalizeSemanticRouting({}, question);
+        }
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        const requestId = randomUUID();
+        try {
+          const response = await fetch(proxy.endpoint, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${secret}`,
+              "Content-Type": "application/json",
+              "X-Second-Brain-Request-Id": requestId
+            },
+            body: JSON.stringify({
+              userIdOrKey: secret,
+              model,
+              requestId,
+              messages,
+              temperature: 0.1,
+              max_tokens: 420,
+              response_format: { type: "json_object" }
+            }),
+            signal: controller.signal
+          });
+
+          const responseText = await response.text();
+          if (!response.ok) {
+            console.warn(`Semantic router failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 500)}`);
+            return normalizeSemanticRouting({}, question);
+          }
+
+          const parsed = JSON.parse(responseText) as ProxyResponse;
+          return normalizeSemanticRouting(parseLocalModelJsonObject(extractProxyText(parsed) || responseText), question);
+        } finally {
+          clearTimeout(timeout);
+        }
+      }
+
+      const llm = new LlmService(async () => settings.ai);
+      return normalizeSemanticRouting(
+        await llm.completeJsonObject({
+          messages,
+          method: { temperature: 0.1, maxTokens: 420, jsonMode: true }
+        }),
+        question
+      );
+    } catch (error) {
+      console.warn("Semantic router failed; falling back to research route.", error);
+      return normalizeSemanticRouting({}, question);
+    }
+  }
+
+  private attachGraphNodesToDrafts(
+    drafts: ProposedTrackerDraft[],
+    graphify: GraphifyContextResult
+  ): ProposedTrackerDraft[] {
+    const nodes = (graphify.nodeHits ?? []).map((hit) => hit.id).filter(Boolean).slice(0, 8);
+    if (nodes.length === 0) {
+      return drafts.map((draft) => ({ ...draft, linkedNodeIds: [], grounding: "floating" }));
+    }
+
+    return drafts.map((draft) => ({
+      ...draft,
+      linkedNodeIds: draft.linkedNodeIds.length ? draft.linkedNodeIds : nodes,
+      grounding: "grounded"
+    }));
+  }
+
   private async saveGraphifyResultBestEffort(
     question: string,
     answer: string,
@@ -704,14 +963,15 @@ export class ChatService {
     thread: ChatThread,
     question: string,
     graphify: GraphifyContextResult,
-    settings?: AppSettings
+    settings?: AppSettings,
+    semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const effectiveSettings = settings ?? (await this.settingsProvider());
     if (effectiveSettings.aiMode !== "proxy") {
-      return this.completeWithLocalEndpoint(thread, question, graphify, effectiveSettings);
+      return this.completeWithLocalEndpoint(thread, question, graphify, effectiveSettings, semantic);
     }
 
-    return this.completeWithManagedProxy(thread, question, graphify, effectiveSettings);
+    return this.completeWithManagedProxy(thread, question, graphify, effectiveSettings, semantic);
   }
 
   private async formulateSearchQuery(thread: ChatThread, question: string, settings: AppSettings): Promise<string> {
@@ -794,11 +1054,55 @@ export class ChatService {
     }
   }
 
+  private async completeWithArtifactOnly(
+    thread: ChatThread,
+    question: string,
+    graphify: GraphifyContextResult,
+    settings: AppSettings,
+    semantic: ChatSemanticRouting
+  ): Promise<ChatMessage> {
+    const messageId = randomUUID();
+    const createdAt = new Date().toISOString();
+    if (graphify.error) {
+      return {
+        id: messageId,
+        role: "assistant",
+        content: "I could not generate the artifact because graph context retrieval failed.",
+        createdAt,
+        grounding: { graphify },
+        semantic,
+        error: graphify.error
+      };
+    }
+
+    const request = requestedArtifactFor(question) ?? { tool: "create_markdown_artifact", extension: ".md", mimeType: "text/markdown" };
+    const artifactSeed = [
+      "Generate the requested artifact silently.",
+      `User request: ${question}`,
+      "",
+      "Relevant Graphify context:",
+      graphify.stdout.slice(0, 7000)
+    ].join("\n");
+    const artifact = await this.createRequestedArtifact(thread.id, messageId, question, artifactSeed, graphify, settings, request);
+
+    return {
+      id: messageId,
+      role: "assistant",
+      content: artifact ? "I generated the file." : "I could not generate a file from that request.",
+      createdAt,
+      artifacts: artifact ? [artifact] : [],
+      grounding: { graphify },
+      semantic,
+      error: artifact ? undefined : "Artifact generation did not return a local file."
+    };
+  }
+
   private async completeWithLocalEndpoint(
     thread: ChatThread,
     question: string,
     graphify: GraphifyContextResult,
-    settings: AppSettings
+    settings: AppSettings,
+    semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const createdAt = new Date().toISOString();
 
@@ -809,6 +1113,7 @@ export class ChatService {
         content: "Graphify context retrieval failed, so I did not send this question to the local AI endpoint.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: graphify.error
       };
     }
@@ -831,6 +1136,7 @@ export class ChatService {
         content: text,
         createdAt,
         artifacts,
+        semantic,
         grounding: { graphify }
       };
     } catch (error) {
@@ -840,6 +1146,7 @@ export class ChatService {
         content: "The local AI endpoint could not generate an answer. Local Graphify context is still available below.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: errorMessage(error)
       };
     }
@@ -849,7 +1156,8 @@ export class ChatService {
     thread: ChatThread,
     question: string,
     graphify: GraphifyContextResult,
-    settings: AppSettings
+    settings: AppSettings,
+    semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const proxy = settings.managedProxy;
     const secret = proxySecret(settings);
@@ -863,6 +1171,7 @@ export class ChatService {
           "Managed proxy is not configured yet. Local Graphify context was retrieved, but remote answer generation is disabled.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: "Managed proxy is disabled or missing an endpoint."
       };
     }
@@ -874,6 +1183,7 @@ export class ChatService {
         content: "Managed proxy secret key is missing. Add the beta key in Settings or set OPENAI_API_KEY to enable chat answers.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: "Managed proxy secret key is missing."
       };
     }
@@ -885,6 +1195,7 @@ export class ChatService {
         content: "Graphify context retrieval failed, so I did not send this question to the managed proxy.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: graphify.error
       };
     }
@@ -910,6 +1221,7 @@ export class ChatService {
         content: text,
         createdAt,
         artifacts: allArtifacts,
+        semantic,
         grounding: {
           graphify,
           api: proxyResponseMetadata(response, model)
@@ -922,6 +1234,7 @@ export class ChatService {
         content: "The managed proxy could not generate an answer. Local Graphify context is still available below.",
         createdAt,
         grounding: { graphify },
+        semantic,
         error: errorMessage(error)
       };
     }
@@ -1087,9 +1400,10 @@ export class ChatService {
     question: string,
     content: string,
     graphify: GraphifyContextResult,
-    settings: AppSettings
+    settings: AppSettings,
+    fallbackRequest?: RequestedArtifact
   ): Promise<ChatArtifact | null> {
-    const request = requestedArtifactFor(question);
+    const request = requestedArtifactFor(question) ?? fallbackRequest;
     if (!request || !content.trim()) {
       return null;
     }

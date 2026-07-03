@@ -1,6 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type {
+  AccountAccessStatus,
+  AccountSettings,
+  AccountUsageSnapshot,
   AiMode,
   AiSettings,
   AppearanceSettings,
@@ -17,6 +20,9 @@ const defaultModel = "local-model";
 const placeholderApiKey = "local-dev-placeholder";
 const productionProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
 const productionProxyChatEndpoint = `${productionProxyOrigin}/chat`;
+const productionWebsiteUrl = "https://www.downloadsecondbrain.com";
+const productionAccountUrl = `${productionWebsiteUrl}/login`;
+const productionCheckoutUrl = `${productionWebsiteUrl}/checkout`;
 const defaultManagedProxyModel = "google/gemini-3.5-flash";
 const defaultGraphifySettings: GraphifyRuntimeSettings = {
   graphifyBin: "",
@@ -29,6 +35,20 @@ const defaultGraphifySettings: GraphifyRuntimeSettings = {
 };
 const defaultAppearanceSettings: AppearanceSettings = {
   topBarMirrored: false
+};
+const defaultAccountSettings: AccountSettings = {
+  email: "",
+  secretKey: "",
+  status: "unknown",
+  planName: "Second Brain",
+  trialEndsAt: "",
+  subscriptionRenewsAt: "",
+  usage: null,
+  websiteUrl: productionWebsiteUrl,
+  accountUrl: productionAccountUrl,
+  checkoutUrl: productionCheckoutUrl,
+  lastVerifiedAt: "",
+  updatedAt: new Date().toISOString()
 };
 
 function normalizeEndpoint(value: string | undefined): string {
@@ -61,6 +81,19 @@ function normalizeAiMode(value: unknown, fallback: AiMode = "proxy"): AiMode {
   return value === "local" || value === "proxy" ? value : fallback;
 }
 
+function normalizeAccountAccessStatus(value: unknown): AccountAccessStatus {
+  switch (value) {
+    case "trialing":
+    case "active":
+    case "past_due":
+    case "canceled":
+    case "expired":
+      return value;
+    default:
+      return "unknown";
+  }
+}
+
 function numberSetting(value: unknown, fallback: number, minimum = 1): number {
   const parsed = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isFinite(parsed) ? Math.max(minimum, Math.trunc(parsed)) : fallback;
@@ -86,6 +119,43 @@ function booleanSetting(value: unknown, fallback: boolean): boolean {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeAccountUsage(value: unknown): AccountUsageSnapshot | null {
+  const parsed = asRecord(value);
+  const used = numberSetting(parsed.used, NaN, 0);
+  const limit = numberSetting(parsed.limit, NaN, 0);
+
+  if (!Number.isFinite(used) || !Number.isFinite(limit)) {
+    return null;
+  }
+
+  return {
+    label: typeof parsed.label === "string" && parsed.label.trim() ? parsed.label.trim() : "AI usage",
+    used,
+    limit,
+    resetAt: typeof parsed.resetAt === "string" ? parsed.resetAt : undefined,
+    updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : undefined
+  };
+}
+
+function normalizeAccountSettings(value: unknown, fallbackSecretKey = ""): AccountSettings {
+  const parsed = asRecord(value);
+
+  return {
+    email: typeof parsed.email === "string" ? parsed.email.trim() : defaultAccountSettings.email,
+    secretKey: typeof parsed.secretKey === "string" ? parsed.secretKey.trim() : fallbackSecretKey.trim(),
+    status: normalizeAccountAccessStatus(parsed.status),
+    planName: typeof parsed.planName === "string" && parsed.planName.trim() ? parsed.planName.trim() : defaultAccountSettings.planName,
+    trialEndsAt: typeof parsed.trialEndsAt === "string" ? parsed.trialEndsAt : "",
+    subscriptionRenewsAt: typeof parsed.subscriptionRenewsAt === "string" ? parsed.subscriptionRenewsAt : "",
+    usage: normalizeAccountUsage(parsed.usage),
+    websiteUrl: productionWebsiteUrl,
+    accountUrl: productionAccountUrl,
+    checkoutUrl: productionCheckoutUrl,
+    lastVerifiedAt: typeof parsed.lastVerifiedAt === "string" ? parsed.lastVerifiedAt : "",
+    updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
+  };
 }
 
 function normalizeManagedProxySettings(value: unknown): ManagedProxySettings {
@@ -200,6 +270,8 @@ export class AiSettingsService {
       const parsed = JSON.parse(await readFile(this.settingsPath, "utf8")) as Record<string, unknown>;
       const aiRecord = asRecord(parsed.ai ?? parsed);
       const legacyProxy = normalizeManagedProxySettings(parsed.managedProxy);
+      const account = normalizeAccountSettings(parsed.account, legacyProxy.secretKey);
+      const proxySecretKey = account.secretKey || legacyProxy.secretKey;
       const aiMode = normalizeAiMode(parsed.aiMode, "proxy");
       const settings = {
         aiMode,
@@ -212,7 +284,11 @@ export class AiSettingsService {
           ),
           updatedAt: typeof aiRecord.updatedAt === "string" ? aiRecord.updatedAt : new Date().toISOString()
         },
-        managedProxy: legacyProxy,
+        account,
+        managedProxy: {
+          ...legacyProxy,
+          secretKey: proxySecretKey
+        },
         graphify: normalizeGraphifySettings(parsed.graphify),
         appearance: normalizeAppearanceSettings(parsed.appearance),
         updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString()
@@ -239,6 +315,22 @@ export class AiSettingsService {
   async updateAppSettings(input: UpdateAppSettingsInput): Promise<AppSettings> {
     const current = await this.getAppSettings();
     const aiMode = normalizeAiMode(input.aiMode, current.aiMode);
+    const accountInput = input.account ?? {};
+    const managedProxyInput = input.managedProxy ?? {};
+    const accountSecretKey =
+      typeof accountInput.secretKey === "string"
+        ? accountInput.secretKey.trim()
+        : typeof managedProxyInput.secretKey === "string"
+          ? managedProxyInput.secretKey.trim()
+          : current.account.secretKey || current.managedProxy.secretKey;
+    const nextAccount = normalizeAccountSettings(
+      {
+        ...current.account,
+        ...accountInput,
+        secretKey: accountSecretKey
+      },
+      accountSecretKey
+    );
     const next: AppSettings = {
       aiMode,
       ai: {
@@ -248,15 +340,16 @@ export class AiSettingsService {
         model: normalizeModel(input.ai?.model ?? current.ai.model),
         updatedAt: new Date().toISOString()
       },
+      account: {
+        ...nextAccount,
+        updatedAt: new Date().toISOString()
+      },
       managedProxy: {
         enabled: true,
         endpoint: productionProxyChatEndpoint,
-        secretKey:
-          typeof input.managedProxy?.secretKey === "string"
-            ? input.managedProxy.secretKey.trim()
-            : current.managedProxy.secretKey,
-        model: normalizeManagedProxyModel(input.managedProxy?.model ?? current.managedProxy.model),
-        groundingEnabled: input.managedProxy?.groundingEnabled ?? current.managedProxy.groundingEnabled,
+        secretKey: accountSecretKey,
+        model: normalizeManagedProxyModel(managedProxyInput.model ?? current.managedProxy.model),
+        groundingEnabled: managedProxyInput.groundingEnabled ?? current.managedProxy.groundingEnabled,
         updatedAt: new Date().toISOString()
       },
       graphify: normalizeGraphifySettings({
@@ -286,6 +379,7 @@ export class AiSettingsService {
         updatedAt: new Date().toISOString()
       },
       managedProxy: normalizeManagedProxySettings(undefined),
+      account: normalizeAccountSettings(undefined),
       graphify: normalizeGraphifySettings(undefined),
       appearance: normalizeAppearanceSettings(undefined),
       updatedAt: new Date().toISOString()
