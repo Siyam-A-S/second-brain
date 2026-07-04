@@ -27,6 +27,7 @@ function repairCommandText(): string {
       "winget install -e --id Python.Python.3.12 --scope user --silent --accept-package-agreements --accept-source-agreements",
       'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
       `uv tool install --upgrade "${graphifyToolPackage}"`,
+      "py -3.10 -m pip install --user --upgrade fpdf2",
       "uv tool ensurepath"
     ].join("\n");
   }
@@ -35,11 +36,12 @@ function repairCommandText(): string {
     return [
       "brew install python uv",
       `uv tool install --upgrade "${graphifyToolPackage}"`,
+      "python3 -m pip install --user --upgrade fpdf2 --break-system-packages",
       "uv tool ensurepath"
     ].join("\n");
   }
 
-  return [`uv tool install --upgrade "${graphifyToolPackage}"`, "uv tool ensurepath"].join("\n");
+  return [`uv tool install --upgrade "${graphifyToolPackage}"`, "python3 -m pip install --user --upgrade fpdf2 --break-system-packages", "uv tool ensurepath"].join("\n");
 }
 
 function uniqueCandidates<T extends RuntimeCommandCandidate>(candidates: T[]): T[] {
@@ -150,8 +152,13 @@ export class DependencyRuntimeService {
   private lastRepairOutput = "";
 
   async getStatus(): Promise<DependencyRuntimeStatus> {
-    const [python, uv, graphify] = await Promise.all([this.checkPython(), this.checkUv(), this.checkGraphify()]);
-    const dependencies = [python, uv, graphify];
+    const [python, uv, graphify, fpdf2] = await Promise.all([
+      this.checkPython(),
+      this.checkUv(),
+      this.checkGraphify(),
+      this.checkFpdf2()
+    ]);
+    const dependencies = [python, uv, graphify, fpdf2];
     const guidance = dependencies.filter((dependency) => !dependency.available).map((dependency) => dependency.guidance);
 
     return {
@@ -205,6 +212,23 @@ export class DependencyRuntimeService {
         args: ["tool", "ensurepath"]
       }
     );
+
+    const pythonCommand = await this.findPythonCommand();
+    if (pythonCommand) {
+      commands.push({
+        command: pythonCommand.command,
+        args: [
+          ...this.pythonArgsWithoutVersion(pythonCommand),
+          "-m",
+          "pip",
+          "install",
+          "--user",
+          "--upgrade",
+          "fpdf2",
+          ...(isWindows ? [] : ["--break-system-packages"])
+        ]
+      });
+    }
 
     const output: string[] = [];
     for (const command of commands) {
@@ -320,6 +344,57 @@ export class DependencyRuntimeService {
       required: true,
       guidance: `Install the full Graphify tool with: uv tool install --upgrade "${graphifyToolPackage}"`
     };
+  }
+
+  private async checkFpdf2(): Promise<RuntimeDependencyCheck> {
+    for (const candidate of uniqueCandidates(pythonCandidates())) {
+      try {
+        const output = await this.run(candidate.command, [
+          ...this.pythonArgsWithoutVersion(candidate),
+          "-c",
+          "import fpdf; print(getattr(fpdf, '__version__', 'installed'))"
+        ]);
+        return {
+          name: "fpdf2",
+          available: true,
+          version: output.trim().split(/\r?\n/)[0] ?? "installed",
+          path: candidate.command,
+          required: true,
+          guidance: ""
+        };
+      } catch {
+        // Try the next Python runtime.
+      }
+    }
+
+    return {
+      name: "fpdf2",
+      available: false,
+      version: "",
+      required: true,
+      guidance: isWindows
+        ? "Install fpdf2 for artifact rendering with: py -3.10 -m pip install --user --upgrade fpdf2"
+        : "Install fpdf2 for artifact rendering with: python3 -m pip install --user --upgrade fpdf2 --break-system-packages"
+    };
+  }
+
+  private async findPythonCommand(): Promise<RuntimeCommandCandidate | null> {
+    for (const candidate of uniqueCandidates(pythonCandidates())) {
+      try {
+        const output = await this.run(candidate.command, candidate.args);
+        if (parsePythonVersion(output).ok) {
+          return candidate;
+        }
+      } catch {
+        // Try the next candidate.
+      }
+    }
+
+    return null;
+  }
+
+  private pythonArgsWithoutVersion(candidate: RuntimeCommandCandidate): string[] {
+    return candidate.args.filter((arg) => arg !== "--version" && arg !== "-V");
   }
 
   private async findUvToolGraphifyCommand(): Promise<string | null> {

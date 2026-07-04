@@ -411,7 +411,7 @@ export type ChatArtifactActionResult = {
 };
 
 export type RuntimeDependencyCheck = {
-  name: "python" | "uv" | "graphify";
+  name: "python" | "uv" | "graphify" | "fpdf2";
   available: boolean;
   version: string;
   path?: string | undefined;

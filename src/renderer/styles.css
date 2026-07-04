@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wdth,wght,YTLC@6..12,100,200..1000,500&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,9 +15,13 @@
   color: var(--color-text-main);
   background: var(--color-frame);
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Nunito Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  font-optical-sizing: auto;
   font-synthesis: none;
+  font-variation-settings:
+    "wdth" 100,
+    "YTLC" 500;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

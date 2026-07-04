@@ -156,3 +156,106 @@ For the most economical scaling, combine both strategies in your proxy endpoint:
 1. **Pre-flight:** Use a quick, zero-temperature Flash call to formulate precise search queries from the user's prompt.
 2. **Focused Retrieval:** Use those keywords to extract a tight, relevant subgraph.
 3. **Cached System Prompt:** When sending the final generation call, keep the heavy system instructions and formatting rules perfectly static at the top of the prompt to trigger Vertex AI's 90% caching discount, appending only the focused graph data and the user's question at the bottom.
+
+-----
+## preflight message
+It is in [ChatService.ts](/home/rushat/second-brain/src/main/services/ChatService.ts:861), inside:
+
+`ChatService.formulateSemanticRoute(...)`
+
+That is the main preflight LLM call now. The system prompt starts at [ChatService.ts:873](/home/rushat/second-brain/src/main/services/ChatService.ts:873):
+
+```ts
+"You are Second Brain's fast semantic router."
+...
+"Search keywords must be 3-8 compact terms useful for graph retrieval."
+```
+
+It returns JSON with:
+
+```ts
+{
+  intent,
+  search_keywords,
+  proposed_trackers
+}
+```
+
+Those keywords are used here:
+
+- Non-streaming chat: [ChatService.ts:608](/home/rushat/second-brain/src/main/services/ChatService.ts:608)
+- Streaming chat: [ChatService.ts:695](/home/rushat/second-brain/src/main/services/ChatService.ts:695)
+
+Specifically:
+
+```ts
+const semantic = await this.formulateSemanticRoute(thread, text, settings);
+const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, text, settings));
+const graphify = await this.queryGraphify(searchQuery, input.budget);
+```
+
+There is also an older fallback keyword-only preflight at [ChatService.ts:1006](/home/rushat/second-brain/src/main/services/ChatService.ts:1006):
+
+`ChatService.formulateSearchQuery(...)`
+
+Its prompt is:
+
+```ts
+"You are a search optimizer. Generate a concise search query (3-6 keywords) ..."
+```
+
+But that only runs if `semantic.searchKeywords` is empty.
+
+The actual handoff to `graphify.serve` is indirect:
+
+1. [ChatService.queryGraphify()](/home/rushat/second-brain/src/main/services/ChatService.ts:852) calls local MCP tool `query_graphify_context`.
+2. [LocalToolRegistry.ts:174](/home/rushat/second-brain/src/main/services/LocalToolRegistry.ts:174) maps that tool to `GraphifyContextService.query(...)`.
+3. [GraphifyContextService.ts:529](/home/rushat/second-brain/src/main/services/GraphifyContextService.ts:529) expands the query against graph vocabulary, then calls MCP tool `query_graph`.
+4. `graphify.serve` is started with `python -m graphify.serve <graph.json>` at [GraphifyContextService.ts:1074](/home/rushat/second-brain/src/main/services/GraphifyContextService.ts:1074).
+
+So the answer is: **the LLM preflight keyword/router message is in `ChatService.formulateSemanticRoute`; the older keyword-only backup is `ChatService.formulateSearchQuery`; `graphify.serve` itself is queried later by `GraphifyContextService.query`.**
+
+----
+## Naming the artifact and memory creation
+There are two separate mechanisms.
+
+**Artifact Naming**
+The LLM instruction for naming artifacts is in [ChatService.ts](/home/rushat/second-brain/src/main/services/ChatService.ts:430), inside `artifactPlannerSystemPrompt()`.
+
+Key lines:
+- [ChatService.ts:434](/home/rushat/second-brain/src/main/services/ChatService.ts:434): schema tells the LLM to return `title` and `filename`.
+- [ChatService.ts:1494](/home/rushat/second-brain/src/main/services/ChatService.ts:1494): the user prompt includes `preferred_filename`.
+- [ChatService.ts:1557](/home/rushat/second-brain/src/main/services/ChatService.ts:1557): proxy artifact planner sends `artifactPlannerSystemPrompt(tools)` as the system message.
+- [ChatService.ts:1510](/home/rushat/second-brain/src/main/services/ChatService.ts:1510): local model planner uses the same system prompt.
+- [ChatService.ts:1610](/home/rushat/second-brain/src/main/services/ChatService.ts:1610): returned `title` / `filename` are normalized.
+- [ChatService.ts:1445](/home/rushat/second-brain/src/main/services/ChatService.ts:1445): generated artifact uses planned filename, otherwise fallback.
+
+Fallback naming is deterministic here:
+- [ChatService.ts:411](/home/rushat/second-brain/src/main/services/ChatService.ts:411): `artifactTitleFromQuestion()`
+- [ChatService.ts:425](/home/rushat/second-brain/src/main/services/ChatService.ts:425): `artifactFileName()`
+
+**Saving Chat Queries To Graphify Memory**
+This is not an LLM instruction. It is app logic after a successful answer.
+
+Entry points:
+- Non-streaming chat saves at [ChatService.ts:630](/home/rushat/second-brain/src/main/services/ChatService.ts:630)
+- Streaming chat saves at [ChatService.ts:820](/home/rushat/second-brain/src/main/services/ChatService.ts:820)
+
+The actual saver is:
+- [ChatService.ts:968](/home/rushat/second-brain/src/main/services/ChatService.ts:968): `saveGraphifyResultBestEffort(...)`
+- [ChatService.ts:980](/home/rushat/second-brain/src/main/services/ChatService.ts:980): calls local MCP tool `save_graphify_result`
+- [ChatService.ts:978](/home/rushat/second-brain/src/main/services/ChatService.ts:978): collects node IDs from `graphify.nodeHits`
+
+The local MCP tool is registered here:
+- [LocalToolRegistry.ts:227](/home/rushat/second-brain/src/main/services/LocalToolRegistry.ts:227): `save_graphify_result`
+- [LocalToolRegistry.ts:241](/home/rushat/second-brain/src/main/services/LocalToolRegistry.ts:241): executes `graphifyContext.saveResult(...)`
+
+The Graphify CLI call is built here:
+- [GraphifyContextService.ts:590](/home/rushat/second-brain/src/main/services/GraphifyContextService.ts:590): `saveResult(...)`
+- [GraphifyContextService.ts:599](/home/rushat/second-brain/src/main/services/GraphifyContextService.ts:599): runs `graphify save-result --question ... --answer ... --type query`
+- [GraphifyContextService.ts:600](/home/rushat/second-brain/src/main/services/GraphifyContextService.ts:600): adds `--nodes` when node hits exist
+
+Shared input type:
+- [brain.ts](/home/rushat/second-brain/src/shared/brain.ts:334): `SaveGraphifyResultInput`
+
+So, short version: **artifact names are LLM-planned in `artifactPlannerSystemPrompt()`; Graphify memory saving is deterministic post-response logic through `saveGraphifyResultBestEffort()` -> `save_graphify_result` -> `graphify save-result`.**

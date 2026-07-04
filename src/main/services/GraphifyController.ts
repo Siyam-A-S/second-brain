@@ -365,6 +365,7 @@ function researchDependencyStatusScript(): string {
     "deps = [",
     "  ('Graphify', 'graphify', True, 'Graph generation and MCP server'),",
     "  ('pypdf', 'pypdf', True, 'Plain PDF text fallback'),",
+    "  ('fpdf2', 'fpdf', True, 'Formatted PDF and presentation artifact rendering'),",
     "  ('PyMuPDF', 'fitz', False, 'PDF pages, images, layout blocks, and source locations'),",
     "  ('pymupdf4llm', 'pymupdf4llm', False, 'Rich PDF-to-Markdown extraction for research papers'),",
     "  ('numpy', 'numpy', False, 'Layout scoring and future research analytics'),",
@@ -564,7 +565,7 @@ export class GraphifyController {
           dependencies: parsed.dependencies,
           guidance: [
             missingRequired.length > 0
-              ? "Install the base Graphify PDF runtime: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\""
+              ? "Install the base Graphify PDF runtime and artifact renderer: uv tool install --upgrade \"graphifyy[pdf,office,openai,mcp]\" && python3 -m pip install --user --upgrade fpdf2 --break-system-packages"
               : "",
             missingRich.length > 0
               ? "For rich research-paper extraction, install the full Graphify tool environment: uv tool install --upgrade \"graphifyy[all]\""

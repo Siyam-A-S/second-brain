@@ -50,6 +50,10 @@ function formatBytes(value: number): string {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function hasGeneratedFileArtifacts(message: ChatMessage): boolean {
+  return Boolean(message.artifacts?.some((artifact) => artifact.source === "local-tool" || artifact.source === "proxy-attachment"));
+}
+
 function sortedThreads(threads: ChatThread[]): ChatThread[] {
   return [...threads].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 }
@@ -973,6 +977,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
           {activeThread?.messages.map((message) => {
             const modelName = apiModelName(message.grounding?.api);
+            const generatedFileMessage = hasGeneratedFileArtifacts(message);
 
             return (
               <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -999,7 +1004,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                     </span>
                   </div>
                   <MessageContent
-                    canAddParts={message.role === "assistant"}
+                    canAddParts={message.role === "assistant" && !generatedFileMessage}
                     content={message.content}
                     inverted={message.role === "user"}
                     onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
@@ -1073,7 +1078,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                         <SearchCheck size={13} />
                         Local graph context used
                       </button>
-                      {message.role === "assistant" ? (
+                      {message.role === "assistant" && !generatedFileMessage ? (
                         <button
                           className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-950 disabled:opacity-50"
                           disabled={Boolean(artifactBusyId)}

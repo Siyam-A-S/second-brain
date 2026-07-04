@@ -86,6 +86,8 @@ const createArtifactSchema = {
   filename: z.string().optional(),
   title: z.string().optional(),
   text: z.string().optional(),
+  astPayload: z.unknown().optional(),
+  ast_payload: z.unknown().optional(),
   contentBase64: z.string().optional(),
   mimeType: z.string().optional(),
   documentType: z.string().optional()
@@ -263,6 +265,15 @@ export function createLocalToolRegistry(options: {
           filename: { type: "string" },
           title: { type: "string" },
           text: { type: "string" },
+          astPayload: {
+            type: "object",
+            description:
+              "Structured artifact AST for PDFs and presentation decks: {meta:{filename,title,layout_mode,primary_color},nodes:[{type,text,spans,bold_prefix}]}"
+          },
+          ast_payload: {
+            type: "object",
+            description: "Snake_case alias for astPayload."
+          },
           contentBase64: { type: "string" },
           mimeType: { type: "string" },
           documentType: {
@@ -294,7 +305,7 @@ export function createLocalToolRegistry(options: {
       artifactTool(
         "create_pdf_artifact",
         "Create PDF artifact",
-        "Create a formatted PDF artifact from structured Markdown text, or from contentBase64 containing PDF bytes. Use documentType for letter, summary, resume, report, proposal, or similar layout.",
+        "Create a formatted PDF artifact from a structured AST payload, or from contentBase64 containing PDF bytes. Use PORTRAIT for reports/letters and LANDSCAPE for presentation decks.",
         ".pdf",
         "application/pdf"
       ),

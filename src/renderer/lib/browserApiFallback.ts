@@ -962,6 +962,19 @@ const browserApiFallback: SecondBrainApi = {
       for (const thread of browserThreads) {
         const message = thread.messages.find((candidate) => candidate.id === messageId);
         if (message) {
+          const isWholeMessage = !input.content || input.content.trim() === message.content.trim();
+          const generatedArtifact = message.artifacts?.find(
+            (artifact) => artifact.source === "local-tool" || artifact.source === "proxy-attachment"
+          );
+          if (isWholeMessage && generatedArtifact) {
+            throw new Error("This response already has a generated file. Add, open, or download the file card instead.");
+          }
+          const existing = isWholeMessage
+            ? message.artifacts?.find((artifact) => artifact.source === "assistant-text")
+            : undefined;
+          if (existing) {
+            return { thread, message, artifact: existing };
+          }
           const content = input.content ?? message.content;
           const title = input.title?.trim() || "browser-preview-response";
           const artifact = {
@@ -982,7 +995,12 @@ const browserApiFallback: SecondBrainApi = {
       throw new Error(`Browser preview cannot find message "${messageId}".`);
     },
     ingestArtifact: async (messageId, artifactId) => {
-      const saved = await browserApiFallback.chat.saveMessageArtifact({ messageId });
+      const thread = browserThreads.find((candidate) => candidate.messages.some((message) => message.id === messageId));
+      const message = thread?.messages.find((candidate) => candidate.id === messageId);
+      const existingArtifact = message?.artifacts?.find((artifact) => artifact.id === artifactId);
+      const saved = existingArtifact && thread && message
+        ? { thread, message, artifact: existingArtifact }
+        : await browserApiFallback.chat.saveMessageArtifact({ messageId });
       return {
         ...saved,
         artifact: saved.message.artifacts?.find((artifact) => artifact.id === artifactId) ?? saved.artifact,
@@ -997,7 +1015,12 @@ const browserApiFallback: SecondBrainApi = {
       };
     },
     downloadArtifact: async (messageId, artifactId) => {
-      const saved = await browserApiFallback.chat.saveMessageArtifact({ messageId });
+      const thread = browserThreads.find((candidate) => candidate.messages.some((message) => message.id === messageId));
+      const message = thread?.messages.find((candidate) => candidate.id === messageId);
+      const existingArtifact = message?.artifacts?.find((artifact) => artifact.id === artifactId);
+      const saved = existingArtifact && thread && message
+        ? { thread, message, artifact: existingArtifact }
+        : await browserApiFallback.chat.saveMessageArtifact({ messageId });
       return {
         ...saved,
         artifact: saved.message.artifacts?.find((artifact) => artifact.id === artifactId) ?? saved.artifact,

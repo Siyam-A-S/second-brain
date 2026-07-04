@@ -197,6 +197,14 @@ function normalizeSearchQuery(value: string, fallback: string): string {
   return cleaned || fallback;
 }
 
+function hasGeneratedFileArtifacts(artifacts: ChatArtifact[] | undefined): boolean {
+  return Boolean(artifacts?.some((artifact) => artifact.source === "local-tool" || artifact.source === "proxy-attachment"));
+}
+
+function artifactChatConfirmation(artifacts: ChatArtifact[]): string {
+  return artifacts.length === 1 ? "I generated the file." : `I generated ${artifacts.length} files.`;
+}
+
 function normalizeKeywordList(value: unknown): string[] {
   return Array.isArray(value)
     ? Array.from(
@@ -341,7 +349,7 @@ function collectProxyAttachments(payload: ProxyResponse): ProxyAttachment[] {
 
 function requestedArtifactFor(question: string): RequestedArtifact | null {
   const normalized = question.toLowerCase();
-  if (/\b(pdf|\.pdf)\b/.test(normalized)) {
+  if (/\b(pdf|\.pdf|deck|slides?|presentation)\b/.test(normalized)) {
     return { tool: "create_pdf_artifact", extension: ".pdf", mimeType: "application/pdf" };
   }
   if (/\b(docx|\.docx|word document|microsoft word)\b/.test(normalized)) {
@@ -382,6 +390,9 @@ function requestedDocumentType(question: string): string {
   if (/\b(report|analysis|memo)\b/.test(normalized)) {
     return "report";
   }
+  if (/\b(deck|slides?|presentation)\b/.test(normalized)) {
+    return "presentation";
+  }
   if (/\b(proposal|pitch)\b/.test(normalized)) {
     return "proposal";
   }
@@ -420,9 +431,15 @@ function artifactPlannerSystemPrompt(tools: LocalToolSpec[]): string {
   return [
     "You are Second Brain's local artifact planner.",
     "Choose exactly one enabled local MCP artifact tool and return one raw JSON object only.",
-    "Schema: {\"tool\":\"tool_name\",\"input\":{\"title\":\"string\",\"filename\":\"string\",\"documentType\":\"letter|summary|resume|report|proposal|invoice|spreadsheet|diagram|document\",\"text\":\"complete artifact body as Markdown or SVG\"},\"reason\":\"short reason\"}.",
+    "Schema: {\"tool\":\"tool_name\",\"input\":{\"title\":\"string\",\"filename\":\"string\",\"documentType\":\"letter|summary|resume|report|proposal|invoice|spreadsheet|diagram|presentation|document\",\"text\":\"complete artifact body as Markdown or SVG\",\"astPayload\":{\"meta\":{\"filename\":\"same filename\",\"title\":\"string\",\"layout_mode\":\"PORTRAIT|LANDSCAPE\",\"primary_color\":\"#006666\"},\"nodes\":[{\"type\":\"HEADING_1|HEADING_2|BODY_TEXT|BULLET_ITEM|NUMBERED_ITEM|QUOTE|SLIDE_TITLE|SLIDE_BREAK|SPACER|BAR_CHART\",\"text\":\"string\",\"spans\":[{\"text\":\"string\",\"bold\":true,\"italic\":false}],\"bold_prefix\":\"string\",\"data\":[{\"label\":\"string\",\"value\":42}]}]}},\"reason\":\"short reason\"}.",
     "The artifact body must be the actual downloadable document content, not a transcript of the chat answer.",
-    "For PDF, DOCX, and Markdown, write structured Markdown with headings, sections, bullets, and tables where useful.",
+    "The artifact name must be short and based of chat message.",
+    "For create_pdf_artifact, provide astPayload, not Markdown. Do not put raw Markdown markers such as **, ###, or ``` inside astPayload text.",
+    "For report, letter, resume, summary, proposal, invoice, and document PDFs use astPayload.meta.layout_mode PORTRAIT.",
+    "For deck, slides, or presentation PDFs use astPayload.meta.layout_mode LANDSCAPE and insert SLIDE_BREAK nodes between slides.",
+    "Use BODY_TEXT spans for bold and italic emphasis. For bullet labels, use BULLET_ITEM.bold_prefix such as \"Risk:\" and put only the remaining sentence in text.",
+    "For PDF bar charts, use BAR_CHART nodes with data items instead of text bars or Unicode block characters.",
+    "For DOCX and Markdown, write structured Markdown with headings, sections, bullets, and tables where useful.",
     "For letters, use date, recipient or salutation when known, body paragraphs, closing, and signature placeholder.",
     "For summaries, use Overview, Key Points, Details, and Next Steps.",
     "For resumes, use name/contact if known, Professional Summary, Skills, Experience, Education, and Projects or Certifications when useful.",
@@ -517,6 +534,10 @@ export class ChatService {
     }
 
     const isWholeMessage = !input.content || input.content.trim() === message.content.trim();
+    if (isWholeMessage && hasGeneratedFileArtifacts(message.artifacts)) {
+      throw new Error("This response already has a generated file. Add, open, or download the file card instead.");
+    }
+
     const existing = isWholeMessage ? message.artifacts?.find((artifact) => artifact.source === "assistant-text") : undefined;
     const artifact = existing ?? (await this.createTextArtifact(thread.id, message, input));
     if (!existing) {
@@ -742,12 +763,13 @@ export class ChatService {
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
           }
+          assistant.content = assistant.artifacts.length ? artifactChatConfirmation(assistant.artifacts) : content;
           emit({
             type: "delta",
             generationId,
             messageId: assistant.id,
-            delta: content,
-            content
+            delta: assistant.content,
+            content: assistant.content
           });
           for (const artifact of assistant.artifacts) {
             emit({ type: "artifact", generationId, messageId: assistant.id, artifact });
@@ -777,6 +799,14 @@ export class ChatService {
           const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, assistant.content, graphify, settings);
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
+            assistant.content = artifactChatConfirmation(assistant.artifacts);
+            emit({
+              type: "delta",
+              generationId,
+              messageId: assistant.id,
+              delta: assistant.content,
+              content: assistant.content
+            });
             emit({ type: "artifact", generationId, messageId: assistant.id, artifact: toolArtifact });
           }
         }
@@ -850,7 +880,7 @@ export class ChatService {
           "Use TRACKER only when the user is explicitly asking to remember, schedule, track, follow up, create a task, or set a deadline.",
           "Use ARTIFACT when the user asks to create/export a file such as PDF, DOCX, XLSX, image, diagram, markdown, resume, letter, or report.",
           "Use RESEARCH for normal questions and explanations.",
-          "Search keywords must be 3-8 compact terms useful for graph retrieval.",
+          "Search keywords must be concise search query (3-6 keywords) to find relevant context for the user's latest message in a semantic graph.",
           `Current local system time: ${new Date().toString()}. Resolve relative dates from this time.`
         ].join(" ")
       },
@@ -1133,7 +1163,7 @@ export class ChatService {
       return {
         id: messageId,
         role: "assistant",
-        content: text,
+        content: artifacts.length ? artifactChatConfirmation(artifacts) : text,
         createdAt,
         artifacts,
         semantic,
@@ -1218,7 +1248,7 @@ export class ChatService {
       return {
         id: messageId,
         role: "assistant",
-        content: text,
+        content: allArtifacts.length ? artifactChatConfirmation(allArtifacts) : text,
         createdAt,
         artifacts: allArtifacts,
         semantic,
@@ -1420,6 +1450,7 @@ export class ChatService {
       title,
       filename: planned?.input.filename?.trim() || artifactFileName(title, request.extension),
       text: planned?.input.text?.trim() || content,
+      astPayload: planned?.input.astPayload ?? planned?.input.ast_payload,
       contentBase64: planned?.input.contentBase64,
       mimeType: planned?.input.mimeType?.trim() || request.mimeType,
       documentType: planned?.input.documentType?.trim() || requestedDocumentType(question)
@@ -1583,6 +1614,7 @@ export class ChatService {
     const filename = stringField(inputRecord, "filename") || artifactFileName(title, request.extension);
     const mimeType = stringField(inputRecord, "mimeType") || stringField(inputRecord, "mime_type") || request.mimeType;
     const contentBase64 = stringField(inputRecord, "contentBase64") || stringField(inputRecord, "content_base64") || undefined;
+    const astPayload = inputRecord.astPayload ?? inputRecord.ast_payload;
 
     return {
       tool: planned.tool || request.tool,
@@ -1590,6 +1622,7 @@ export class ChatService {
         title,
         filename,
         text,
+        astPayload,
         contentBase64,
         mimeType,
         documentType

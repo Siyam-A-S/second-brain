@@ -20,7 +20,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          "Inter",
+          "\"Nunito Sans\"",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
