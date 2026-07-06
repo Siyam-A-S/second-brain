@@ -5,6 +5,7 @@ import type {
   AccountAccessStatus,
   AccountSettings,
   AccountUsageSnapshot,
+  AppBuildInfo,
   AiSettings,
   AiMode,
   AppSettings,
@@ -83,6 +84,7 @@ export type {
   AccountAccessStatus,
   AccountSettings,
   AccountUsageSnapshot,
+  AppBuildInfo,
   AiSettings,
   AiMode,
   AppSettings,
@@ -182,6 +184,11 @@ export const windowChannels = {
   openExternal: "window-open-external"
 } as const;
 
+export const appChannels = {
+  getBuildInfo: "app-get-build-info",
+  reportRendererError: "app-report-renderer-error"
+} as const;
+
 export const fileChannels = {
   dropped: "files-dropped"
 } as const;
@@ -262,7 +269,8 @@ export const settingsChannels = {
   updateAi: "settings-update-ai",
   getApp: "settings-get-app",
   updateApp: "settings-update-app",
-  updateManagedProxy: "settings-update-managed-proxy"
+  updateManagedProxy: "settings-update-managed-proxy",
+  refreshAccount: "settings-refresh-account"
 } as const;
 
 export const chatChannels = {
@@ -286,6 +294,7 @@ export const runtimeChannels = {
 } as const;
 
 export type WindowChannel = (typeof windowChannels)[keyof typeof windowChannels];
+export type AppChannel = (typeof appChannels)[keyof typeof appChannels];
 export type FileChannel = (typeof fileChannels)[keyof typeof fileChannels];
 export type BrainChannel = (typeof brainChannels)[keyof typeof brainChannels];
 export type TrackerChannel = (typeof trackerChannels)[keyof typeof trackerChannels];
@@ -332,6 +341,10 @@ export type GraphHtmlDocument = {
 };
 
 export type SecondBrainApi = {
+  app: {
+    getBuildInfo: () => Promise<AppBuildInfo>;
+    reportRendererError: (input: { scope: string; error: string; detail?: unknown }) => Promise<void>;
+  };
   window: {
     minimize: () => Promise<void>;
     maximize: () => Promise<boolean>;
@@ -413,6 +426,7 @@ export type SecondBrainApi = {
     getApp: () => Promise<AppSettings>;
     updateApp: (input: UpdateAppSettingsInput) => Promise<AppSettings>;
     updateManagedProxy: (input: UpdateManagedProxySettingsInput) => Promise<ManagedProxySettings>;
+    refreshAccount: () => Promise<AppSettings>;
   };
   chat: {
     listThreads: () => Promise<ChatThread[]>;

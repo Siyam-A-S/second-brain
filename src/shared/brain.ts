@@ -14,6 +14,16 @@ export type BrainNodeFrontmatter = {
 
 export type UserValidationState = "unreviewed" | "approved" | "rejected" | "pinned";
 
+export type BuildChannel = "development" | "production";
+
+export type AppBuildInfo = {
+  channel: BuildChannel;
+  version: string;
+  buildId: string;
+  gitCommit: string;
+  target: string;
+};
+
 export type BrainNode = BrainNodeFrontmatter & {
   content: string;
   path: string;

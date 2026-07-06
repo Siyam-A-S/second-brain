@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
@@ -20,7 +20,16 @@ import {
   Trash2,
   User
 } from "lucide-react";
-import type { ChatArtifact, ChatMessage, ChatStreamEvent, ChatThread, GraphifyContextResult, ProposedTrackerDraft } from "../../shared/ipc";
+import type {
+  AppBuildInfo,
+  ChatArtifact,
+  ChatMessage,
+  ChatStreamEvent,
+  ChatThread,
+  GraphifyContextResult,
+  ProposedTrackerDraft
+} from "../../shared/ipc";
+import { isProductionBuild, presentError, presentPossiblyDetailedError, productionErrorMessage } from "../lib/errorPresentation";
 import { useTrackerStore } from "../stores/useTrackerStore";
 
 type ChatWorkbenchProps = {
@@ -550,6 +559,7 @@ function FileCard({
 
 export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
   const [activeThreadId, setActiveThreadId] = useState<string>("");
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState("Ready");
@@ -569,8 +579,16 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     [activeThreadId, threads]
   );
   const hasFreshUnusedThread = useMemo(() => threads.some(isFreshUnusedThread), [threads]);
+  const productionBuild = isProductionBuild(buildInfo);
+  const effectiveGroundingCollapsed = productionBuild || groundingCollapsed;
+  const productionBuildRef = useRef(false);
 
   useEffect(() => {
+    productionBuildRef.current = productionBuild;
+  }, [productionBuild]);
+
+  useEffect(() => {
+    void window.api.app.getBuildInfo().then(setBuildInfo).catch(() => undefined);
     void loadThreads();
   }, [refreshKey]);
 
@@ -614,7 +632,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     if (event.type === "started") {
       setActiveGenerationId(event.generationId);
       upsertThread(event.thread);
-      setStatus("Querying local Graphify context...");
+      setStatus(productionBuildRef.current ? "Thinking..." : "Querying local Graphify context...");
       return;
     }
 
@@ -639,7 +657,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     if (event.type === "done") {
       upsertThread(event.thread);
       setSelectedGrounding(event.message.grounding?.graphify ?? null);
-      setStatus(event.message.error ? event.message.error : "Answer generated.");
+      setStatus(productionBuildRef.current && event.message.error ? productionErrorMessage : event.message.error || "Answer generated.");
       setActiveGenerationId("");
       setIsSending(false);
       return;
@@ -658,7 +676,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     if (event.thread) {
       upsertThread(event.thread);
     }
-    setStatus(event.error);
+    setStatus(productionBuildRef.current ? productionErrorMessage : event.error);
     setActiveGenerationId("");
     setIsSending(false);
   }
@@ -670,7 +688,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setActiveThreadId((current) => current || loaded[0]?.id || "");
       setStatus("Ready");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to load chat.");
+      setStatus(presentError(error, "Unable to load chat.", buildInfo));
     }
   }
 
@@ -689,7 +707,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setActiveThreadId(thread.id);
       setSelectedGrounding(null);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to create chat.");
+      setStatus(presentError(error, "Unable to create chat.", buildInfo));
     }
   }
 
@@ -701,7 +719,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setActiveThreadId(next[0]?.id ?? "");
       setSelectedGrounding(null);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to delete chat.");
+      setStatus(presentError(error, "Unable to delete chat.", buildInfo));
     }
   }
 
@@ -713,7 +731,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
 
     setDraft("");
     setIsSending(true);
-    setStatus("Querying local Graphify context...");
+    setStatus(productionBuild ? "Thinking..." : "Querying local Graphify context...");
 
     try {
       const response = await window.api.chat.sendMessageStream({
@@ -723,9 +741,9 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       });
       upsertThread(response.thread);
       setSelectedGrounding(response.message.grounding?.graphify ?? null);
-      setStatus(response.message.error ? response.message.error : "Answer generated.");
+      setStatus(presentPossiblyDetailedError(response.message.error, "Answer generated.", buildInfo));
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to send message.");
+      setStatus(presentError(error, "Unable to send message.", buildInfo));
     } finally {
       setIsSending(false);
     }
@@ -744,7 +762,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     try {
       setSelectedGrounding(await window.api.chat.getGrounding(messageId));
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to load grounding.");
+      setStatus(presentError(error, "Unable to load grounding.", buildInfo));
     }
   }
 
@@ -759,7 +777,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setActiveThreadId(ingested.thread.id);
       setStatus("Response artifact added to Graphify ingestion.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to add response artifact.");
+      setStatus(presentError(error, "Unable to add response artifact.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -781,7 +799,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setActiveThreadId(ingested.thread.id);
       setStatus("Response section added to Graphify ingestion.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to add response section.");
+      setStatus(presentError(error, "Unable to add response section.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -793,7 +811,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       const result = await window.api.chat.ingestArtifact(messageId, artifactId);
       setStatus(result.ingestion ? "Artifact added to Graphify ingestion." : "Artifact saved.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to ingest artifact.");
+      setStatus(presentError(error, "Unable to ingest artifact.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -805,7 +823,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       const result = await window.api.chat.downloadArtifact(messageId, artifactId);
       setStatus(result.downloadedPath ? `Artifact downloaded to ${result.downloadedPath}` : "Download canceled.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to download artifact.");
+      setStatus(presentError(error, "Unable to download artifact.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -817,7 +835,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       await window.api.chat.openArtifact(messageId, artifactId);
       setStatus("Artifact opened.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to open artifact.");
+      setStatus(presentError(error, "Unable to open artifact.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -839,7 +857,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
       setTrackedDraftIds((current) => new Set([...current, draft.id]));
       setStatus("Tracker item saved.");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Unable to save tracker item.");
+      setStatus(presentError(error, "Unable to save tracker item.", buildInfo));
     } finally {
       setArtifactBusyId("");
     }
@@ -857,11 +875,11 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   return (
     <div
       className={`grid min-h-0 flex-1 border-b border-slate-900/5 bg-floral ${
-        historyCollapsed && groundingCollapsed
+        historyCollapsed && effectiveGroundingCollapsed
           ? "grid-cols-[minmax(0,1fr)]"
           : historyCollapsed
             ? "grid-cols-[minmax(0,1fr)_360px]"
-            : groundingCollapsed
+            : effectiveGroundingCollapsed
               ? "grid-cols-[280px_minmax(0,1fr)]"
               : "grid-cols-[280px_minmax(0,1fr)_360px]"
       }`}
@@ -950,9 +968,11 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
             ) : null}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-950">{activeThread?.title ?? "New Chat"}</p>
-              <p className="mt-0.5 truncate text-xs text-slate-500">
-                Graphify query retrieves a bounded local context packet before the model answers.
-              </p>
+              {!productionBuild ? (
+                <p className="mt-0.5 truncate text-xs text-slate-500">
+                  Graphify query retrieves a bounded local context packet before the model answers.
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -964,6 +984,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
               <RefreshCcw size={13} />
               Refresh
             </button>
+            {!productionBuild ? (
             <button
               className="grid h-8 w-8 place-items-center rounded-md text-slate-500 transition hover:bg-white/65 hover:text-slate-950"
               title={groundingCollapsed ? "Show grounding" : "Collapse grounding"}
@@ -972,6 +993,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
             >
               {groundingCollapsed ? <PanelRightOpen size={15} /> : <PanelRightClose size={15} />}
             </button>
+            ) : null}
           </div>
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
@@ -1050,10 +1072,10 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                       }`}
                     >
                       <AlertTriangle size={14} />
-                      {message.error}
+                      {productionBuild ? productionErrorMessage : message.error}
                     </p>
                   ) : null}
-                  {message.grounding?.graphify ? (
+                  {message.grounding?.graphify && !productionBuild ? (
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {modelName ? (
                         <span
@@ -1126,7 +1148,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
               </span>
               <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-semibold text-slate-500 shadow-sm">
                 <Loader2 className="animate-spin" size={15} />
-                Querying graph and composing answer
+                {productionBuild ? "Composing answer" : "Querying graph and composing answer"}
               </div>
             </div>
           ) : null}
@@ -1137,9 +1159,11 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                   <DatabaseZap size={22} />
                 </div>
                 <h2 className="mt-4 text-base font-semibold text-slate-950">Ask across the active project</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Second Brain asks Graphify for a compact local subgraph, hydrates readable excerpts, then sends only that context packet to the selected model.
-                </p>
+                {!productionBuild ? (
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Second Brain asks Graphify for a compact local subgraph, hydrates readable excerpts, then sends only that context packet to the selected model.
+                  </p>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -1184,7 +1208,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
         </div>
       </section>
 
-      {!groundingCollapsed ? (
+      {!effectiveGroundingCollapsed ? (
       <aside className="min-h-0 border-l border-slate-900/5 bg-white/25 p-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">

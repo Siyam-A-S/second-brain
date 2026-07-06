@@ -100,6 +100,35 @@ export function MainApp(): JSX.Element {
   const [topBarMirrored, setTopBarMirrored] = useState(() => initialStoredBoolean(topBarMirroredStorageKey));
 
   useEffect(() => {
+    const handleError = (event: ErrorEvent): void => {
+      void window.api.app.reportRendererError({
+        scope: "renderer:error",
+        error: event.message,
+        detail: {
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+          stack: event.error instanceof Error ? event.error.stack : undefined
+        }
+      });
+    };
+    const handleRejection = (event: PromiseRejectionEvent): void => {
+      void window.api.app.reportRendererError({
+        scope: "renderer:unhandledRejection",
+        error: event.reason instanceof Error ? event.reason.message : String(event.reason),
+        detail: event.reason instanceof Error ? { stack: event.reason.stack } : undefined
+      });
+    };
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
+    };
+  }, []);
+
+  useEffect(() => {
     const root = document.documentElement;
     if (themeMode === "keypiphy") {
       root.dataset.theme = "keypiphy";

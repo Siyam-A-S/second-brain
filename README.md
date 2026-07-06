@@ -11,9 +11,23 @@ Second Brain is a local-first desktop app for turning dropped notes, code, docum
 - Windows: [Second-Brain-0.1.4-latest-win-unpacked.zip](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.4/Second-Brain-0.1.4-latest-win-unpacked.zip)
 - macOS Apple Silicon beta: [Second.Brain-0.1.4-mac-arm64.dmg](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.4/Second.Brain-0.1.4-mac-arm64.dmg)
 
-## Windows Get Started
+## Production Distribution
 
-1. Download the Windows zip and extract the entire folder.
+Production releases are distributed through [downloadsecondbrain.com](https://www.downloadsecondbrain.com) and use `prod-vX.Y.Z` release tags. Production builds are managed-account builds: users sign in on the website, copy their account access key into Settings, and the desktop app uses the managed Second Brain proxy for AI access.
+
+Production bundles intentionally hide developer surfaces such as grounding inspection, raw Graphify command output, local endpoint/model controls, and detailed error messages. Customer-facing errors are shown as `Something went wrong. Try again.` while redacted diagnostic logs are stored locally and uploaded best-effort for support.
+
+Production assets:
+
+- Windows installer: `Second-Brain-Setup-<version>-prod.exe`
+- macOS Apple Silicon DMG: `Second-Brain-<version>-prod-mac-arm64.dmg`
+- macOS runtime helper: `install-second-brain-runtime.command`
+
+See [PRODUCTION_RELEASE.md](PRODUCTION_RELEASE.md) for production tag rules, runtime dependency behavior, account access, and diagnostics policy.
+
+## Development Windows Get Started
+
+1. Download the development Windows zip and extract the entire folder.
 2. Install Python 3.10 or newer:
 
    ```powershell
@@ -39,7 +53,7 @@ Second Brain is a local-first desktop app for turning dropped notes, code, docum
 
 If Graphify is installed somewhere custom, set `SECOND_BRAIN_GRAPHIFY_BIN` to the full `graphify.exe` or `graphify.cmd` path before launching the app.
 
-## macOS Apple Silicon Beta Get Started
+## Development macOS Apple Silicon Beta Get Started
 
 The macOS build is prepared for beta testing and is not notarized yet. macOS Gatekeeper may block the first launch as an unidentified developer app.
 
@@ -66,10 +80,12 @@ On Apple Silicon Macs, Second Brain checks common Homebrew paths such as `/opt/h
 
 ## Connect AI
 
-Second Brain uses a single global AI mode.
+Development builds expose a single global AI mode.
 
 - Use Proxy AI: default mode for paid users. Enter your Secret Key in Settings; the app uses the managed Second Brain proxy for chat and Graphify workflows.
 - Use Local AI: advanced mode for local OpenAI-compatible servers. Enter the base URL, model name, and Graphify limits in Settings.
+
+Production builds are proxy-first and account-managed. End users should use the website account access key rather than local endpoint/model settings.
 
 For a local llama.cpp server:
 
@@ -119,4 +135,13 @@ npm run package:win
 npm run package:mac:adhoc
 ```
 
+Build production packages:
+
+```bash
+npm run package:prod:win:installer
+npm run package:prod:mac:dmg
+```
+
 Pushing the `v0.1.4` tag, or manually running the **Release Second Brain** GitHub Action, publishes the Windows zip and macOS Apple Silicon DMG to the 0.1.4 release.
+
+Pushing a `prod-v0.1.4` style tag, or manually running **Production Release Second Brain**, publishes installer-style production assets for website-managed distribution.

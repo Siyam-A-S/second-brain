@@ -1,6 +1,7 @@
 import type {
   BoardRule,
   AppSettings,
+  AppBuildInfo,
   ChatStreamEvent,
   ChatThread,
   CreateTrackerInput,
@@ -31,6 +32,14 @@ import type {
 const trackerStatusHandlers = new Set<(status: TrackerIngestionStatus) => void>();
 const chatStreamHandlers = new Set<(event: ChatStreamEvent) => void>();
 const browserTrackers: TrackerRecord[] = [];
+const browserEnv = import.meta.env as ImportMetaEnv & Record<string, string | undefined>;
+const browserBuildInfo: AppBuildInfo = {
+  channel: browserEnv.VITE_SECOND_BRAIN_BUILD_CHANNEL === "production" ? "production" : "development",
+  version: "browser-preview",
+  buildId: "browser-preview",
+  gitCommit: "browser-preview",
+  target: "browser"
+};
 const browserProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
 const browserProxyChatEndpoint = `${browserProxyOrigin}/chat`;
 const browserAccountUrl = "https://www.downloadsecondbrain.com/login";
@@ -368,6 +377,12 @@ async function processDroppedItemsInBrowser(items: ProcessDroppedItem[]): Promis
 }
 
 const browserApiFallback: SecondBrainApi = {
+  app: {
+    getBuildInfo: async () => browserBuildInfo,
+    reportRendererError: async (input) => {
+      console.error("Browser preview renderer error", input);
+    }
+  },
   window: {
     minimize: async () => undefined,
     maximize: async () => false,
@@ -822,6 +837,28 @@ const browserApiFallback: SecondBrainApi = {
         updatedAt: new Date().toISOString()
       };
       return browserAppSettings.managedProxy;
+    },
+    refreshAccount: async () => {
+      browserAppSettings = {
+        ...browserAppSettings,
+        account: {
+          ...browserAppSettings.account,
+          status: browserAppSettings.account.secretKey ? "active" : "unknown",
+          planName: browserAppSettings.account.secretKey ? "Preview Pro" : "Second Brain",
+          usage: browserAppSettings.account.secretKey
+            ? {
+                label: "AI usage",
+                used: 128,
+                limit: 1000,
+                updatedAt: new Date().toISOString()
+              }
+            : null,
+          lastVerifiedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        updatedAt: new Date().toISOString()
+      };
+      return browserAppSettings;
     }
   },
   chat: {

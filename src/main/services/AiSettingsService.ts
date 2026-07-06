@@ -23,6 +23,7 @@ const productionProxyChatEndpoint = `${productionProxyOrigin}/chat`;
 const productionWebsiteUrl = "https://www.downloadsecondbrain.com";
 const productionAccountUrl = `${productionWebsiteUrl}/login`;
 const productionCheckoutUrl = `${productionWebsiteUrl}/checkout`;
+const productionAccountApiUrl = `${productionWebsiteUrl}/api/desktop/account`;
 const defaultManagedProxyModel = "google/gemini-3.5-flash";
 const defaultGraphifySettings: GraphifyRuntimeSettings = {
   graphifyBin: "",
@@ -310,6 +311,51 @@ export class AiSettingsService {
 
   async updateManagedProxy(input: UpdateManagedProxySettingsInput): Promise<ManagedProxySettings> {
     return (await this.updateAppSettings({ managedProxy: input })).managedProxy;
+  }
+
+  async refreshAccount(): Promise<AppSettings> {
+    const current = await this.getAppSettings();
+    const accessKey = current.account.secretKey || current.managedProxy.secretKey;
+    if (!accessKey) {
+      throw new Error("Account access key is required.");
+    }
+
+    const response = await fetch(productionAccountApiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessKey}`,
+        Accept: "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Account refresh failed with ${response.status}.`);
+    }
+
+    const account = normalizeAccountSettings(await response.json(), accessKey);
+    const next: AppSettings = {
+      ...current,
+      account: {
+        ...current.account,
+        ...account,
+        email: account.email || current.account.email,
+        secretKey: accessKey,
+        lastVerifiedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      managedProxy: {
+        ...current.managedProxy,
+        secretKey: accessKey,
+        enabled: true,
+        updatedAt: new Date().toISOString()
+      },
+      aiMode: "proxy",
+      updatedAt: new Date().toISOString()
+    };
+
+    await this.saveAppSettings(next);
+    this.applyRuntimeSettings(next);
+    return next;
   }
 
   async updateAppSettings(input: UpdateAppSettingsInput): Promise<AppSettings> {

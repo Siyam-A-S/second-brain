@@ -11,6 +11,13 @@ files:
   - dist/**/*
   - package.json
 
+extraResources:
+  - from: scripts/production-runtime
+    to: installer
+    filter:
+      - install-second-brain-runtime.ps1
+      - install-second-brain-runtime.command
+
 asar: true
 
 mac:
@@ -36,6 +43,7 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
+  include: build/installer.nsh
 
 linux:
   target:

@@ -299,7 +299,7 @@ export class ExplorerService {
     }
 
     if (parsed.kind === "related") {
-      return this.getRelatedGroupChildren(parsed.ownerKind, parsed.ownerId, parsed.relation);
+      return [];
     }
 
     return [];
@@ -579,13 +579,13 @@ export class ExplorerService {
     const relatedCount = this.sourceRelatedItems(index, sourceFile).length;
     if (relatedCount > 0) {
       roots.push({
-        id: relatedGroupId("source", sourceFile, "*"),
-        title: "Related across brain",
-        kind: "related-group",
-        sourceFile,
-        relation: "*",
-        childrenCount: relatedCount,
-        isExpandable: true
+          id: relatedGroupId("source", sourceFile, "*"),
+          title: "Related across brain",
+          kind: "related-group",
+          sourceFile,
+          relation: "*",
+          childrenCount: relatedCount,
+          isExpandable: false
       });
     }
 
@@ -614,7 +614,7 @@ export class ExplorerService {
         graphNodeId: nodeId,
         relation: group.relation,
         childrenCount: group.items.length,
-        isExpandable: true
+        isExpandable: false
       }));
 
     return [...artifacts, ...structuralChildren, ...groups].slice(0, maxTreeChildren);

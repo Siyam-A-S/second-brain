@@ -39,6 +39,11 @@ const windowChannels = {
   openExternal: "window-open-external"
 } as const;
 
+const appChannels = {
+  getBuildInfo: "app-get-build-info",
+  reportRendererError: "app-report-renderer-error"
+} as const;
+
 const fileChannels = {
   dropped: "files-dropped"
 } as const;
@@ -119,7 +124,8 @@ const settingsChannels = {
   updateAi: "settings-update-ai",
   getApp: "settings-get-app",
   updateApp: "settings-update-app",
-  updateManagedProxy: "settings-update-managed-proxy"
+  updateManagedProxy: "settings-update-managed-proxy",
+  refreshAccount: "settings-refresh-account"
 } as const;
 
 const chatChannels = {
@@ -143,6 +149,11 @@ const runtimeChannels = {
 } as const;
 
 const api: SecondBrainApi = {
+  app: {
+    getBuildInfo: () => ipcRenderer.invoke(appChannels.getBuildInfo),
+    reportRendererError: (input: { scope: string; error: string; detail?: unknown }) =>
+      ipcRenderer.invoke(appChannels.reportRendererError, input)
+  },
   window: {
     minimize: () => ipcRenderer.invoke(windowChannels.minimize),
     maximize: () => ipcRenderer.invoke(windowChannels.maximize),
@@ -237,7 +248,8 @@ const api: SecondBrainApi = {
     getApp: () => ipcRenderer.invoke(settingsChannels.getApp),
     updateApp: (input: UpdateAppSettingsInput) => ipcRenderer.invoke(settingsChannels.updateApp, input),
     updateManagedProxy: (input: UpdateManagedProxySettingsInput) =>
-      ipcRenderer.invoke(settingsChannels.updateManagedProxy, input)
+      ipcRenderer.invoke(settingsChannels.updateManagedProxy, input),
+    refreshAccount: () => ipcRenderer.invoke(settingsChannels.refreshAccount)
   },
   chat: {
     listThreads: () => ipcRenderer.invoke(chatChannels.listThreads),

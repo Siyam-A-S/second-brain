@@ -13,7 +13,8 @@ import {
   UserRound,
   X
 } from "lucide-react";
-import type { AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } from "../../shared/ipc";
+import type { AppBuildInfo, AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } from "../../shared/ipc";
+import { isProductionBuild, presentError } from "../lib/errorPresentation";
 
 type SettingsPanelProps = {
   open: boolean;
@@ -71,12 +72,14 @@ function statusTone(status: AppSettings["account"]["status"]): string {
 
 export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelProps): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
   const [dependencyReport, setDependencyReport] = useState<ResearchDependencyReport | null>(null);
   const [runtimeStatus, setRuntimeStatus] = useState<DependencyRuntimeStatus | null>(null);
   const [status, setStatus] = useState("Loading settings...");
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingDependencies, setIsCheckingDependencies] = useState(false);
   const [isRepairingRuntime, setIsRepairingRuntime] = useState(false);
+  const [isRefreshingAccount, setIsRefreshingAccount] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -85,6 +88,11 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
 
     let mounted = true;
     setStatus("Loading settings...");
+    void window.api.app.getBuildInfo().then((info) => {
+      if (mounted) {
+        setBuildInfo(info);
+      }
+    }).catch(() => undefined);
 
     void window.api.settings
       .getApp()
@@ -97,8 +105,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
         setStatus("Settings ready.");
       })
       .catch((error) => {
-        const message = error instanceof Error ? error.message : "Unable to load settings.";
-        setStatus(message);
+        setStatus(presentError(error, "Unable to load settings.", buildInfo));
       });
     void refreshDependencyStatus();
     void refreshRuntimeStatus();
@@ -122,7 +129,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
 
     try {
       const saved = await window.api.settings.updateApp({
-        aiMode: settings.aiMode,
+        aiMode: isProductionBuild(buildInfo) ? "proxy" : settings.aiMode,
         ai: {
           endpoint: settings.ai.endpoint,
           apiKey: settings.ai.apiKey,
@@ -137,15 +144,15 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
       onSettingsSaved?.(saved);
       setStatus("Settings saved.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to save settings.";
-      setStatus(message);
+      setStatus(presentError(error, "Unable to save settings.", buildInfo));
     } finally {
       setIsSaving(false);
     }
   }
 
   const aiMode = settings?.aiMode ?? "proxy";
-  const isProxyMode = aiMode === "proxy";
+  const productionBuild = isProductionBuild(buildInfo);
+  const isProxyMode = productionBuild || aiMode === "proxy";
   const account = settings?.account;
   const usagePercent =
     account?.usage && account.usage.limit > 0
@@ -158,8 +165,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
       await window.api.window.openExternal(target);
     } catch (error) {
       window.open(target, "_blank", "noopener,noreferrer");
-      const message = error instanceof Error ? error.message : "Opening account portal in browser.";
-      setStatus(message);
+      setStatus(presentError(error, "Opening account portal in browser.", buildInfo));
     }
   }
 
@@ -168,7 +174,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
     try {
       setDependencyReport(await window.api.research.getDependencyStatus());
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to inspect research dependencies.";
+      const message = presentError(error, "Unable to inspect research dependencies.", buildInfo);
       setDependencyReport({
         available: false,
         checkedAt: new Date().toISOString(),
@@ -185,7 +191,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
     try {
       setRuntimeStatus(await window.api.runtime.getDependencyStatus());
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to inspect runtime dependencies.";
+      const message = presentError(error, "Unable to inspect runtime dependencies.", buildInfo);
       setRuntimeStatus({
         available: false,
         checkedAt: new Date().toISOString(),
@@ -204,10 +210,24 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
       setRuntimeStatus(await window.api.runtime.installOrRepairDependencies());
       setStatus("Runtime check complete.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to repair runtime dependencies.";
-      setStatus(message);
+      setStatus(presentError(error, "Unable to repair runtime dependencies.", buildInfo));
     } finally {
       setIsRepairingRuntime(false);
+    }
+  }
+
+  async function refreshAccount(): Promise<void> {
+    setIsRefreshingAccount(true);
+    setStatus("Refreshing account...");
+    try {
+      const refreshed = await window.api.settings.refreshAccount();
+      setSettings(refreshed);
+      onSettingsSaved?.(refreshed);
+      setStatus("Account refreshed.");
+    } catch (error) {
+      setStatus(presentError(error, "Unable to refresh account.", buildInfo));
+    } finally {
+      setIsRefreshingAccount(false);
     }
   }
 
@@ -368,6 +388,15 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                   Sign in on web
                 </button>
                 <button
+                  className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:opacity-50"
+                  disabled={isRefreshingAccount}
+                  type="button"
+                  onClick={() => void refreshAccount()}
+                >
+                  <RefreshCcw className={isRefreshingAccount ? "animate-spin" : ""} size={15} />
+                  Refresh account
+                </button>
+                <button
                   className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                   type="button"
                   onClick={() => void openAccountUrl(account?.checkoutUrl)}
@@ -381,36 +410,38 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center gap-2">
                 <Cloud size={17} className="text-slate-500" />
-                <h3 className="text-sm font-semibold text-slate-950">AI Access</h3>
+                <h3 className="text-sm font-semibold text-slate-950">{productionBuild ? "Managed Access" : "AI Access"}</h3>
               </div>
-              <div className="grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-white/65 p-1">
-                <button
-                  className={`h-9 rounded text-sm font-semibold transition ${
-                    isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
-                  }`}
-                  type="button"
-                  onClick={() =>
-                    setSettings((current) =>
-                      current ? { ...current, aiMode: "proxy", managedProxy: { ...current.managedProxy, enabled: true } } : current
-                    )
-                  }
-                >
-                  Account Cloud
-                </button>
-                <button
-                  className={`h-9 rounded text-sm font-semibold transition ${
-                    !isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
-                  }`}
-                  type="button"
-                  onClick={() =>
-                    setSettings((current) =>
-                      current ? { ...current, aiMode: "local", managedProxy: { ...current.managedProxy, enabled: false } } : current
-                    )
-                  }
-                >
-                  Local Runtime
-                </button>
-              </div>
+              {!productionBuild ? (
+                <div className="grid grid-cols-2 gap-2 rounded-md border border-slate-200 bg-white/65 p-1">
+                  <button
+                    className={`h-9 rounded text-sm font-semibold transition ${
+                      isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
+                    }`}
+                    type="button"
+                    onClick={() =>
+                      setSettings((current) =>
+                        current ? { ...current, aiMode: "proxy", managedProxy: { ...current.managedProxy, enabled: true } } : current
+                      )
+                    }
+                  >
+                    Account Cloud
+                  </button>
+                  <button
+                    className={`h-9 rounded text-sm font-semibold transition ${
+                      !isProxyMode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600 hover:bg-white hover:text-slate-950"
+                    }`}
+                    type="button"
+                    onClick={() =>
+                      setSettings((current) =>
+                        current ? { ...current, aiMode: "local", managedProxy: { ...current.managedProxy, enabled: false } } : current
+                      )
+                    }
+                  >
+                    Local Runtime
+                  </button>
+                </div>
+              ) : null}
 
               {isProxyMode ? (
                 <div className="mt-4 rounded-md border border-slate-200 bg-white/65 p-3 text-sm leading-6 text-slate-600">
@@ -430,7 +461,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
               )}
             </section>
 
-            {!isProxyMode ? (
+            {!productionBuild && !isProxyMode ? (
               <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
                 <div className="mb-4 flex items-center gap-2">
                   <Cpu size={17} className="text-slate-500" />
@@ -570,6 +601,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
               </section>
             ) : null}
 
+            {!productionBuild ? (
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -633,7 +665,9 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                 <p className="text-sm text-slate-500">Runtime status has not been checked yet.</p>
               )}
             </section>
+            ) : null}
 
+            {!productionBuild ? (
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -688,6 +722,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                 <p className="text-sm text-slate-500">Research dependency status has not been checked yet.</p>
               )}
             </section>
+            ) : null}
           </div>
         </div>
       </section>

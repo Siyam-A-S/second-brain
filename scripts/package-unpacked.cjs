@@ -17,6 +17,7 @@ const target = args.has("--mac")
           ? "win"
           : "linux";
 const targetFlag = `--${target}`;
+const buildChannel = process.env.SECOND_BRAIN_BUILD_CHANNEL === "production" ? "production" : "development";
 const buildId = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "Z");
 const electronBuilderBin = path.join(
   rootDir,
@@ -104,6 +105,7 @@ writeFileSync(
     `Second Brain ${appLayout.label}`,
     `build_id=${buildId}`,
     `version=${require(path.join(rootDir, "package.json")).version}`,
+    `build_channel=${buildChannel}`,
     `git_commit=${gitCommit || "unknown"}`,
     `git_dirty=${gitStatus ? "true" : "false"}`,
     `target=${target}`,

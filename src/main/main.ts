@@ -1,6 +1,7 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, screen, shell } from "electron";
 import path from "node:path";
 import {
+  appChannels,
   boardChannels,
   brainChannels,
   chatChannels,
@@ -18,6 +19,7 @@ import {
   windowChannels
 } from "../shared/ipc";
 import type {
+  AppBuildInfo,
   ChatStreamEvent,
   ClipboardIngestibleItemsResult,
   CreateProjectInput,
@@ -44,6 +46,7 @@ import type { ExplorerSearchInput } from "../shared/types/explorer";
 import { AgentController } from "./services/AgentController";
 import { AiSettingsService } from "./services/AiSettingsService";
 import { ArtifactToolService } from "./services/ArtifactToolService";
+import { loadBuildInfo } from "./services/BuildInfoService";
 import { ChatService } from "./services/ChatService";
 import { DependencyRuntimeService } from "./services/DependencyRuntimeService";
 import { EmbeddingService } from "./services/EmbeddingService";
@@ -54,6 +57,7 @@ import { GraphifyController } from "./services/GraphifyController";
 import { ExplorerService } from "./services/ExplorerService";
 import { GraphRagService } from "./services/GraphRagService";
 import { LocalMcpServer } from "./services/LocalMcpServer";
+import { LogService } from "./services/LogService";
 import { LlmService } from "./services/LlmService";
 import { NotificationService } from "./services/NotificationService";
 import { ProjectService } from "./services/ProjectService";
@@ -66,6 +70,8 @@ let widgetWindow: BrowserWindow | null = null;
 let mcpServer: LocalMcpServer | null = null;
 let graphifyController: GraphifyController | null = null;
 let notificationService: NotificationService | null = null;
+let buildInfo: AppBuildInfo | null = null;
+let logService: LogService | null = null;
 
 type ProjectRuntime = {
   storage: StorageService;
@@ -86,6 +92,10 @@ let projectRuntime: ProjectRuntime | null = null;
 const widgetWindowSize = 96;
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
+const productionErrorMessage = "Something went wrong. Try again.";
+const minZoomFactor = 0.75;
+const maxZoomFactor = 1.6;
+const zoomStep = 0.1;
 
 const rendererEntry = path.join(__dirname, "../renderer/index.html");
 const preloadEntry = path.join(__dirname, "../preload/preload.js");
@@ -99,6 +109,40 @@ function loadRenderer(window: BrowserWindow, windowName: "main" | "widget"): voi
   void window.loadFile(rendererEntry, {
     query: {
       window: windowName
+    }
+  });
+}
+
+function clampZoomFactor(value: number): number {
+  return Math.min(maxZoomFactor, Math.max(minZoomFactor, Number(value.toFixed(2))));
+}
+
+function installZoomShortcuts(window: BrowserWindow): void {
+  window.webContents.on("before-input-event", (event, input) => {
+    const commandModifier = process.platform === "darwin" ? input.meta : input.control;
+    if (!commandModifier || input.alt || input.shift || input.type !== "keyDown") {
+      return;
+    }
+
+    const key = input.key.toLowerCase();
+    const code = input.code;
+    const current = window.webContents.getZoomFactor();
+
+    if (key === "+" || key === "=" || code === "Equal" || code === "NumpadAdd") {
+      event.preventDefault();
+      window.webContents.setZoomFactor(clampZoomFactor(current + zoomStep));
+      return;
+    }
+
+    if (key === "-" || code === "Minus" || code === "NumpadSubtract") {
+      event.preventDefault();
+      window.webContents.setZoomFactor(clampZoomFactor(current - zoomStep));
+      return;
+    }
+
+    if (key === "0" || code === "Digit0" || code === "Numpad0") {
+      event.preventDefault();
+      window.webContents.setZoomFactor(1);
     }
   });
 }
@@ -121,6 +165,8 @@ function createMainWindow(): BrowserWindow {
       sandbox: true
     }
   });
+
+  installZoomShortcuts(window);
 
   window.once("ready-to-show", () => {
     window.show();
@@ -386,13 +432,37 @@ function registerIpc(
   projects: ProjectService,
   embeddings: EmbeddingService,
   aiSettings: AiSettingsService,
-  runtimeDependencies: DependencyRuntimeService
+  runtimeDependencies: DependencyRuntimeService,
+  currentBuildInfo: AppBuildInfo,
+  logs: LogService
 ): void {
-  ipcMain.handle(windowChannels.minimize, () => {
+  const handle = (
+    channel: string,
+    listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown | Promise<unknown>
+  ): void => {
+    ipcMain.handle(channel, async (event, ...args) => {
+      try {
+        return await listener(event, ...args);
+      } catch (error) {
+        void logs.error(`ipc:${channel}`, error, { args }).catch(() => undefined);
+        if (currentBuildInfo.channel === "production") {
+          throw new Error(productionErrorMessage);
+        }
+        throw error;
+      }
+    });
+  };
+
+  handle(appChannels.getBuildInfo, () => currentBuildInfo);
+  handle(appChannels.reportRendererError, (_event, input) =>
+    logs.error("renderer", input && typeof input === "object" && "error" in input ? input.error : "Renderer error", input)
+  );
+
+  handle(windowChannels.minimize, () => {
     showWidget();
   });
 
-  ipcMain.handle(windowChannels.maximize, (event) => {
+  handle(windowChannels.maximize, (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (!window) {
       return false;
@@ -407,15 +477,15 @@ function registerIpc(
     return true;
   });
 
-  ipcMain.handle(windowChannels.close, () => {
+  handle(windowChannels.close, () => {
     app.quit();
   });
 
-  ipcMain.handle(windowChannels.restore, () => {
+  handle(windowChannels.restore, () => {
     restoreMainWindow();
   });
 
-  ipcMain.handle(windowChannels.openExternal, async (_event, url: string) => {
+  handle(windowChannels.openExternal, async (_event, url: string) => {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" || parsed.hostname !== "www.downloadsecondbrain.com") {
       throw new Error("External link is not allowed.");
@@ -424,7 +494,7 @@ function registerIpc(
     await shell.openExternal(parsed.toString());
   });
 
-  ipcMain.handle(windowChannels.getWidgetBounds, () => {
+  handle(windowChannels.getWidgetBounds, () => {
     if (!widgetWindow || widgetWindow.isDestroyed()) {
       return null;
     }
@@ -432,7 +502,7 @@ function registerIpc(
     return widgetWindow.getBounds();
   });
 
-  ipcMain.handle(windowChannels.moveWidget, (_event, payload: WidgetMovePayload) => {
+  handle(windowChannels.moveWidget, (_event, payload: WidgetMovePayload) => {
     const nextBounds = clampWidgetBounds(payload);
     if (!nextBounds || !widgetWindow || widgetWindow.isDestroyed()) {
       return null;
@@ -442,7 +512,7 @@ function registerIpc(
     return nextBounds;
   });
 
-  ipcMain.handle(fileChannels.dropped, async (_event, payload: FilesDroppedPayload) => {
+  handle(fileChannels.dropped, async (_event, payload: FilesDroppedPayload) => {
     const result = await requireRuntime().graphify.ingestFilesDrop(payload);
     console.info("Files dropped and ingested by Graphify", {
       writtenFileCount: result.writtenFileCount,
@@ -453,129 +523,130 @@ function registerIpc(
     return result;
   });
 
-  ipcMain.handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => requireRuntime().storage.writeNode(input));
-  ipcMain.handle(brainChannels.readNode, (_event, uuid: string) => requireRuntime().storage.readNode(uuid));
-  ipcMain.handle(brainChannels.listNodes, (_event, input?: ListBrainNodesInput) => requireRuntime().storage.listNodes(input));
-  ipcMain.handle(brainChannels.searchNodes, async (_event, input: SearchBrainNodesInput) => {
+  handle(brainChannels.writeNode, (_event, input: WriteBrainNodeInput) => requireRuntime().storage.writeNode(input));
+  handle(brainChannels.readNode, (_event, uuid: string) => requireRuntime().storage.readNode(uuid));
+  handle(brainChannels.listNodes, (_event, input?: ListBrainNodesInput) => requireRuntime().storage.listNodes(input));
+  handle(brainChannels.searchNodes, async (_event, input: SearchBrainNodesInput) => {
     const nodes = await requireRuntime().storage.listNodes();
     return embeddings.search(input, nodes);
   });
-  ipcMain.handle(brainChannels.mcpStatus, () => requireRuntime().mcpServer.getStatus());
-  ipcMain.handle(brainChannels.organizedBoard, () => requireRuntime().graphRag.getOrganizedBoard());
-  ipcMain.handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) =>
+  handle(brainChannels.mcpStatus, () => requireRuntime().mcpServer.getStatus());
+  handle(brainChannels.organizedBoard, () => requireRuntime().graphRag.getOrganizedBoard());
+  handle(brainChannels.exportBoardPlaintext, (_event, input?: ExportBoardPlaintextInput) =>
     requireRuntime().graphRag.exportBoardPlaintext(input)
   );
-  ipcMain.handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) =>
+  handle(brainChannels.updateNodeSignals, (_event, input: UpdateNodeSignalsInput) =>
     requireRuntime().storage.updateNodeSignals(input)
   );
-  ipcMain.handle(trackerChannels.list, (_event, input?: TrackerListInput) => requireRuntime().tracker.listTrackers(input));
-  ipcMain.handle(trackerChannels.create, (_event, input: CreateTrackerInput) => requireRuntime().tracker.createTracker(input));
-  ipcMain.handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => requireRuntime().tracker.updateTracker(input));
-  ipcMain.handle(trackerChannels.remove, (_event, uuid: string) => requireRuntime().tracker.removeTracker(uuid));
-  ipcMain.handle(projectChannels.list, () => projects.listProjects());
-  ipcMain.handle(projectChannels.getActive, () => projects.getActiveProject());
-  ipcMain.handle(projectChannels.create, async (_event, input: CreateProjectInput) => {
+  handle(trackerChannels.list, (_event, input?: TrackerListInput) => requireRuntime().tracker.listTrackers(input));
+  handle(trackerChannels.create, (_event, input: CreateTrackerInput) => requireRuntime().tracker.createTracker(input));
+  handle(trackerChannels.update, (_event, input: UpdateTrackerInput) => requireRuntime().tracker.updateTracker(input));
+  handle(trackerChannels.remove, (_event, uuid: string) => requireRuntime().tracker.removeTracker(uuid));
+  handle(projectChannels.list, () => projects.listProjects());
+  handle(projectChannels.getActive, () => projects.getActiveProject());
+  handle(projectChannels.create, async (_event, input: CreateProjectInput) => {
     const project = await projects.createProject(input);
     await switchProjectRuntime(project, aiSettings, embeddings);
     return projects.getActiveProject();
   });
-  ipcMain.handle(projectChannels.select, async (_event, input: ProjectSelectionInput) => {
+  handle(projectChannels.select, async (_event, input: ProjectSelectionInput) => {
     const project = await projects.selectProject(input);
     await switchProjectRuntime(project, aiSettings, embeddings);
     return projects.getActiveProject();
   });
-  ipcMain.handle(projectChannels.rename, (_event, input: RenameProjectInput) => projects.renameProject(input));
-  ipcMain.handle(projectChannels.archive, async (_event, input: ProjectSelectionInput) => {
+  handle(projectChannels.rename, (_event, input: RenameProjectInput) => projects.renameProject(input));
+  handle(projectChannels.archive, async (_event, input: ProjectSelectionInput) => {
     const archived = await projects.archiveProject(input);
     await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
     return archived;
   });
-  ipcMain.handle(graphBoardChannels.getState, () => requireRuntime().graphBoard.getState());
-  ipcMain.handle(graphBoardChannels.getNodeDetails, (_event, nodeId: string) =>
+  handle(graphBoardChannels.getState, () => requireRuntime().graphBoard.getState());
+  handle(graphBoardChannels.getNodeDetails, (_event, nodeId: string) =>
     requireRuntime().graphBoard.getNodeDetails(nodeId)
   );
-  ipcMain.handle(graphBoardChannels.generateCallflow, (_event, nodeId: string) =>
+  handle(graphBoardChannels.generateCallflow, (_event, nodeId: string) =>
     requireRuntime().graphify.generateCallflowHtml(nodeId)
   );
-  ipcMain.handle(graphBoardChannels.getDefinitionStatus, () => requireRuntime().graphify.getDefinitionStatus());
-  ipcMain.handle(researchChannels.getDependencyStatus, () => requireRuntime().graphify.getResearchDependencyStatus());
-  ipcMain.handle(researchChannels.listPapers, () => requireRuntime().research.listPapers());
-  ipcMain.handle(researchChannels.getPaperDetails, (_event, nodeId: string) =>
+  handle(graphBoardChannels.getDefinitionStatus, () => requireRuntime().graphify.getDefinitionStatus());
+  handle(researchChannels.getDependencyStatus, () => requireRuntime().graphify.getResearchDependencyStatus());
+  handle(researchChannels.listPapers, () => requireRuntime().research.listPapers());
+  handle(researchChannels.getPaperDetails, (_event, nodeId: string) =>
     requireRuntime().research.getPaperDetails(nodeId)
   );
-  ipcMain.handle(researchChannels.saveNodeNote, (_event, input: SaveResearchNodeNoteInput) =>
+  handle(researchChannels.saveNodeNote, (_event, input: SaveResearchNodeNoteInput) =>
     requireRuntime().research.saveNodeNote(input)
   );
-  ipcMain.handle(researchChannels.updatePaperStatus, (_event, input: UpdateResearchPaperStatusInput) =>
+  handle(researchChannels.updatePaperStatus, (_event, input: UpdateResearchPaperStatusInput) =>
     requireRuntime().research.updatePaperStatus(input)
   );
-  ipcMain.handle(boardChannels.getState, (_event, rule: BoardRule) => requireRuntime().graphifyBoard.buildBoardState(rule));
-  ipcMain.handle(boardChannels.getGraphHtml, () => requireRuntime().graphify.readGraphHtml());
-  ipcMain.handle(boardChannels.removeSource, (_event, sourceFile: string) => requireRuntime().graphify.removeSource(sourceFile));
-  ipcMain.handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
+  handle(boardChannels.getState, (_event, rule: BoardRule) => requireRuntime().graphifyBoard.buildBoardState(rule));
+  handle(boardChannels.getGraphHtml, () => requireRuntime().graphify.readGraphHtml());
+  handle(boardChannels.removeSource, (_event, sourceFile: string) => requireRuntime().graphify.removeSource(sourceFile));
+  handle(boardChannels.collapseSource, (_event, sourceFile: string, targetSourceFile: string) =>
     requireRuntime().graphify.collapseSourceInto(sourceFile, targetSourceFile)
   );
-  ipcMain.handle(boardChannels.groupNodes, (_event, input: GroupGraphNodesInput) =>
+  handle(boardChannels.groupNodes, (_event, input: GroupGraphNodesInput) =>
     requireRuntime().graphify.groupGraphNodes(input)
   );
-  ipcMain.handle(boardChannels.renameSource, (_event, sourceFile: string, newName: string) =>
+  handle(boardChannels.renameSource, (_event, sourceFile: string, newName: string) =>
     requireRuntime().graphify.renameSource(sourceFile, newName)
   );
-  ipcMain.handle(boardChannels.commentSource, (_event, sourceFile: string, comment: string) =>
+  handle(boardChannels.commentSource, (_event, sourceFile: string, comment: string) =>
     requireRuntime().graphify.commentSource(sourceFile, comment)
   );
-  ipcMain.handle(boardChannels.search, (_event, input: BoardSearchInput) => requireRuntime().graphifyBoard.search(input));
-  ipcMain.handle(explorerChannels.getRoot, () => requireRuntime().graphExplorer.getRoot());
-  ipcMain.handle(explorerChannels.getChildren, (_event, nodeId: string) => requireRuntime().graphExplorer.getChildren(nodeId));
-  ipcMain.handle(explorerChannels.getDetails, (_event, nodeId: string) => requireRuntime().graphExplorer.getDetails(nodeId));
-  ipcMain.handle(explorerChannels.search, (_event, input: ExplorerSearchInput) =>
+  handle(boardChannels.search, (_event, input: BoardSearchInput) => requireRuntime().graphifyBoard.search(input));
+  handle(explorerChannels.getRoot, () => requireRuntime().graphExplorer.getRoot());
+  handle(explorerChannels.getChildren, (_event, nodeId: string) => requireRuntime().graphExplorer.getChildren(nodeId));
+  handle(explorerChannels.getDetails, (_event, nodeId: string) => requireRuntime().graphExplorer.getDetails(nodeId));
+  handle(explorerChannels.search, (_event, input: ExplorerSearchInput) =>
     requireRuntime().graphExplorer.search(input)
   );
-  ipcMain.handle(explorerChannels.getSourceOptions, () => requireRuntime().graphExplorer.listSourceOptions());
-  ipcMain.handle(explorerChannels.getArtifactContent, (_event, artifactId: string) =>
+  handle(explorerChannels.getSourceOptions, () => requireRuntime().graphExplorer.listSourceOptions());
+  handle(explorerChannels.getArtifactContent, (_event, artifactId: string) =>
     requireRuntime().graphExplorer.getArtifactContent(artifactId)
   );
-  ipcMain.handle(explorerChannels.openNode, async (_event, nodeId: string) => {
+  handle(explorerChannels.openNode, async (_event, nodeId: string) => {
     const filePath = await requireRuntime().graphExplorer.getOpenPath(nodeId);
     const error = await shell.openPath(filePath);
     if (error) {
       throw new Error(error);
     }
   });
-  ipcMain.handle(clipboardChannels.readText, () => clipboard.readText());
-  ipcMain.handle(clipboardChannels.readIngestibleItems, () => readClipboardIngestibleItems());
-  ipcMain.handle(clipboardChannels.writeText, (_event, text: string) => {
+  handle(clipboardChannels.readText, () => clipboard.readText());
+  handle(clipboardChannels.readIngestibleItems, () => readClipboardIngestibleItems());
+  handle(clipboardChannels.writeText, (_event, text: string) => {
     clipboard.writeText(text);
   });
-  ipcMain.handle(settingsChannels.getAi, () => aiSettings.getSettings());
-  ipcMain.handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
-  ipcMain.handle(settingsChannels.getApp, () => aiSettings.getAppSettings());
-  ipcMain.handle(settingsChannels.updateApp, (_event, input: UpdateAppSettingsInput) => aiSettings.updateAppSettings(input));
-  ipcMain.handle(settingsChannels.updateManagedProxy, (_event, input: UpdateManagedProxySettingsInput) =>
+  handle(settingsChannels.getAi, () => aiSettings.getSettings());
+  handle(settingsChannels.updateAi, (_event, input: UpdateAiSettingsInput) => aiSettings.updateSettings(input));
+  handle(settingsChannels.getApp, () => aiSettings.getAppSettings());
+  handle(settingsChannels.updateApp, (_event, input: UpdateAppSettingsInput) => aiSettings.updateAppSettings(input));
+  handle(settingsChannels.updateManagedProxy, (_event, input: UpdateManagedProxySettingsInput) =>
     aiSettings.updateManagedProxy(input)
   );
-  ipcMain.handle(chatChannels.listThreads, () => requireRuntime().chat.listThreads());
-  ipcMain.handle(chatChannels.createThread, (_event, input?: { title?: string | undefined }) =>
+  handle(settingsChannels.refreshAccount, () => aiSettings.refreshAccount());
+  handle(chatChannels.listThreads, () => requireRuntime().chat.listThreads());
+  handle(chatChannels.createThread, (_event, input?: { title?: string | undefined }) =>
     requireRuntime().chat.createThread(input)
   );
-  ipcMain.handle(chatChannels.sendMessage, (_event, input) => requireRuntime().chat.sendMessage(input));
-  ipcMain.handle(chatChannels.sendMessageStream, (event, input) =>
+  handle(chatChannels.sendMessage, (_event, input) => requireRuntime().chat.sendMessage(input));
+  handle(chatChannels.sendMessageStream, (event, input) =>
     requireRuntime().chat.sendMessageStream(input, (streamEvent: ChatStreamEvent) => {
       event.sender.send(chatChannels.streamEvent, streamEvent);
     })
   );
-  ipcMain.handle(chatChannels.abortGeneration, (_event, generationId: string) =>
+  handle(chatChannels.abortGeneration, (_event, generationId: string) =>
     requireRuntime().chat.abortGeneration(generationId)
   );
-  ipcMain.handle(chatChannels.deleteThread, (_event, threadId: string) => requireRuntime().chat.deleteThread(threadId));
-  ipcMain.handle(chatChannels.getGrounding, (_event, messageId: string) => requireRuntime().chat.getGrounding(messageId));
-  ipcMain.handle(chatChannels.saveMessageArtifact, (_event, input: SaveChatArtifactInput) =>
+  handle(chatChannels.deleteThread, (_event, threadId: string) => requireRuntime().chat.deleteThread(threadId));
+  handle(chatChannels.getGrounding, (_event, messageId: string) => requireRuntime().chat.getGrounding(messageId));
+  handle(chatChannels.saveMessageArtifact, (_event, input: SaveChatArtifactInput) =>
     requireRuntime().chat.saveMessageArtifact(input)
   );
-  ipcMain.handle(chatChannels.ingestArtifact, (_event, messageId: string, artifactId: string) =>
+  handle(chatChannels.ingestArtifact, (_event, messageId: string, artifactId: string) =>
     requireRuntime().chat.ingestArtifact(messageId, artifactId)
   );
-  ipcMain.handle(chatChannels.downloadArtifact, async (_event, messageId: string, artifactId: string) => {
+  handle(chatChannels.downloadArtifact, async (_event, messageId: string, artifactId: string) => {
     const saved = await requireRuntime().chat.saveMessageArtifact({ messageId });
     const artifact = saved.message.artifacts?.find((candidate) => candidate.id === artifactId) ?? saved.artifact;
     const options: Electron.SaveDialogOptions = {
@@ -592,22 +663,31 @@ function registerIpc(
 
     return requireRuntime().chat.downloadArtifact(messageId, artifact.id, result.filePath);
   });
-  ipcMain.handle(chatChannels.openArtifact, async (_event, messageId: string, artifactId: string) => {
+  handle(chatChannels.openArtifact, async (_event, messageId: string, artifactId: string) => {
     const filePath = await requireRuntime().chat.getArtifactPath(messageId, artifactId);
     const error = await shell.openPath(filePath);
     if (error) {
       throw new Error(error);
     }
   });
-  ipcMain.handle(runtimeChannels.getDependencyStatus, () => runtimeDependencies.getStatus());
-  ipcMain.handle(runtimeChannels.installOrRepairDependencies, () => runtimeDependencies.installOrRepair());
+  handle(runtimeChannels.getDependencyStatus, () => runtimeDependencies.getStatus());
+  handle(runtimeChannels.installOrRepairDependencies, () => runtimeDependencies.installOrRepair());
 }
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
   const userDataPath = app.getPath("userData");
+  buildInfo = await loadBuildInfo(app.getVersion());
   const aiSettings = new AiSettingsService(userDataPath);
+  logService = new LogService(userDataPath, buildInfo, () => aiSettings.getAppSettings());
+  await logService.flushPending();
+  process.on("uncaughtException", (error) => {
+    void logService?.error("process:uncaughtException", error).catch(() => undefined);
+  });
+  process.on("unhandledRejection", (reason) => {
+    void logService?.error("process:unhandledRejection", reason).catch(() => undefined);
+  });
   const runtimeDependencies = new DependencyRuntimeService();
   const projects = new ProjectService(userDataPath);
   const embeddings = new EmbeddingService(path.join(userDataPath, "models"));
@@ -616,7 +696,7 @@ app.whenReady().then(async () => {
   await projects.initialize();
   await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
 
-  registerIpc(projects, embeddings, aiSettings, runtimeDependencies);
+  registerIpc(projects, embeddings, aiSettings, runtimeDependencies, buildInfo, logService);
   const agentController = new AgentController(() => requireRuntime().graphify);
   agentController.registerIpc();
   mainWindow = createMainWindow();

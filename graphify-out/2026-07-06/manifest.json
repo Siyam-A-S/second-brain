@@ -5,13 +5,13 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1782883379.393382,
-    "ast_hash": "4d08ca8a1802515db8a3b7cce7bcc1f5",
+    "mtime": 1783135742.4661527,
+    "ast_hash": "3e5eb536b90df94d50a5a86012fdfef0",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
-    "mtime": 1783031200.2907872,
-    "ast_hash": "421d2125d304f5e765d1a04aa7d5a7f8",
+    "mtime": 1783136149.747071,
+    "ast_hash": "71b6ca914d39d7fc21bb6b79e5ee9cf8",
     "semantic_hash": ""
   },
   "src/main/services/AgentController.ts": {
@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "src/preload/preload.ts": {
-    "mtime": 1783030946.3966672,
-    "ast_hash": "b56e816eb70d9ad14fa32e9f367f42db",
+    "mtime": 1783136068.693687,
+    "ast_hash": "5e7827b88485798c5d718fbc81d834e4",
     "semantic_hash": ""
   },
   "src/renderer/components/DropTarget.tsx": {
@@ -80,8 +80,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1783051649.1435018,
-    "ast_hash": "40943c335bdb41c19ffef9703f496303",
+    "mtime": 1783136087.7837772,
+    "ast_hash": "3ce7d5d7790bb612df9bb0a12fde5ca0",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -100,18 +100,18 @@
     "semantic_hash": ""
   },
   "src/renderer/views/MainApp.tsx": {
-    "mtime": 1782945272.1535,
-    "ast_hash": "12ebc9653330fca42aef5c67dfd7e370",
+    "mtime": 1783136012.2884202,
+    "ast_hash": "5a84407e9f8f1d1ebbfe4be85f7b1cfe",
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1783041024.6703048,
-    "ast_hash": "b4fef2753e88532783a8a6be3b2a8654",
+    "mtime": 1783135577.4373865,
+    "ast_hash": "86535512a51fc35c3ea6203f14ead8a8",
     "semantic_hash": ""
   },
   "src/shared/ipc.ts": {
-    "mtime": 1783031391.1266522,
-    "ast_hash": "739df4975d4ed5f17a213d60cb5f2c9c",
+    "mtime": 1783136061.9936552,
+    "ast_hash": "37b793d8014637afc6a7bd21796338f2",
     "semantic_hash": ""
   },
   "src/vite-env.d.ts": {
@@ -205,8 +205,8 @@
     "semantic_hash": "62c05a2bf20bf036a0b2633478663e64"
   },
   "dev/chatnotes.md": {
-    "mtime": 1782716214.4662707,
-    "ast_hash": "7e7e58ac5563eac63d2073f2ff4d2af8",
+    "mtime": 1783131831.0268464,
+    "ast_hash": "7a267a00d9546d800049cb7581204857",
     "semantic_hash": ""
   },
   "index.html": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/main/services/AiSettingsService.ts": {
-    "mtime": 1782946561.6066217,
-    "ast_hash": "6450e270e299b695d3ac0a9c158d1b45",
+    "mtime": 1783136100.1248357,
+    "ast_hash": "c37002e4986d32dea63b9da737b70447",
     "semantic_hash": ""
   },
   "src/main/services/TrackerService.ts": {
@@ -275,13 +275,13 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782883390.9335387,
-    "ast_hash": "af9bad3f103b7ffef421f917eb019889",
+    "mtime": 1783136052.814612,
+    "ast_hash": "5dc5fc44b789423a8d303c2168155a12",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
-    "mtime": 1782946670.1610637,
-    "ast_hash": "3153101e166f285f0d6cb2a05905650b",
+    "mtime": 1783136121.9439392,
+    "ast_hash": "113a77922b95069fb8e2caa806415c0c",
     "semantic_hash": ""
   },
   "src/main/services/GraphBoardService.ts": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1783052676.2390127,
-    "ast_hash": "ce93db18c29a5a5390c26d8ce49e3d89",
+    "mtime": 1783131839.9820921,
+    "ast_hash": "90826de7a3b73dc536b7b52bd65f5b4a",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/renderer/components/ChatWorkbench.tsx": {
-    "mtime": 1783051626.2443762,
-    "ast_hash": "db7f38270d24604be69f5a17153781d1",
+    "mtime": 1783135948.3621187,
+    "ast_hash": "3e4ef15eae740a045c59dcd93d6b59a6",
     "semantic_hash": ""
   },
   "proxy/main.py": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "electron-builder.yml": {
-    "mtime": 1782865349.928982,
-    "ast_hash": "662d31c15d0488b57350ac0d8505ca1b",
+    "mtime": 1783135762.7212472,
+    "ast_hash": "d30ebc70fb4049b04a500251d064ca5d",
     "semantic_hash": ""
   },
   "dev/plans.md": {
@@ -397,6 +397,36 @@
   "src/main/services/NotificationService.ts": {
     "mtime": 1783030816.4331136,
     "ast_hash": "533b0f9440e48481cfda54e732018ee9",
+    "semantic_hash": ""
+  },
+  "scripts/production-runtime/install-second-brain-runtime.ps1": {
+    "mtime": 1783135780.219329,
+    "ast_hash": "df83f0ac6f90a150612575cf635e65fb",
+    "semantic_hash": ""
+  },
+  "src/main/services/BuildInfoService.ts": {
+    "mtime": 1783135624.5066042,
+    "ast_hash": "335824f04eeb362639425118a8ab11dd",
+    "semantic_hash": ""
+  },
+  "src/main/services/LogService.ts": {
+    "mtime": 1783135665.2957933,
+    "ast_hash": "39320d99f74f5d94e193acb057a005c1",
+    "semantic_hash": ""
+  },
+  "src/renderer/lib/errorPresentation.ts": {
+    "mtime": 1783135830.171563,
+    "ast_hash": "48058e5bddea4ae58ad9c9131593f2e3",
+    "semantic_hash": ""
+  },
+  ".github/workflows/production-release.yml": {
+    "mtime": 1783136179.7472131,
+    "ast_hash": "2bb96ad87cfbb37ade518a307fa476a0",
+    "semantic_hash": ""
+  },
+  "PRODUCTION_RELEASE.md": {
+    "mtime": 1783136036.4965346,
+    "ast_hash": "a12ca4fac77a13ae9734e0fa2054e62d",
     "semantic_hash": ""
   }
 }
