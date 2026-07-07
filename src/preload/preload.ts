@@ -95,7 +95,8 @@ const projectChannels = {
   select: "projects-select",
   rename: "projects-rename",
   archive: "projects-archive",
-  getActive: "projects-get-active"
+  getActive: "projects-get-active",
+  getStorageUsage: "projects-get-storage-usage"
 } as const;
 
 const graphBoardChannels = {
@@ -199,7 +200,8 @@ const api: SecondBrainApi = {
     select: (input: ProjectSelectionInput) => ipcRenderer.invoke(projectChannels.select, input),
     rename: (input: RenameProjectInput) => ipcRenderer.invoke(projectChannels.rename, input),
     archive: (input: ProjectSelectionInput) => ipcRenderer.invoke(projectChannels.archive, input),
-    getActive: () => ipcRenderer.invoke(projectChannels.getActive)
+    getActive: () => ipcRenderer.invoke(projectChannels.getActive),
+    getStorageUsage: () => ipcRenderer.invoke(projectChannels.getStorageUsage)
   },
   graphBoard: {
     getState: () => ipcRenderer.invoke(graphBoardChannels.getState),

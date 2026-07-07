@@ -95,9 +95,9 @@ const productionProxyOpenAiBaseUrl = `${productionProxyOrigin}/v1`;
 const productionProxyChatEndpoint = `${productionProxyOrigin}/chat`;
 const productionProxyChatCompletionsEndpoint = `${productionProxyOrigin}/v1/chat/completions`;
 const defaultGraphifyTemperature = 0.6;
-const defaultGraphifyMaxTokens = 8192;
+const defaultGraphifyMaxTokens = 32768;
 const defaultGraphifyRetryTemperature = 0;
-const defaultGraphifyRetryMaxTokens = 4096;
+const defaultGraphifyRetryMaxTokens = 16384;
 const defaultHtmlCommand = "graphify export html --graph graphify-out/graph.json";
 const defaultCallflowCommand = "graphify export callflow-html";
 const sourceCommentDirectoryName = "source-comments";
@@ -2254,10 +2254,10 @@ export class GraphifyController {
       : "";
     const localModelHint = [
       "Local model guidance:",
-      "- The app first tries 8192 completion tokens and retries once with strict JSON settings capped at 4096.",
-      "- If this still fails, restart llama-server with a larger context, for example `-c 8192` or `-c 12288`.",
+      "- The app first tries 32768 completion tokens and retries once with strict JSON settings capped at 16384.",
+      "- If this still fails, restart llama-server with a larger context, for example `-c 32768` or `-c 49152`.",
       "- For Gemma/Gemma-style thinking templates, disable thinking in the server/template if available; hidden thinking can consume completion budget before the JSON closes.",
-      "- You can lower the retry cap with `SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS=2048`."
+      "- You can lower the retry cap with `SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS=8192`."
     ].join("\n");
 
     return new Error([message, runtimeHint, localModelHint].filter(Boolean).join("\n\n"));

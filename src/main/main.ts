@@ -544,6 +544,7 @@ function registerIpc(
   handle(trackerChannels.remove, (_event, uuid: string) => requireRuntime().tracker.removeTracker(uuid));
   handle(projectChannels.list, () => projects.listProjects());
   handle(projectChannels.getActive, () => projects.getActiveProject());
+  handle(projectChannels.getStorageUsage, () => projects.getStorageUsage());
   handle(projectChannels.create, async (_event, input: CreateProjectInput) => {
     const project = await projects.createProject(input);
     await switchProjectRuntime(project, aiSettings, embeddings);

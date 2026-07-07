@@ -90,7 +90,7 @@ Production builds are proxy-first and account-managed. End users should use the 
 For a local llama.cpp server:
 
 ```bash
-./llama-server -m "/path/to/your-model.gguf" --host 127.0.0.1 --port 8080 -c 8192
+./llama-server -m "/path/to/your-model.gguf" --host 127.0.0.1 --port 8080 -c 32768
 ```
 
 Use these local settings:
@@ -100,6 +100,8 @@ Base URL: http://localhost:8080/v1
 Model: local-model
 API key: leave blank for a local server
 ```
+
+If your local model cannot support a 32k context, lower the Graphify max-token settings in Settings before ingesting large sources.
 
 ## Runtime Dependencies
 

@@ -37,6 +37,7 @@ import type {
   McpServerStatus,
   ProjectRecord,
   ProjectSelectionInput,
+  ProjectStorageUsage,
   RenameProjectInput,
   ResearchDependencyReport,
   ResearchPaperDetails,
@@ -122,6 +123,7 @@ export type {
   McpServerStatus,
   ProjectRecord,
   ProjectSelectionInput,
+  ProjectStorageUsage,
   RenameProjectInput,
   ResearchDependencyReport,
   ResearchPaperComponentType,
@@ -240,7 +242,8 @@ export const projectChannels = {
   select: "projects-select",
   rename: "projects-rename",
   archive: "projects-archive",
-  getActive: "projects-get-active"
+  getActive: "projects-get-active",
+  getStorageUsage: "projects-get-storage-usage"
 } as const;
 
 export const graphBoardChannels = {
@@ -382,6 +385,7 @@ export type SecondBrainApi = {
     rename: (input: RenameProjectInput) => Promise<ProjectRecord>;
     archive: (input: ProjectSelectionInput) => Promise<ProjectRecord>;
     getActive: () => Promise<ProjectRecord>;
+    getStorageUsage: () => Promise<ProjectStorageUsage>;
   };
   graphBoard: {
     getState: () => Promise<GraphBoardState>;

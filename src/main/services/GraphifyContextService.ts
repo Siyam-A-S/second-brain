@@ -10,6 +10,7 @@ import type {
   GraphifyContextResult,
   GraphifyContextSourceExcerpt
 } from "../../shared/brain";
+import { SourceContentService } from "./SourceContentService";
 import {
   isCmdShim,
   runtimeGraphifyCommands,
@@ -274,7 +275,7 @@ function linkEndpointId(value: unknown): string {
 
 function parseTraversalNodeHits(stdout: string): GraphifyContextNodeHit[] {
   const hits = new Map<string, GraphifyContextNodeHit>();
-  const pattern = /^NODE\s+(.+?)(?:\s+\[([^\]]*)\])?\s*$/gim;
+  const pattern = /^\s*NODE\s+(.+?)(?:\s+\[([^\]]*)\])?\s*$/gim;
   let match: RegExpExecArray | null;
   let rank = 0;
 
@@ -287,8 +288,8 @@ function parseTraversalNodeHits(stdout: string): GraphifyContextNodeHit[] {
     const attrs = parseAttributeBlock(match[2]);
     const sourceFile = attrs.src || attrs.source || attrs.source_file || attrs.sourcefile;
     const sourceLocation = attrs.loc || attrs.location || attrs.source_location || attrs.sourcelocation;
-    const id = attrs.id || `${label}:${sourceFile ?? ""}:${sourceLocation ?? ""}`;
-    const key = id.toLowerCase();
+    const id = attrs.id || "";
+    const key = `${id}:${label}:${sourceFile ?? ""}:${sourceLocation ?? ""}`.toLowerCase();
     if (hits.has(key)) {
       continue;
     }
@@ -306,6 +307,74 @@ function parseTraversalNodeHits(stdout: string): GraphifyContextNodeHit[] {
   }
 
   return Array.from(hits.values()).slice(0, maxNodeHits);
+}
+
+function resolveTraversalNodeHits(parsedHits: GraphifyContextNodeHit[], graph: GraphifyGraphData): GraphifyContextNodeHit[] {
+  const nodesById = new Map<string, GraphifyGraphNode>(
+    graph.nodes.flatMap((node): Array<[string, GraphifyGraphNode]> => {
+      const id = asString(node.id).toLowerCase();
+      return id ? [[id, node]] : [];
+    })
+  );
+  const resolved: GraphifyContextNodeHit[] = [];
+  const seen = new Set<string>();
+
+  const pushNode = (node: GraphifyGraphNode, rank: number, fallback: GraphifyContextNodeHit) => {
+    const id = asString(node.id);
+    const label = nodeLabel(node) || fallback.label || id;
+    if (!id || !label || seen.has(id)) {
+      return;
+    }
+
+    seen.add(id);
+    resolved.push({
+      id,
+      label,
+      sourceFile: sourceFileFromNode(node) || fallback.sourceFile,
+      sourceLocation: sourceLocationFromNode(node) || fallback.sourceLocation,
+      community: asString(node.community) || fallback.community,
+      confidence: asString(node.confidence) || asString(node.confidence_score) || fallback.confidence,
+      rank
+    });
+  };
+
+  const exactLabelMatches = (hit: GraphifyContextNodeHit): GraphifyGraphNode[] =>
+    graph.nodes.filter((node) => nodeLabel(node).toLowerCase() === hit.label.toLowerCase());
+
+  const exactSourceMatches = (nodes: GraphifyGraphNode[], hit: GraphifyContextNodeHit): GraphifyGraphNode[] =>
+    hit.sourceFile
+      ? nodes.filter((node) => sourceFileFromNode(node).toLowerCase() === hit.sourceFile?.toLowerCase())
+      : [];
+
+  const exactLocationMatches = (nodes: GraphifyGraphNode[], hit: GraphifyContextNodeHit): GraphifyGraphNode[] =>
+    hit.sourceLocation
+      ? nodes.filter((node) => sourceLocationFromNode(node).toLowerCase() === hit.sourceLocation?.toLowerCase())
+      : [];
+
+  for (const hit of parsedHits) {
+    const byId = hit.id ? nodesById.get(hit.id.toLowerCase()) : undefined;
+    if (byId) {
+      pushNode(byId, hit.rank, hit);
+      continue;
+    }
+
+    const labelMatches = exactLabelMatches(hit);
+    const sourceMatches = exactSourceMatches(labelMatches, hit);
+    const locationMatches = exactLocationMatches(sourceMatches, hit);
+    const matched =
+      (locationMatches.length === 1 ? locationMatches[0] : undefined) ??
+      (sourceMatches.length === 1 ? sourceMatches[0] : undefined) ??
+      (labelMatches.length === 1 ? labelMatches[0] : undefined);
+
+    if (matched) {
+      pushNode(matched, hit.rank, hit);
+    }
+  }
+
+  return resolved
+    .sort((left, right) => left.rank - right.rank)
+    .map((hit, index) => ({ ...hit, rank: index + 1 }))
+    .slice(0, maxNodeHits);
 }
 
 function citationFromNodeHit(hit: GraphifyContextNodeHit): GraphifyContextCitation | null {
@@ -422,6 +491,7 @@ export const graphifyContextTestUtils = {
   buildInlineGraphTraversalStdout,
   lineNumberFromLocation,
   parseTraversalNodeHits,
+  resolveTraversalNodeHits,
   tokenize
 };
 
@@ -522,7 +592,10 @@ export class GraphifyContextService {
   private mcpTransport: StdioClientTransport | null = null;
   private mcpGraphMtimeMs = 0;
 
-  constructor(private readonly rawVaultPath: string) {
+  constructor(
+    private readonly rawVaultPath: string,
+    private readonly sourceContent = new SourceContentService(rawVaultPath)
+  ) {
     this.graphPath = path.join(rawVaultPath, "graphify-out", "graph.json");
   }
 
@@ -657,6 +730,7 @@ export class GraphifyContextService {
         citations: [],
         expandedTokens,
         nodeHits: [],
+        sourceChunks: [],
         sourceExcerpts: [],
         error: errorMessage(error)
       }));
@@ -716,10 +790,15 @@ export class GraphifyContextService {
       ...nodeHits.map(citationFromNodeHit).filter((citation): citation is GraphifyContextCitation => Boolean(citation)),
       ...extractCitations(stdout)
     ]);
-    const sourceExcerpts = await this.hydrateNodeSourceExcerpts(nodeHits);
+    const sourceChunks = await this.sourceContent.hydrate({
+      nodeHits,
+      expandedTokens,
+      query
+    });
+    const sourceExcerpts = this.sourceContent.toSourceExcerpts(sourceChunks);
     const graphCards = await this.hydrateGraphCardDefinitions(stdout, citations, nodeHits, graph);
     const wikiContext = await this.hydrateWikiContext(stdout, graphCards.communityIds);
-    const sourceExcerptText = this.formatSourceExcerpts(sourceExcerpts);
+    const sourceChunkText = this.sourceContent.formatSourceChunks(sourceChunks);
     return {
       query,
       stdout: [
@@ -727,7 +806,7 @@ export class GraphifyContextService {
         stdout,
         graphCards.text ? `Relevant card definitions:\n${graphCards.text}` : "",
         wikiContext ? `Relevant community wiki:\n${wikiContext}` : "",
-        sourceExcerptText ? `Relevant source excerpts:\n${sourceExcerptText}` : ""
+        sourceChunkText ? `Relevant source chunks:\n${sourceChunkText}` : ""
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -737,6 +816,7 @@ export class GraphifyContextService {
       citations,
       expandedTokens,
       nodeHits,
+      sourceChunks,
       sourceExcerpts
     };
   }
@@ -769,6 +849,7 @@ export class GraphifyContextService {
       citations: [],
       expandedTokens,
       nodeHits: [],
+      sourceChunks: [],
       sourceExcerpts: [],
       error
     };
@@ -828,83 +909,8 @@ export class GraphifyContextService {
     return ranked.slice(0, maxExpandedTokens);
   }
 
-  private resolveNodeHits(stdout: string, parsedHits: GraphifyContextNodeHit[], graph: GraphifyGraphData): GraphifyContextNodeHit[] {
-    const nodesById = new Map<string, GraphifyGraphNode>(
-      graph.nodes.flatMap((node): Array<[string, GraphifyGraphNode]> => {
-        const id = asString(node.id).toLowerCase();
-        return id ? [[id, node]] : [];
-      })
-    );
-    const nodes = graph.nodes;
-    const resolved: GraphifyContextNodeHit[] = [];
-    const seen = new Set<string>();
-
-    const pushNode = (node: GraphifyGraphNode, rank: number, fallback?: GraphifyContextNodeHit) => {
-      const id = asString(node.id) || fallback?.id;
-      const label = nodeLabel(node) || fallback?.label || id;
-      if (!id || !label || seen.has(id)) {
-        return;
-      }
-
-      seen.add(id);
-      resolved.push({
-        id,
-        label,
-        sourceFile: sourceFileFromNode(node) || fallback?.sourceFile,
-        sourceLocation: sourceLocationFromNode(node) || fallback?.sourceLocation,
-        community: asString(node.community) || fallback?.community,
-        confidence: asString(node.confidence) || asString(node.confidence_score) || fallback?.confidence,
-        rank
-      });
-    };
-
-    for (const hit of parsedHits) {
-      const direct = nodesById.get(hit.id.toLowerCase());
-      const label = hit.label.toLowerCase();
-      const source = hit.sourceFile?.toLowerCase();
-      const location = hit.sourceLocation?.toLowerCase();
-      const matched =
-        direct ??
-        nodes.find((node) => {
-          const nodeSource = sourceFileFromNode(node).toLowerCase();
-          const nodeLocation = sourceLocationFromNode(node).toLowerCase();
-          return (
-            nodeLabel(node).toLowerCase() === label &&
-            (!source || nodeSource === source) &&
-            (!location || nodeLocation === location)
-          );
-        }) ??
-        nodes.find((node) => nodeLabel(node).toLowerCase() === label || asString(node.id).toLowerCase() === label);
-
-      if (matched) {
-        pushNode(matched, hit.rank, hit);
-      } else if (!seen.has(hit.id)) {
-        seen.add(hit.id);
-        resolved.push(hit);
-      }
-    }
-
-    if (resolved.length === 0) {
-      const haystack = stdout.toLowerCase();
-      const scanned = nodes
-        .map((node) => {
-          const id = asString(node.id);
-          const label = nodeLabel(node);
-          const candidates = [id, label].filter((candidate) => candidate.length > 2);
-          const indexes = candidates.map((candidate) => haystack.indexOf(candidate.toLowerCase())).filter((index) => index >= 0);
-          return indexes.length > 0 ? { node, index: Math.min(...indexes) } : null;
-        })
-        .filter((item): item is { node: GraphifyGraphNode; index: number } => Boolean(item))
-        .sort((left, right) => left.index - right.index)
-        .slice(0, maxNodeHits);
-
-      scanned.forEach((item, index) => pushNode(item.node, index + 1));
-    }
-
-    return resolved
-      .sort((left, right) => left.rank - right.rank)
-      .map((hit, index) => ({ ...hit, rank: index + 1 }))
-      .slice(0, maxNodeHits);
+  private resolveNodeHits(_stdout: string, parsedHits: GraphifyContextNodeHit[], graph: GraphifyGraphData): GraphifyContextNodeHit[] {
+    return resolveTraversalNodeHits(parsedHits, graph);
   }
 
   private async hydrateNodeSourceExcerpts(nodeHits: GraphifyContextNodeHit[]): Promise<GraphifyContextSourceExcerpt[]> {

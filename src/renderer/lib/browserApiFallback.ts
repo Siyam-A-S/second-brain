@@ -12,6 +12,7 @@ import type {
   ProcessDroppedItem,
   ProcessDroppedItemsResult,
   ProjectRecord,
+  ProjectStorageUsage,
   ResearchDependencyReport,
   ResearchPaperDetails,
   ResearchPaperSummary,
@@ -145,8 +146,8 @@ let browserAppSettings: AppSettings = {
   },
   graphify: {
     graphifyBin: "",
-    maxTokens: 8192,
-    retryMaxTokens: 4096,
+    maxTokens: 32768,
+    retryMaxTokens: 16384,
     timeoutMs: 600_000,
     cardDefinitions: true,
     cardDefinitionMaxPerPass: 24,
@@ -586,6 +587,16 @@ const browserApiFallback: SecondBrainApi = {
       }
 
       return project;
+    },
+    getStorageUsage: async (): Promise<ProjectStorageUsage> => {
+      const sourceCount = browserExplorerTree.length;
+      const bytes = 42_000_000 + sourceCount * 1_250_000;
+      return {
+        bytes,
+        label: "46.1 MB",
+        projectsPath: "/browser-preview/projects",
+        checkedAt: new Date().toISOString()
+      };
     }
   },
   graphBoard: {

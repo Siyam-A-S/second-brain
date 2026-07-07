@@ -12,7 +12,6 @@ import {
   FileText,
   FileVideo,
   Folder,
-  GitMerge,
   Loader2,
   MessageSquare,
   Network,
@@ -229,10 +228,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
   const [renameDraft, setRenameDraft] = useState("");
   const [commenting, setCommenting] = useState(false);
   const [commentDraft, setCommentDraft] = useState("");
-  const [grouping, setGrouping] = useState(false);
-  const [groupLabel, setGroupLabel] = useState("");
-  const [groupRelation, setGroupRelation] = useState("forms_request_pipeline");
-  const [groupNodeDraft, setGroupNodeDraft] = useState("");
   const [artifactContent, setArtifactContent] = useState<ExplorerArtifactContent | null>(null);
   const [artifactLoading, setArtifactLoading] = useState(false);
 
@@ -320,7 +315,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
     setActionError(null);
     setRenaming(false);
     setCommenting(false);
-    setGrouping(false);
     setArtifactContent(null);
 
     try {
@@ -424,62 +418,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
       await refreshAfterSourceAction();
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Unable to save source comment.");
-    }
-  }
-
-  async function startGroupingSelected(): Promise<void> {
-    const seedIds = new Set<string>();
-    if (selectedNode.graphNodeId) {
-      seedIds.add(selectedNode.graphNodeId);
-    }
-
-    if (selectedNode.sourceFile && selectedNode.isExpandable) {
-      try {
-        const children = await loadChildren(selectedNode);
-        for (const child of children) {
-          if (child.graphNodeId) {
-            seedIds.add(child.graphNodeId);
-          }
-        }
-      } catch {
-        // The editable text area below still lets the user paste graph node IDs.
-      }
-    }
-
-    setGroupLabel(selectedNode.title ? `${selectedNode.title} relationship` : "Group Relationship");
-    setGroupNodeDraft(Array.from(seedIds).join("\n"));
-    setGrouping((value) => !value);
-  }
-
-  function parsedGroupNodeIds(): string[] {
-    return Array.from(
-      new Set(
-        groupNodeDraft
-          .split(/[,\n]/)
-          .map((value) => value.trim())
-          .filter(Boolean)
-      )
-    );
-  }
-
-  async function groupSelectedNodes(): Promise<void> {
-    const nodeIds = parsedGroupNodeIds();
-    if (nodeIds.length < 3) {
-      setActionError("Add at least three graph node IDs for a group relationship.");
-      return;
-    }
-
-    setActionError(null);
-    try {
-      await window.api.board.groupNodes({
-        label: groupLabel,
-        relation: groupRelation,
-        nodeIds
-      });
-      setGrouping(false);
-      await refreshAfterSourceAction();
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : "Unable to group graph nodes.");
     }
   }
 
@@ -643,14 +581,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                       >
                         <MessageSquare size={16} />
                       </button>
-                      <button
-                        className="grid h-9 w-9 place-items-center rounded-md text-slate-500 transition hover:bg-white hover:text-slate-950"
-                        title="Group relationship"
-                        type="button"
-                        onClick={() => void startGroupingSelected()}
-                      >
-                        <GitMerge size={16} />
-                      </button>
                       {selectedNode.sourceFile ? (
                         <button
                           className="grid h-9 w-9 place-items-center rounded-md text-rose-500 transition hover:bg-rose-50 hover:text-rose-700"
@@ -694,55 +624,6 @@ export function ExplorerWorkbench({ refreshKey }: ExplorerWorkbenchProps): JSX.E
                   onClick={() => void commentSelectedSource()}
                 >
                   Save comment
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {grouping ? (
-            <div className="space-y-3 border-b border-slate-200/80 px-5 py-4">
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
-                <label className="min-w-0">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Group Label</span>
-                  <input
-                    className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    value={groupLabel}
-                    onChange={(event) => setGroupLabel(event.target.value)}
-                  />
-                </label>
-                <label className="min-w-0">
-                  <span className="text-xs font-semibold uppercase text-slate-500">Relation</span>
-                  <input
-                    className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    value={groupRelation}
-                    onChange={(event) => setGroupRelation(event.target.value)}
-                  />
-                </label>
-              </div>
-              <label className="block">
-                <span className="text-xs font-semibold uppercase text-slate-500">Graph Node IDs</span>
-                <textarea
-                  className="mt-1 h-28 w-full resize-none rounded-md border border-slate-200 bg-white/80 px-3 py-2 font-mono text-xs leading-5 text-slate-800 outline-none transition focus:border-slate-400"
-                  value={groupNodeDraft}
-                  onChange={(event) => setGroupNodeDraft(event.target.value)}
-                />
-              </label>
-              <div className="flex justify-end gap-2">
-                <button
-                  className="h-8 rounded-md px-3 text-xs font-semibold text-slate-500 transition hover:bg-white hover:text-slate-950"
-                  type="button"
-                  onClick={() => setGrouping(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="inline-flex h-8 items-center gap-2 rounded-md bg-slate-950 px-3 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={parsedGroupNodeIds().length < 3}
-                  type="button"
-                  onClick={() => void groupSelectedNodes()}
-                >
-                  <GitMerge size={14} />
-                  Group Relationship
                 </button>
               </div>
             </div>

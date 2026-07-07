@@ -25,10 +25,12 @@ const productionAccountUrl = `${productionWebsiteUrl}/login`;
 const productionCheckoutUrl = `${productionWebsiteUrl}/checkout`;
 const productionAccountApiUrl = `${productionWebsiteUrl}/api/desktop/account`;
 const defaultManagedProxyModel = "google/gemini-3.5-flash";
+const legacyDefaultGraphifyMaxTokens = 8192;
+const legacyDefaultGraphifyRetryMaxTokens = 4096;
 const defaultGraphifySettings: GraphifyRuntimeSettings = {
   graphifyBin: "",
-  maxTokens: 8192,
-  retryMaxTokens: 4096,
+  maxTokens: 32768,
+  retryMaxTokens: 16384,
   timeoutMs: 600_000,
   cardDefinitions: true,
   cardDefinitionMaxPerPass: 24,
@@ -172,8 +174,20 @@ function normalizeManagedProxySettings(value: unknown): ManagedProxySettings {
   };
 }
 
-function normalizeGraphifySettings(value: unknown, useEnvironment = true): GraphifyRuntimeSettings {
+function migrateLegacyGraphifyDefault(value: number, legacyDefault: number, nextDefault: number, shouldMigrate: boolean): number {
+  return shouldMigrate && value === legacyDefault ? nextDefault : value;
+}
+
+function normalizeGraphifySettings(value: unknown, useEnvironment = true, migrateLegacyDefaults = useEnvironment): GraphifyRuntimeSettings {
   const parsed = asRecord(value);
+  const environmentMaxTokens = useEnvironment
+    ? process.env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS ?? process.env.GRAPHIFY_MAX_OUTPUT_TOKENS
+    : undefined;
+  const environmentRetryMaxTokens = useEnvironment ? process.env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS : undefined;
+  const shouldMigrateStoredMaxTokens = migrateLegacyDefaults && !environmentMaxTokens;
+  const shouldMigrateStoredRetryMaxTokens = migrateLegacyDefaults && !environmentRetryMaxTokens;
+  const maxTokens = numberSetting(environmentMaxTokens ?? parsed.maxTokens, defaultGraphifySettings.maxTokens);
+  const retryMaxTokens = numberSetting(environmentRetryMaxTokens ?? parsed.retryMaxTokens, defaultGraphifySettings.retryMaxTokens);
 
   return {
     graphifyBin:
@@ -182,14 +196,17 @@ function normalizeGraphifySettings(value: unknown, useEnvironment = true): Graph
         : useEnvironment
           ? process.env.SECOND_BRAIN_GRAPHIFY_BIN?.trim() ?? defaultGraphifySettings.graphifyBin
           : defaultGraphifySettings.graphifyBin,
-    maxTokens: numberSetting(
-      (useEnvironment ? process.env.SECOND_BRAIN_GRAPHIFY_MAX_TOKENS ?? process.env.GRAPHIFY_MAX_OUTPUT_TOKENS : undefined) ??
-        parsed.maxTokens,
-      defaultGraphifySettings.maxTokens
+    maxTokens: migrateLegacyGraphifyDefault(
+      maxTokens,
+      legacyDefaultGraphifyMaxTokens,
+      defaultGraphifySettings.maxTokens,
+      shouldMigrateStoredMaxTokens
     ),
-    retryMaxTokens: numberSetting(
-      (useEnvironment ? process.env.SECOND_BRAIN_GRAPHIFY_RETRY_MAX_TOKENS : undefined) ?? parsed.retryMaxTokens,
-      defaultGraphifySettings.retryMaxTokens
+    retryMaxTokens: migrateLegacyGraphifyDefault(
+      retryMaxTokens,
+      legacyDefaultGraphifyRetryMaxTokens,
+      defaultGraphifySettings.retryMaxTokens,
+      shouldMigrateStoredRetryMaxTokens
     ),
     timeoutMs: numberSetting(
       (useEnvironment ? process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS : undefined) ?? parsed.timeoutMs,

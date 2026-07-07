@@ -1,6 +1,12 @@
-import { cp, mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, readFile, readdir, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { CreateProjectInput, ProjectRecord, ProjectSelectionInput, RenameProjectInput } from "../../shared/brain";
+import type {
+  CreateProjectInput,
+  ProjectRecord,
+  ProjectSelectionInput,
+  ProjectStorageUsage,
+  RenameProjectInput
+} from "../../shared/brain";
 
 type ProjectState = {
   activeProjectId: string;
@@ -33,6 +39,19 @@ function nowIso(): string {
 
 function isEnoent(error: unknown): boolean {
   return Boolean(error && typeof error === "object" && "code" in error && error.code === "ENOENT");
+}
+
+function formatStorageBytes(bytes: number): string {
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = Math.max(0, bytes);
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const digits = unitIndex <= 1 || value >= 10 ? 0 : 1;
+  return `${value.toFixed(digits)} ${units[unitIndex]}`;
 }
 
 async function exists(filePath: string): Promise<boolean> {
@@ -174,6 +193,17 @@ export class ProjectService {
     return this.toRecord(project);
   }
 
+  async getStorageUsage(): Promise<ProjectStorageUsage> {
+    await mkdir(this.projectsRoot, { recursive: true });
+    const bytes = await this.directorySize(this.projectsRoot);
+    return {
+      bytes,
+      label: formatStorageBytes(bytes),
+      projectsPath: this.projectsRoot,
+      checkedAt: nowIso()
+    };
+  }
+
   private async loadOrCreateState(): Promise<void> {
     try {
       const parsed = JSON.parse(await readFile(this.statePath, "utf8")) as ProjectState;
@@ -290,5 +320,43 @@ export class ProjectService {
       archivedAt: project.archivedAt,
       active: state.activeProjectId === project.id
     };
+  }
+
+  private async directorySize(directoryPath: string): Promise<number> {
+    let entries;
+    try {
+      entries = await readdir(directoryPath, { withFileTypes: true });
+    } catch (error) {
+      if (isEnoent(error)) {
+        return 0;
+      }
+      throw error;
+    }
+
+    let total = 0;
+    for (const entry of entries) {
+      const entryPath = path.join(directoryPath, entry.name);
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
+
+      if (entry.isDirectory()) {
+        total += await this.directorySize(entryPath);
+        continue;
+      }
+
+      try {
+        const info = await lstat(entryPath);
+        if (info.isFile()) {
+          total += info.size;
+        }
+      } catch (error) {
+        if (!isEnoent(error)) {
+          throw error;
+        }
+      }
+    }
+
+    return total;
   }
 }

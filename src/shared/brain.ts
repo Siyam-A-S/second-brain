@@ -266,6 +266,26 @@ export type GraphifyContextSourceExcerpt = {
   text: string;
 };
 
+export type GraphifySourceChunkReason =
+  | "node-location"
+  | "keyword-overlap"
+  | "converted-sidecar"
+  | "paper-component"
+  | "metadata-only";
+
+export type GraphifySourceChunk = {
+  id: string;
+  sourceFile: string;
+  displayName: string;
+  startLine?: number | undefined;
+  endLine?: number | undefined;
+  nodeIds: string[];
+  nodeLabels: string[];
+  text: string;
+  score: number;
+  reason: GraphifySourceChunkReason;
+};
+
 export type GraphifyContextResult = {
   query: string;
   stdout: string;
@@ -275,6 +295,7 @@ export type GraphifyContextResult = {
   citations: GraphifyContextCitation[];
   expandedTokens?: string[] | undefined;
   nodeHits?: GraphifyContextNodeHit[] | undefined;
+  sourceChunks?: GraphifySourceChunk[] | undefined;
   sourceExcerpts?: GraphifyContextSourceExcerpt[] | undefined;
   error?: string | undefined;
 };
@@ -450,6 +471,13 @@ export type ProjectRecord = {
   updatedAt: string;
   archivedAt?: string | undefined;
   active: boolean;
+};
+
+export type ProjectStorageUsage = {
+  bytes: number;
+  label: string;
+  projectsPath: string;
+  checkedAt: string;
 };
 
 export type CreateProjectInput = {

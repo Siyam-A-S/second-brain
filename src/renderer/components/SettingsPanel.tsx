@@ -6,6 +6,7 @@ import {
   Cpu,
   CreditCard,
   ExternalLink,
+  HardDrive,
   KeyRound,
   RefreshCcw,
   Save,
@@ -13,7 +14,13 @@ import {
   UserRound,
   X
 } from "lucide-react";
-import type { AppBuildInfo, AppSettings, DependencyRuntimeStatus, ResearchDependencyReport } from "../../shared/ipc";
+import type {
+  AppBuildInfo,
+  AppSettings,
+  DependencyRuntimeStatus,
+  ProjectStorageUsage,
+  ResearchDependencyReport
+} from "../../shared/ipc";
 import { isProductionBuild, presentError } from "../lib/errorPresentation";
 
 type SettingsPanelProps = {
@@ -75,6 +82,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
   const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
   const [dependencyReport, setDependencyReport] = useState<ResearchDependencyReport | null>(null);
   const [runtimeStatus, setRuntimeStatus] = useState<DependencyRuntimeStatus | null>(null);
+  const [projectStorageUsage, setProjectStorageUsage] = useState<ProjectStorageUsage | null>(null);
   const [status, setStatus] = useState("Loading settings...");
   const [isSaving, setIsSaving] = useState(false);
   const [isCheckingDependencies, setIsCheckingDependencies] = useState(false);
@@ -109,6 +117,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
       });
     void refreshDependencyStatus();
     void refreshRuntimeStatus();
+    void refreshProjectStorageUsage();
 
     return () => {
       mounted = false;
@@ -202,6 +211,20 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
     }
   }
 
+  async function refreshProjectStorageUsage(): Promise<void> {
+    try {
+      setProjectStorageUsage(await window.api.projects.getStorageUsage());
+    } catch (error) {
+      setProjectStorageUsage({
+        bytes: 0,
+        label: "Unavailable",
+        projectsPath: "",
+        checkedAt: new Date().toISOString()
+      });
+      setStatus(presentError(error, "Unable to inspect project storage.", buildInfo));
+    }
+  }
+
   async function repairRuntime(): Promise<void> {
     setIsRepairingRuntime(true);
     setStatus("Repairing Graphify runtime...");
@@ -289,6 +312,34 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                   }
                 />
               </label>
+            </section>
+
+            <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <HardDrive size={17} className="text-slate-500" />
+                  <h3 className="text-sm font-semibold text-slate-950">Project Storage</h3>
+                </div>
+                <button
+                  className="inline-flex h-8 items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-3 text-xs font-semibold text-slate-600 transition hover:bg-white hover:text-slate-950"
+                  type="button"
+                  onClick={() => void refreshProjectStorageUsage()}
+                >
+                  <RefreshCcw size={13} />
+                  Refresh
+                </button>
+              </div>
+              <div className="rounded-md border border-slate-200 bg-white/65 p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Projects folder</p>
+                <p className="mt-2 text-lg font-semibold text-slate-950">{projectStorageUsage?.label ?? "Checking..."}</p>
+                <p className="mt-1 truncate text-xs text-slate-500">{projectStorageUsage?.projectsPath || "Local project data"}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Checked{" "}
+                  {projectStorageUsage?.checkedAt
+                    ? new Date(projectStorageUsage.checkedAt).toLocaleString()
+                    : "now"}
+                </p>
+              </div>
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
@@ -491,7 +542,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                       min={512}
                       step={512}
                       type="number"
-                      value={settings?.graphify.maxTokens ?? 8192}
+                      value={settings?.graphify.maxTokens ?? 32768}
                       onChange={(event) =>
                         setSettings((current) =>
                           current
@@ -514,7 +565,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                       min={512}
                       step={512}
                       type="number"
-                      value={settings?.graphify.retryMaxTokens ?? 4096}
+                      value={settings?.graphify.retryMaxTokens ?? 16384}
                       onChange={(event) =>
                         setSettings((current) =>
                           current

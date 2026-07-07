@@ -111,6 +111,8 @@ const defaultContextBudget = 2600;
 const requestTimeoutMs = Number(process.env.SECOND_BRAIN_MANAGED_PROXY_TIMEOUT_MS ?? 180_000);
 const artifactPlanTimeoutMs = Number(process.env.SECOND_BRAIN_ARTIFACT_PLAN_TIMEOUT_MS ?? 30_000);
 const maxStoredMessagesPerThread = 80;
+const maxSearchKeywords = 4;
+const titleGenerationTimeoutMs = Number(process.env.SECOND_BRAIN_CHAT_TITLE_TIMEOUT_MS ?? 8_000);
 const artifactDirectoryName = "artifacts";
 const artifactToolNames: LocalToolName[] = [
   "create_markdown_artifact",
@@ -119,10 +121,62 @@ const artifactToolNames: LocalToolName[] = [
   "create_xlsx_artifact",
   "create_image_artifact"
 ];
+const groundedChatSystemPrompt = [
+  "You are Second Brain Chat.",
+  "Answer using the local Graphify context first.",
+  "If the context is insufficient, say what is missing.",
+  "You can create downloadable files through Second Brain local artifact tools after your answer.",
+  "When the user asks for a PDF, DOCX, XLSX, image, or Markdown file, do not refuse; answer briefly and include the essential requirements or source details needed for the artifact.",
+  "Second Brain will run a local artifact planning tool after generation to create the formatted downloadable file.",
+  "Do not say you cannot create or save files just because you are text-based.",
+  "Preserve source grounding from the provided Graphify output.",
+  "Use the Relevant source chunks section as the only quoted source text.",
+  "Do not claim access to files beyond the context packet."
+].join(" ");
 
 function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
+
+const conversationKeywordStopWords = new Set([
+  "about",
+  "after",
+  "again",
+  "also",
+  "answer",
+  "artifact",
+  "because",
+  "before",
+  "being",
+  "could",
+  "from",
+  "have",
+  "into",
+  "just",
+  "latest",
+  "make",
+  "more",
+  "need",
+  "please",
+  "question",
+  "response",
+  "should",
+  "that",
+  "their",
+  "there",
+  "these",
+  "thing",
+  "this",
+  "those",
+  "using",
+  "what",
+  "when",
+  "where",
+  "which",
+  "with",
+  "would",
+  "your"
+]);
 
 function titleFromMessage(value: string): string {
   return compact(value).slice(0, 80) || "New Chat";
@@ -142,6 +196,13 @@ function createFreshThread(title = "New Chat"): ChatThread {
 function isFreshUnusedThread(thread: ChatThread): boolean {
   return thread.messages.length === 0;
 }
+
+export const chatServiceTestUtils = {
+  buildConversationSearchScope,
+  extractConversationKeywords,
+  normalizeGeneratedChatTitle,
+  normalizeSearchQuery
+};
 
 function extractContentPart(value: unknown): string {
   if (typeof value === "string") {
@@ -194,7 +255,32 @@ function normalizeSearchQuery(value: string, fallback: string): string {
     .replace(/\s+/g, " ")
     .trim();
 
-  return cleaned || fallback;
+  const keywords = extractConversationKeywords(cleaned || fallback, maxSearchKeywords);
+  return keywords.length ? keywords.join(" ") : compact(fallback);
+}
+
+function extractConversationKeywords(value: string, limit = maxSearchKeywords): string[] {
+  const counts = new Map<string, { count: number; firstIndex: number }>();
+  const tokens = value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9_./-]+/i)
+    .flatMap((token) => token.split(/[./-]+/))
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && token.length <= 36 && !conversationKeywordStopWords.has(token));
+
+  tokens.forEach((token, index) => {
+    const current = counts.get(token);
+    counts.set(token, {
+      count: (current?.count ?? 0) + 1,
+      firstIndex: current?.firstIndex ?? index
+    });
+  });
+
+  return Array.from(counts.entries())
+    .sort((left, right) => right[1].count - left[1].count || left[1].firstIndex - right[1].firstIndex)
+    .map(([token]) => token)
+    .slice(0, limit);
 }
 
 function hasGeneratedFileArtifacts(artifacts: ChatArtifact[] | undefined): boolean {
@@ -205,17 +291,84 @@ function artifactChatConfirmation(artifacts: ChatArtifact[]): string {
   return artifacts.length === 1 ? "I generated the file." : `I generated ${artifacts.length} files.`;
 }
 
-function normalizeKeywordList(value: unknown): string[] {
+function formatMessageForScopedSearch(message: ChatMessage): string {
+  const parts = [`${message.role}: ${compact(message.content).slice(0, 900)}`];
+  const artifacts = message.artifacts
+    ?.map((artifact) => `${artifact.filename} ${artifact.mimeType}`)
+    .filter(Boolean)
+    .join("; ");
+  if (artifacts) {
+    parts.push(`artifacts: ${artifacts}`);
+  }
+
+  const trackers = message.semantic?.proposedTrackers
+    ?.map((tracker) => `${tracker.title} ${(tracker.contextKeywords ?? []).join(" ")}`)
+    .filter(Boolean)
+    .join("; ");
+  if (trackers) {
+    parts.push(`tracker drafts: ${trackers}`);
+  }
+
+  return parts.join("\n");
+}
+
+function recentThreadWithoutCurrentQuestion(thread: ChatThread, question: string): ChatMessage[] {
+  const history = thread.messages;
+  return history.length > 0 && history[history.length - 1]?.role === "user" && history[history.length - 1]?.content.trim() === question
+    ? history.slice(0, -1)
+    : history;
+}
+
+function buildConversationSearchScope(thread: ChatThread, question: string): string {
+  const recentHistory = recentThreadWithoutCurrentQuestion(thread, question);
+  return [
+    "Latest user question:",
+    question,
+    "",
+    "Recent running conversation:",
+    ...recentHistory.slice(-6).map(formatMessageForScopedSearch)
+  ]
+    .join("\n")
+    .slice(0, 5000);
+}
+
+function buildThreadTitleScope(thread: ChatThread, latestQuestion: string): string {
+  return [
+    "Latest user question:",
+    latestQuestion,
+    "",
+    "Current chat:",
+    ...thread.messages.slice(-8).map(formatMessageForScopedSearch)
+  ]
+    .join("\n")
+    .slice(0, 4500);
+}
+
+function normalizeGeneratedChatTitle(value: string, fallback: string): string {
+  const title = compact(value)
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/^(title|chat title):\s*/i, "")
+    .replace(/[.?!:;]+$/g, "")
+    .split(/\s+/)
+    .slice(0, 6)
+    .join(" ")
+    .slice(0, 80)
+    .trim();
+
+  return title || titleFromMessage(fallback);
+}
+
+function normalizeKeywordList(value: unknown, fallbackText = ""): string[] {
   return Array.isArray(value)
     ? Array.from(
         new Set(
           value
             .filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
-            .map((item) => compact(item).slice(0, 80))
+            .flatMap((item) => extractConversationKeywords(item, maxSearchKeywords))
             .filter(Boolean)
         )
-      ).slice(0, 8)
-    : [];
+      ).slice(0, maxSearchKeywords)
+    : extractConversationKeywords(fallbackText, maxSearchKeywords);
 }
 
 function normalizeDueDate(value: unknown): string | undefined {
@@ -269,14 +422,14 @@ function normalizeProposedTrackers(value: unknown): ProposedTrackerDraft[] {
     .slice(0, 4);
 }
 
-function normalizeSemanticRouting(value: unknown, fallbackQuestion: string): ChatSemanticRouting {
+function normalizeSemanticRouting(value: unknown, fallbackQuestion: string, fallbackScope = fallbackQuestion): ChatSemanticRouting {
   const record = asRecord(value);
   const intent = record?.intent === "ARTIFACT" || record?.intent === "TRACKER" || record?.intent === "RESEARCH"
     ? record.intent
     : requestedArtifactFor(fallbackQuestion)
       ? "ARTIFACT"
       : "RESEARCH";
-  const searchKeywords = normalizeKeywordList(record?.search_keywords ?? record?.searchKeywords);
+  const searchKeywords = normalizeKeywordList(record?.search_keywords ?? record?.searchKeywords, fallbackScope);
   const proposedTrackers = normalizeProposedTrackers(record?.proposed_trackers ?? record?.proposedTrackers);
   const fallbackDraft: ProposedTrackerDraft = {
     id: String(randomUUID()),
@@ -289,7 +442,7 @@ function normalizeSemanticRouting(value: unknown, fallbackQuestion: string): Cha
 
   return {
     intent,
-    searchKeywords: searchKeywords.length ? searchKeywords : normalizeSearchQuery(fallbackQuestion, fallbackQuestion).split(/\s+/).slice(0, 6),
+    searchKeywords,
     proposedTrackers: intent === "TRACKER" && proposedTrackers.length === 0 ? [fallbackDraft] : proposedTrackers
   };
 }
@@ -635,9 +788,7 @@ export class ChatService {
     thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
     thread.updatedAt = new Date().toISOString();
 
-    if (thread.title === "New Chat") {
-      thread.title = titleFromMessage(text);
-    }
+    await this.updateThreadTitleBestEffort(thread, text, settings);
 
     await this.writeState();
     return {
@@ -815,9 +966,7 @@ export class ChatService {
       thread.messages.push(assistant);
       thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
       thread.updatedAt = new Date().toISOString();
-      if (thread.title === "New Chat") {
-        thread.title = titleFromMessage(text);
-      }
+      await this.updateThreadTitleBestEffort(thread, text, settings);
       if (semantic.intent !== "TRACKER") {
         await this.saveGraphifyResultBestEffort(text, assistant.content, graphify, assistant.error);
       }
@@ -864,11 +1013,7 @@ export class ChatService {
     question: string,
     settings: AppSettings
   ): Promise<ChatSemanticRouting> {
-    const history = thread.messages;
-    const recentHistory =
-      history.length > 0 && history[history.length - 1]?.role === "user" && history[history.length - 1]?.content.trim() === question
-        ? history.slice(0, -1)
-        : history;
+    const searchScope = buildConversationSearchScope(thread, question);
     const messages: LlmChatMessage[] = [
       {
         role: "system",
@@ -880,15 +1025,13 @@ export class ChatService {
           "Use TRACKER only when the user is explicitly asking to remember, schedule, track, follow up, create a task, or set a deadline.",
           "Use ARTIFACT when the user asks to create/export a file such as PDF, DOCX, XLSX, image, diagram, markdown, resume, letter, or report.",
           "Use RESEARCH for normal questions and explanations.",
-          "Search keywords must be concise search query (3-6 keywords) to find relevant context for the user's latest message in a semantic graph.",
+          "Search keywords must be 3-4 precise terms for semantic graph retrieval.",
+          "Choose keywords only from the provided running conversation scope: the latest user question, recent assistant answers, proposed tracker context, and generated artifact names or types.",
+          "Do not use outside synonyms or unrelated graph-wide topics.",
           `Current local system time: ${new Date().toString()}. Resolve relative dates from this time.`
         ].join(" ")
       },
-      ...recentHistory.slice(-6).map<LlmChatMessage>((message) => ({
-        role: message.role === "assistant" ? "assistant" : "user",
-        content: message.content
-      })),
-      { role: "user", content: question }
+      { role: "user", content: searchScope }
     ];
 
     try {
@@ -897,7 +1040,7 @@ export class ChatService {
         const secret = proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
-          return normalizeSemanticRouting({}, question);
+          return normalizeSemanticRouting({}, question, searchScope);
         }
 
         const controller = new AbortController();
@@ -930,7 +1073,7 @@ export class ChatService {
           }
 
           const parsed = JSON.parse(responseText) as ProxyResponse;
-          return normalizeSemanticRouting(parseLocalModelJsonObject(extractProxyText(parsed) || responseText), question);
+          return normalizeSemanticRouting(parseLocalModelJsonObject(extractProxyText(parsed) || responseText), question, searchScope);
         } finally {
           clearTimeout(timeout);
         }
@@ -942,12 +1085,84 @@ export class ChatService {
           messages,
           method: { temperature: 0.1, maxTokens: 420, jsonMode: true }
         }),
-        question
+        question,
+        searchScope
       );
     } catch (error) {
       console.warn("Semantic router failed; falling back to research route.", error);
-      return normalizeSemanticRouting({}, question);
+      return normalizeSemanticRouting({}, question, searchScope);
     }
+  }
+
+  private async updateThreadTitleBestEffort(thread: ChatThread, latestQuestion: string, settings: AppSettings): Promise<void> {
+    const scope = buildThreadTitleScope(thread, latestQuestion);
+    const fallback = titleFromMessage(latestQuestion);
+    const messages: LlmChatMessage[] = [
+      {
+        role: "system",
+        content:
+          "You name Second Brain chats. Return only a concise 3-6 word title based on the chat topic, goal, plan, tracker items, or generated artifacts. No quotes, punctuation suffixes, markdown, or filler."
+      },
+      { role: "user", content: scope }
+    ];
+
+    try {
+      if (settings.aiMode === "proxy") {
+        const proxy = settings.managedProxy;
+        const secret = proxySecret(settings);
+        const model = proxyModel(settings);
+        if (!proxy.endpoint.trim() || !secret) {
+          thread.title = fallback;
+          return;
+        }
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), titleGenerationTimeoutMs);
+        const requestId = randomUUID();
+        try {
+          const response = await fetch(proxy.endpoint, {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${secret}`,
+              "Content-Type": "application/json",
+              "X-Second-Brain-Request-Id": requestId
+            },
+            body: JSON.stringify({
+              userIdOrKey: secret,
+              model,
+              requestId,
+              messages,
+              temperature: 0.1,
+              max_tokens: 24
+            }),
+            signal: controller.signal
+          });
+
+          const responseText = await response.text();
+          if (response.ok) {
+            const parsed = JSON.parse(responseText) as ProxyResponse;
+            thread.title = normalizeGeneratedChatTitle(extractProxyText(parsed) || responseText, latestQuestion);
+            return;
+          }
+
+          console.warn(`Chat title generation failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 500)}`);
+        } finally {
+          clearTimeout(timeout);
+        }
+      } else {
+        const llm = new LlmService(async () => settings.ai);
+        const text = await llm.completeText({
+          messages,
+          method: { temperature: 0.1, maxTokens: 24 }
+        });
+        thread.title = normalizeGeneratedChatTitle(text, latestQuestion);
+        return;
+      }
+    } catch (error) {
+      console.warn("Chat title generation failed; using local fallback.", error);
+    }
+
+    thread.title = fallback;
   }
 
   private attachGraphNodesToDrafts(
@@ -1005,22 +1220,14 @@ export class ChatService {
   }
 
   private async formulateSearchQuery(thread: ChatThread, question: string, settings: AppSettings): Promise<string> {
-    const history = thread.messages;
-    const recentHistory =
-      history.length > 0 && history[history.length - 1]?.role === "user" && history[history.length - 1]?.content.trim() === question
-        ? history.slice(0, -1)
-        : history;
+    const searchScope = buildConversationSearchScope(thread, question);
     const messages: LlmChatMessage[] = [
       {
         role: "system",
         content:
-          "You are a search optimizer. Generate a concise search query (3-6 keywords) to find relevant context for the user's latest message in a semantic graph. Consider the conversation history. Do NOT answer the question. Return ONLY the keywords separated by spaces, without quotes or conversational filler."
+          "You are a search optimizer. Generate only 3-4 precise keywords to find relevant context in a semantic graph. Use only terms from the provided running conversation scope: latest user question, recent assistant answers, generated artifact filenames/types, and tracker context. Do NOT answer. Return ONLY keywords separated by spaces, without quotes or filler."
       },
-      ...recentHistory.slice(-4).map<LlmChatMessage>((message) => ({
-        role: message.role === "assistant" ? "assistant" : "user",
-        content: message.content
-      })),
-      { role: "user", content: question }
+      { role: "user", content: searchScope }
     ];
 
     try {
@@ -1029,7 +1236,7 @@ export class ChatService {
         const secret = proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
-          return question;
+          return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
         }
 
         const controller = new AbortController();
@@ -1057,7 +1264,7 @@ export class ChatService {
           const responseText = await response.text();
           if (!response.ok) {
             console.warn(`Proxy search formulation failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 500)}`);
-            return question;
+            return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
           }
 
           const parsed = JSON.parse(responseText) as ProxyResponse;
@@ -1069,7 +1276,7 @@ export class ChatService {
           clearTimeout(timeout);
         }
 
-        return question;
+        return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
       }
 
       const llm = new LlmService(async () => settings.ai);
@@ -1080,7 +1287,7 @@ export class ChatService {
       return normalizeSearchQuery(text, question);
     } catch (error) {
       console.warn("Search formulation failed, using raw question.", error);
-      return question;
+      return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
     }
   }
 
@@ -1328,25 +1535,27 @@ export class ChatService {
     question: string,
     graphify: GraphifyContextResult
   ): LlmChatMessage[] {
+    const sourceChunkCitations =
+      graphify.sourceChunks
+        ?.filter((chunk) => chunk.text.trim())
+        .map((chunk) => {
+          const location = chunk.startLine ? ` L${chunk.startLine}-L${chunk.endLine ?? chunk.startLine}` : "";
+          return `${chunk.displayName || chunk.sourceFile}${location}`;
+        })
+        .slice(0, 8) ?? [];
+    const fallbackCitations = graphify.citations
+      .map((citation) => citation.label ?? citation.sourceLocation ?? citation.sourceFile)
+      .slice(0, 8);
+    const citationLabels = sourceChunkCitations.length > 0 ? sourceChunkCitations : fallbackCitations;
+
     return [
       {
         role: "system",
-        content: [
-          "You are Second Brain Chat.",
-          "Answer using the local Graphify context first.",
-          "If the context is insufficient, say what is missing.",
-          "You can create downloadable files through Second Brain local artifact tools after your answer.",
-          "When the user asks for a PDF, DOCX, XLSX, image, or Markdown file, do not refuse; answer briefly and include the essential requirements or source details needed for the artifact.",
-          "Second Brain will run a local artifact planning tool after generation to create the formatted downloadable file.",
-          "Do not say you cannot create or save files just because you are text-based.",
-          "Preserve source grounding from the provided Graphify output.",
-          "Use the Relevant local excerpts section as the only quoted source text.",
-          "Do not claim access to files beyond the context packet."
-        ].join(" ")
+        content: groundedChatSystemPrompt
       },
       ...thread.messages.slice(-8).map<LlmChatMessage>((message) => ({
         role: message.role === "assistant" ? "assistant" : "user",
-        content: message.content
+        content: formatMessageForScopedSearch(message)
       })),
       {
         role: "user",
@@ -1358,11 +1567,7 @@ export class ChatService {
           "",
           `Graphify command: ${graphify.command}`,
           `Context budget: ${graphify.budget}`,
-          graphify.citations.length
-            ? `Citations: ${graphify.citations
-                .map((citation) => citation.label ?? citation.sourceLocation ?? citation.sourceFile)
-                .join(", ")}`
-            : ""
+          citationLabels.length ? `Citations: ${citationLabels.join(", ")}` : ""
         ].join("\n")
       }
     ];
