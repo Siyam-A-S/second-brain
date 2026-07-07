@@ -80,8 +80,8 @@
     "semantic_hash": "c50f531e8fb1eff4f6b96c9bff4f76ef"
   },
   "src/renderer/lib/browserApiFallback.ts": {
-    "mtime": 1783319421.535722,
-    "ast_hash": "9bd2f7c9ac6c3f6d468921ec2ec00a28",
+    "mtime": 1783385136.0986884,
+    "ast_hash": "291e913441a7d25ef6c2c39945774cdd",
     "semantic_hash": ""
   },
   "src/renderer/lib/dropPayload.ts": {
@@ -220,8 +220,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1783041175.2422132,
-    "ast_hash": "a72e492f647ed4cd723ea0ce2841b8e9",
+    "mtime": 1783385128.788777,
+    "ast_hash": "bdc6288abc41231e8d4880db6bfcc73c",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/main/services/AiSettingsService.ts": {
-    "mtime": 1783136100.1248357,
-    "ast_hash": "c37002e4986d32dea63b9da737b70447",
+    "mtime": 1783385167.539319,
+    "ast_hash": "7e9e2dd3132b9b858922f8ee9ce296dc",
     "semantic_hash": ""
   },
   "src/main/services/TrackerService.ts": {
@@ -275,13 +275,13 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1783136052.814612,
-    "ast_hash": "5dc5fc44b789423a8d303c2168155a12",
+    "mtime": 1783385173.0932555,
+    "ast_hash": "c184e4a635be3b7a67c4d312fa7613a7",
     "semantic_hash": ""
   },
   "src/renderer/components/SettingsPanel.tsx": {
-    "mtime": 1783319444.1457691,
-    "ast_hash": "8545a8b26d136b7ae01b38c3f3e99db8",
+    "mtime": 1783385142.214615,
+    "ast_hash": "df03c4190a776c293a212b2406019207",
     "semantic_hash": ""
   },
   "src/main/services/GraphBoardService.ts": {

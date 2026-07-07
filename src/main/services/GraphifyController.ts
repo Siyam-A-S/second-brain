@@ -393,6 +393,74 @@ function researchDependencyStatusScript(): string {
   ].join("\n");
 }
 
+function pdfPaperComponentScript(): string {
+  return String.raw`
+import json
+import sys
+from pathlib import Path
+
+try:
+    from pypdf import PdfReader
+except Exception as exc:
+    raise SystemExit(f"pypdf is required for PDF sidecar extraction: {exc}")
+
+if len(sys.argv) < 4:
+    raise SystemExit("Usage: python -c <script> <pdf-path> <output-dir> <source-file>")
+
+pdf_path = Path(sys.argv[1])
+output_dir = Path(sys.argv[2])
+source_file = sys.argv[3].replace("\\", "/")
+sections_dir = output_dir / "sections"
+sections_dir.mkdir(parents=True, exist_ok=True)
+
+reader = PdfReader(str(pdf_path))
+parts = []
+for index, page in enumerate(reader.pages, start=1):
+    try:
+        text = page.extract_text() or ""
+    except Exception:
+        text = ""
+    text = "\n".join(line.rstrip() for line in text.splitlines()).strip()
+    if text:
+        parts.append(f"## Page {index}\n\n{text}")
+
+title = pdf_path.stem
+body = "\n\n".join(parts).strip()
+markdown_path = sections_dir / "full-text.md"
+markdown = "\n".join([
+    f"# {title}",
+    "",
+    f"Source file: {source_file}",
+    "",
+    body or "_No extractable text was found in this PDF._",
+    ""
+])
+markdown_path.write_text(markdown, encoding="utf-8")
+
+artifact_path = markdown_path.relative_to(output_dir.parent.parent).as_posix()
+index_path = output_dir / "artifact-index.json"
+index_path.write_text(json.dumps([
+    {
+        "artifactId": f"pdf-text:{source_file}",
+        "artifactKind": "section",
+        "title": f"{title} full text",
+        "sourceFile": source_file,
+        "artifactPath": artifact_path,
+        "page": 1,
+        "preview": (body[:360] if body else "No extractable text was found in this PDF."),
+        "llmFormat": "markdown"
+    }
+], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+print(json.dumps({
+    "sourceFile": source_file,
+    "artifactPath": artifact_path,
+    "pages": len(reader.pages),
+    "chars": len(body)
+}, ensure_ascii=False))
+`;
+}
+
 function linkEndpointId(value: unknown): string {
   if (typeof value === "string" || typeof value === "number") {
     return String(value);
@@ -436,6 +504,7 @@ export class GraphifyController {
   private readonly llm: LlmService;
   private cardDefinitionUpdate: Promise<void> | null = null;
   private cardDefinitionQueued = false;
+  private pendingPaperComponentMessage = "";
   private activeGraphifyProxyBaseUrl: string | null = null;
   private definitionStatus: GraphDefinitionStatus = {
     running: false,
@@ -863,6 +932,10 @@ export class GraphifyController {
   async ingestDroppedItems(items: ProcessDroppedItem[]): Promise<GraphifyIngestionResult> {
     await this.initialize();
     const writtenFiles = await this.writeRawItems(items);
+    const paperComponentMessage = await this.ensurePdfPaperComponents(writtenFiles);
+    if (paperComponentMessage) {
+      this.pendingPaperComponentMessage = paperComponentMessage;
+    }
 
     if (writtenFiles.length === 0) {
       if (await this.fileExists(this.graphPath)) {
@@ -956,6 +1029,61 @@ export class GraphifyController {
     return written;
   }
 
+  private async ensurePdfPaperComponents(sourcePaths: string[]): Promise<string> {
+    if (process.env.SECOND_BRAIN_PAPER_COMPONENTS === "0") {
+      return "";
+    }
+
+    const pdfPaths = sourcePaths.filter((sourcePath) => path.extname(sourcePath).toLowerCase() === ".pdf");
+    if (pdfPaths.length === 0) {
+      return "";
+    }
+
+    const messages: string[] = [];
+    for (const sourcePath of pdfPaths) {
+      const relativeSource = path.relative(this.rawVaultPath, sourcePath).split(path.sep).join(path.posix.sep);
+      const componentRoot = path.join(this.rawVaultPath, paperComponentDirectoryName, paperComponentDirectoryNameForSource(relativeSource));
+      const indexPath = path.join(componentRoot, "artifact-index.json");
+
+      if (await this.isGeneratedOutputFresh(sourcePath, indexPath)) {
+        continue;
+      }
+
+      const invocations = await this.getGraphifyPythonInvocations([
+        "-c",
+        pdfPaperComponentScript(),
+        sourcePath,
+        componentRoot,
+        relativeSource
+      ]);
+      const failures: string[] = [];
+      let created = false;
+
+      for (const invocation of invocations) {
+        try {
+          const stdout = await this.runGraphifyUtilityInvocation(invocation);
+          messages.push(stdout || `Created PDF text sidecar for ${relativeSource}.`);
+          created = true;
+          break;
+        } catch (error) {
+          failures.push(`${invocation.label}: ${errorMessage(error)}`);
+        }
+      }
+
+      if (!created) {
+        messages.push(
+          [
+            `Skipped PDF text sidecar for ${relativeSource}.`,
+            "Chat can still use Graphify PDF graph nodes, but exact source chunks require pypdf-readable sidecars.",
+            ...failures.slice(0, 3).map((failure) => `- ${failure}`)
+          ].join("\n")
+        );
+      }
+    }
+
+    return messages.join("\n");
+  }
+
   private async isGeneratedOutputFresh(sourcePath: string, outputPath: string): Promise<boolean> {
     try {
       const [sourceStat, outputStat] = await Promise.all([stat(sourcePath), stat(outputPath)]);
@@ -1038,7 +1166,10 @@ export class GraphifyController {
 
       const htmlStdout = await this.ensureGraphHtml(primarySettings, aiSettings);
       const wikiStdout = await this.refreshWikiExport(primarySettings, aiSettings);
+      const paperComponentStdout = this.pendingPaperComponentMessage;
+      this.pendingPaperComponentMessage = "";
       const combinedStdout = [
+        paperComponentStdout ? `PDF source sidecars:\n${paperComponentStdout}` : "",
         stdout,
         process.env.SECOND_BRAIN_CARD_DEFINITIONS === "0" ? "" : "Graphify card definitions scheduled in background.",
         htmlStdout ? `Graphify HTML export:\n${htmlStdout}` : "",

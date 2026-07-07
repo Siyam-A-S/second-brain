@@ -105,7 +105,7 @@
     "semantic_hash": ""
   },
   "src/shared/brain.ts": {
-    "mtime": 1783383694.6397243,
+    "mtime": 1783386717.3810244,
     "ast_hash": "731b6306392dd13852c2e40fd41bfb69",
     "semantic_hash": ""
   },
@@ -220,8 +220,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1783385128.788777,
-    "ast_hash": "bdc6288abc41231e8d4880db6bfcc73c",
+    "mtime": 1783386865.0875335,
+    "ast_hash": "33033d1b3bfde9a654526f63faf31597",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -380,8 +380,8 @@
     "semantic_hash": ""
   },
   "dev/plans.md": {
-    "mtime": 1782633436.4578526,
-    "ast_hash": "8a99de11fb42719b29096a2feb588346",
+    "mtime": 1783386624.3859823,
+    "ast_hash": "ffd00cdf284a9c354214ca04cca22294",
     "semantic_hash": ""
   },
   "MAC_TESTING_GUIDE.md": {
