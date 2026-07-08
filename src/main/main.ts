@@ -2,6 +2,7 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, screen, shell } f
 import path from "node:path";
 import {
   appChannels,
+  accountChannels,
   boardChannels,
   brainChannels,
   chatChannels,
@@ -20,6 +21,7 @@ import {
 } from "../shared/ipc";
 import type {
   AppBuildInfo,
+  AccountSignInInput,
   ChatStreamEvent,
   ClipboardIngestibleItemsResult,
   CreateProjectInput,
@@ -44,6 +46,7 @@ import type {
 import type { BoardRule, BoardSearchInput } from "../shared/types/board";
 import type { ExplorerSearchInput } from "../shared/types/explorer";
 import { AgentController } from "./services/AgentController";
+import { AccountAuthService } from "./services/AccountAuthService";
 import { AiSettingsService } from "./services/AiSettingsService";
 import { ArtifactToolService } from "./services/ArtifactToolService";
 import { loadBuildInfo } from "./services/BuildInfoService";
@@ -72,6 +75,7 @@ let graphifyController: GraphifyController | null = null;
 let notificationService: NotificationService | null = null;
 let buildInfo: AppBuildInfo | null = null;
 let logService: LogService | null = null;
+let accountAuth: AccountAuthService | null = null;
 
 type ProjectRuntime = {
   storage: StorageService;
@@ -353,10 +357,11 @@ function requireRuntime(): ProjectRuntime {
 async function createProjectRuntime(
   project: Awaited<ReturnType<ProjectService["getActiveProject"]>>,
   aiSettings: AiSettingsService,
-  embeddings: EmbeddingService
+  embeddings: EmbeddingService,
+  accessTokenProvider: () => Promise<string | null>
 ): Promise<ProjectRuntime> {
   const storage = new StorageService(project.vaultPath);
-  const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getEffectiveSettings());
+  const graphify = new GraphifyController(project.rawVaultPath, () => aiSettings.getEffectiveSettings(), accessTokenProvider);
   const research = new ResearchService(project.rootPath, graphify.getGraphPath());
   const graphifyBoard = new GraphifyBoardService(graphify.getGraphPath(), graphify.getRawVaultPath());
   const graphBoard = new GraphBoardService(graphify.getGraphPath(), research);
@@ -374,8 +379,12 @@ async function createProjectRuntime(
     artifactTools,
     port: Number(process.env.SECOND_BRAIN_MCP_PORT ?? 4127)
   });
-  const chat = new ChatService(project.rootPath, nextMcpServer, () => aiSettings.getAppSettings(), (items) =>
-    graphify.ingestDroppedItems(items)
+  const chat = new ChatService(
+    project.rootPath,
+    nextMcpServer,
+    () => aiSettings.getAppSettings(),
+    (items) => graphify.ingestDroppedItems(items),
+    accessTokenProvider
   );
 
   await aiSettings.initialize();
@@ -412,7 +421,8 @@ async function createProjectRuntime(
 async function switchProjectRuntime(
   project: Awaited<ReturnType<ProjectService["getActiveProject"]>>,
   aiSettings: AiSettingsService,
-  embeddings: EmbeddingService
+  embeddings: EmbeddingService,
+  accessTokenProvider: () => Promise<string | null>
 ): Promise<ProjectRuntime> {
   const previous = projectRuntime;
   if (previous) {
@@ -422,7 +432,7 @@ async function switchProjectRuntime(
     await previous.mcpServer.stop();
   }
 
-  projectRuntime = await createProjectRuntime(project, aiSettings, embeddings);
+  projectRuntime = await createProjectRuntime(project, aiSettings, embeddings, accessTokenProvider);
   graphifyController = projectRuntime.graphify;
   mcpServer = projectRuntime.mcpServer;
   return projectRuntime;
@@ -434,7 +444,9 @@ function registerIpc(
   aiSettings: AiSettingsService,
   runtimeDependencies: DependencyRuntimeService,
   currentBuildInfo: AppBuildInfo,
-  logs: LogService
+  logs: LogService,
+  accounts: AccountAuthService,
+  accessTokenProvider: () => Promise<string | null>
 ): void {
   const handle = (
     channel: string,
@@ -547,18 +559,18 @@ function registerIpc(
   handle(projectChannels.getStorageUsage, () => projects.getStorageUsage());
   handle(projectChannels.create, async (_event, input: CreateProjectInput) => {
     const project = await projects.createProject(input);
-    await switchProjectRuntime(project, aiSettings, embeddings);
+    await switchProjectRuntime(project, aiSettings, embeddings, accessTokenProvider);
     return projects.getActiveProject();
   });
   handle(projectChannels.select, async (_event, input: ProjectSelectionInput) => {
     const project = await projects.selectProject(input);
-    await switchProjectRuntime(project, aiSettings, embeddings);
+    await switchProjectRuntime(project, aiSettings, embeddings, accessTokenProvider);
     return projects.getActiveProject();
   });
   handle(projectChannels.rename, (_event, input: RenameProjectInput) => projects.renameProject(input));
   handle(projectChannels.archive, async (_event, input: ProjectSelectionInput) => {
     const archived = await projects.archiveProject(input);
-    await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
+    await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings, accessTokenProvider);
     return archived;
   });
   handle(graphBoardChannels.getState, () => requireRuntime().graphBoard.getState());
@@ -626,6 +638,10 @@ function registerIpc(
     aiSettings.updateManagedProxy(input)
   );
   handle(settingsChannels.refreshAccount, () => aiSettings.refreshAccount());
+  handle(accountChannels.getState, () => accounts.getState());
+  handle(accountChannels.signIn, (_event, input: AccountSignInInput) => accounts.signIn(input));
+  handle(accountChannels.signOut, () => accounts.signOut());
+  handle(accountChannels.refresh, () => accounts.refresh());
   handle(chatChannels.listThreads, () => requireRuntime().chat.listThreads());
   handle(chatChannels.createThread, (_event, input?: { title?: string | undefined }) =>
     requireRuntime().chat.createThread(input)
@@ -680,8 +696,10 @@ app.whenReady().then(async () => {
 
   const userDataPath = app.getPath("userData");
   buildInfo = await loadBuildInfo(app.getVersion());
-  const aiSettings = new AiSettingsService(userDataPath);
-  logService = new LogService(userDataPath, buildInfo, () => aiSettings.getAppSettings());
+  accountAuth = new AccountAuthService(userDataPath, buildInfo);
+  const aiSettings = new AiSettingsService(userDataPath, buildInfo.channel);
+  const accessTokenProvider = () => accountAuth?.getAccessToken() ?? Promise.resolve(null);
+  logService = new LogService(userDataPath, buildInfo, () => aiSettings.getAppSettings(), accessTokenProvider);
   await logService.flushPending();
   process.on("uncaughtException", (error) => {
     void logService?.error("process:uncaughtException", error).catch(() => undefined);
@@ -695,9 +713,9 @@ app.whenReady().then(async () => {
 
   await aiSettings.initialize();
   await projects.initialize();
-  await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings);
+  await switchProjectRuntime(await projects.getActiveProject(), aiSettings, embeddings, accessTokenProvider);
 
-  registerIpc(projects, embeddings, aiSettings, runtimeDependencies, buildInfo, logService);
+  registerIpc(projects, embeddings, aiSettings, runtimeDependencies, buildInfo, logService, accountAuth, accessTokenProvider);
   const agentController = new AgentController(() => requireRuntime().graphify);
   agentController.registerIpc();
   mainWindow = createMainWindow();

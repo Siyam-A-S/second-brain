@@ -28,6 +28,10 @@ Packaged builds expose typed metadata to the renderer through `window.api.app.ge
 - `buildId`
 - `gitCommit`
 - `target`
+- `websiteUrl`
+- `proxyUrl`
+- `supabaseUrl`
+- `supabaseAnonKey`
 
 Portable builds also write `BUILD_INFO.txt` with the same channel signal.
 
@@ -61,37 +65,39 @@ It uploads:
 
 - `Second-Brain-Setup-<version>-prod.exe`
 - `Second-Brain-<version>-prod-mac-arm64.dmg`
-- `install-second-brain-runtime.command`
+
+Production builds require these CI secrets:
+
+- `SECOND_BRAIN_SUPABASE_URL`
+- `SECOND_BRAIN_SUPABASE_ANON_KEY`
+
+The packaging script fails before Electron Builder runs if the compiled build metadata is not production or if the Supabase configuration is missing.
 
 ## Runtime Dependencies
 
-Windows production uses the NSIS installer hook in `build/installer.nsh`. It runs:
+Production packages include a bundled minimal Python runtime under Electron `resources/runtime/<platform>-<arch>/`.
 
-```text
-scripts/production-runtime/install-second-brain-runtime.ps1
-```
+The CI runtime preparation step installs only the default production dependencies:
 
-The script checks or installs Python, uv, Graphify with file support, and `fpdf2`.
+- `graphifyy[pdf,office,openai,mcp]`
+- `fpdf2`
+- `pypdf`
 
-macOS production publishes this companion script:
+Video/transcription dependencies are intentionally excluded from the default bundle to keep installer size manageable. The runtime preparation script prunes caches, tests, docs, `__pycache__`, `idlelib`, `tkinter`, `ensurepip`, headers, and static libraries where safe.
 
-```text
-scripts/production-runtime/install-second-brain-runtime.command
-```
-
-Users should run it once if the app reports missing runtime support. The app still verifies dependencies at first run and can repair them if the installer or script was skipped.
+The app still verifies dependencies at first run and prefers the bundled runtime before checking system Python, uv, or PATH Graphify.
 
 ## Managed Account Access
 
-Production Settings are account-first. Customers enter their email and access key from:
+Production Settings are account-first. Customers sign in with the same Supabase email/password account used on:
 
 ```text
 https://www.downloadsecondbrain.com
 ```
 
-The desktop app uses the access key for managed proxy AI and production diagnostics. Model names, endpoints, local Graphify token controls, and grounding debug views are hidden from production UI.
+The desktop app stores Supabase session tokens in Electron secure storage and never exposes access or refresh tokens to the renderer. Model names, endpoints, local Graphify token controls, and grounding debug views are hidden from production UI.
 
-Planned account endpoints:
+Desktop account endpoints:
 
 - `GET https://www.downloadsecondbrain.com/api/desktop/account`
 - `POST https://www.downloadsecondbrain.com/api/desktop/logs`
@@ -99,8 +105,10 @@ Planned account endpoints:
 Both use:
 
 ```text
-Authorization: Bearer <account access key>
+Authorization: Bearer <supabase_access_token>
 ```
+
+The managed AI proxy must accept the same Supabase bearer token, validate it server-side, enforce plan/usage, and forward approved requests to Vertex. Graphify proxy mode receives that token as `OPENAI_API_KEY` and uses `OPENAI_BASE_URL=https://graphify-proxy-724616525781.us-central1.run.app/v1`.
 
 ## Error And Log Policy
 

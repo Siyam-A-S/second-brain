@@ -2,6 +2,8 @@ import type {
   BoardRule,
   AppSettings,
   AppBuildInfo,
+  AccountAuthState,
+  AccountSignInInput,
   ChatStreamEvent,
   ChatThread,
   CreateTrackerInput,
@@ -39,7 +41,11 @@ const browserBuildInfo: AppBuildInfo = {
   version: "browser-preview",
   buildId: "browser-preview",
   gitCommit: "browser-preview",
-  target: "browser"
+  target: "browser",
+  websiteUrl: "https://www.downloadsecondbrain.com",
+  proxyUrl: "https://graphify-proxy-724616525781.us-central1.run.app",
+  supabaseUrl: browserEnv.VITE_SECOND_BRAIN_SUPABASE_URL ?? "",
+  supabaseAnonKey: browserEnv.VITE_SECOND_BRAIN_SUPABASE_ANON_KEY ?? ""
 };
 const browserProxyOrigin = "https://graphify-proxy-724616525781.us-central1.run.app";
 const browserProxyChatEndpoint = `${browserProxyOrigin}/chat`;
@@ -174,6 +180,32 @@ function unusedFreshThread(): ChatThread | undefined {
 }
 
 const browserThreads: ChatThread[] = [createBrowserPreviewThread()];
+
+function browserAccountState(): AccountAuthState {
+  const signedIn = Boolean(browserAppSettings.account.email);
+  return {
+    signedIn,
+    email: browserAppSettings.account.email,
+    userId: signedIn ? "browser-preview-user" : "",
+    status: signedIn ? "active" : "unknown",
+    planName: signedIn ? "Preview Pro" : "Second Brain",
+    trialEndsAt: browserAppSettings.account.trialEndsAt,
+    subscriptionRenewsAt: browserAppSettings.account.subscriptionRenewsAt,
+    usage: signedIn
+      ? {
+          label: "AI usage",
+          used: 128,
+          limit: 1000,
+          updatedAt: new Date().toISOString()
+        }
+      : null,
+    websiteUrl: "https://www.downloadsecondbrain.com",
+    accountUrl: browserAccountUrl,
+    checkoutUrl: browserCheckoutUrl,
+    lastVerifiedAt: browserAppSettings.account.lastVerifiedAt,
+    updatedAt: new Date().toISOString()
+  };
+}
 
 function browserExplorerNode(nodeId: string): ExplorerNode | undefined {
   return browserExplorerTree.find((node) => node.id === nodeId);
@@ -871,6 +903,40 @@ const browserApiFallback: SecondBrainApi = {
       };
       return browserAppSettings;
     }
+  },
+  account: {
+    getState: async () => browserAccountState(),
+    signIn: async (input: AccountSignInInput) => {
+      browserAppSettings = {
+        ...browserAppSettings,
+        account: {
+          ...browserAppSettings.account,
+          email: input.email,
+          status: "active",
+          planName: "Preview Pro",
+          lastVerifiedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      };
+      return browserAccountState();
+    },
+    signOut: async () => {
+      browserAppSettings = {
+        ...browserAppSettings,
+        account: {
+          ...browserAppSettings.account,
+          email: "",
+          secretKey: "",
+          status: "unknown",
+          planName: "Second Brain",
+          usage: null,
+          lastVerifiedAt: "",
+          updatedAt: new Date().toISOString()
+        }
+      };
+      return browserAccountState();
+    },
+    refresh: async () => browserAccountState()
   },
   chat: {
     listThreads: async () => {

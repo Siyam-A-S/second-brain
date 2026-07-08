@@ -4,6 +4,7 @@ import { stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { DependencyRuntimeStatus, RuntimeDependencyCheck } from "../../shared/brain";
+import { runtimeGraphifyCommands, runtimePythonCommands } from "./RuntimeCommandPaths";
 
 const graphifyToolPackage = "graphifyy[all]";
 const timeoutMs = 180_000;
@@ -87,20 +88,21 @@ function macBinaryCandidates(binaryName: string): string[] {
 }
 
 function pythonCandidates(): Array<{ command: string; args: string[] }> {
+  const bundled = runtimePythonCommands().map((command) => ({ command, args: ["--version"] }));
   if (isWindows) {
-    return windowsPythonCandidates();
+    return [...bundled, ...windowsPythonCandidates()];
   }
 
   if (isMac) {
-    return macBinaryCandidates("python3")
+    return bundled.concat(macBinaryCandidates("python3")
       .map((command) => ({ command, args: ["--version"] }))
-      .concat([{ command: "python", args: ["--version"] }]);
+      .concat([{ command: "python", args: ["--version"] }]));
   }
 
-  return [
+  return bundled.concat([
     { command: "python3", args: ["--version"] },
     { command: "python", args: ["--version"] }
-  ];
+  ]);
 }
 
 function uvCandidates(): Array<{ command: string; args: string[] }> {
@@ -120,18 +122,18 @@ function uvCandidates(): Array<{ command: string; args: string[] }> {
 
 function graphifyPathCandidates(): string[] {
   if (isWindows) {
-    return [
+    return runtimeGraphifyCommands().concat([
       windowsUserBin("graphify.exe"),
       windowsUserBin("graphify.cmd"),
       "graphify"
-    ];
+    ]);
   }
 
   if (isMac) {
-    return macBinaryCandidates("graphify");
+    return runtimeGraphifyCommands().concat(macBinaryCandidates("graphify"));
   }
 
-  return [path.join(os.homedir(), ".local", "bin", "graphify"), "graphify"];
+  return runtimeGraphifyCommands().concat([path.join(os.homedir(), ".local", "bin", "graphify"), "graphify"]);
 }
 
 function parsePythonVersion(value: string): { version: string; ok: boolean } {

@@ -3,7 +3,7 @@ import type { AppBuildInfo } from "../../shared/ipc";
 export const productionErrorMessage = "Something went wrong. Try again.";
 
 export function isProductionBuild(buildInfo: AppBuildInfo | null | undefined): boolean {
-  return buildInfo?.channel === "production";
+  return buildInfo?.channel !== "development";
 }
 
 export function presentError(error: unknown, fallback: string, buildInfo: AppBuildInfo | null | undefined): string {

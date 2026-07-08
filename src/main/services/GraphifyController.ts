@@ -77,6 +77,7 @@ type GraphifyLocalModelSettings = {
   maxTokens: number;
 };
 type AiSettingsProvider = () => Promise<AiSettings>;
+type AccessTokenProvider = () => Promise<string | null>;
 type GraphifyInvocation = {
   label: string;
   command: string;
@@ -527,7 +528,8 @@ export class GraphifyController {
         "second-brain-local",
       model: process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL ?? defaultLocalModelName,
       updatedAt: new Date().toISOString()
-    })
+    }),
+    private readonly accessTokenProvider?: AccessTokenProvider
   ) {
     this.graphOutPath = path.join(rawVaultPath, "graphify-out");
     this.graphPath = path.join(this.graphOutPath, "graph.json");
@@ -1715,7 +1717,7 @@ export class GraphifyController {
     }
   }
 
-  private runGraphifyCommand(
+  private async runGraphifyCommand(
     command: string,
     settings: GraphifyLocalModelSettings,
     failureLabel: string,
@@ -1730,7 +1732,7 @@ export class GraphifyController {
       cwd: this.rawVaultPath,
       timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS ?? updateTimeoutMs),
       maxBuffer: maxExecBuffer,
-      env: this.buildGraphifyEnvironment(settings, aiSettings),
+      env: await this.buildGraphifyEnvironment(settings, aiSettings),
       windowsHide: true
     };
 
@@ -1828,15 +1830,15 @@ export class GraphifyController {
       const rawBody = await this.readHttpRequestBody(request);
       const payload = JSON.parse(rawBody) as Record<string, unknown>;
       const requestId = randomUUID();
+      const bearerToken = (await this.accessTokenProvider?.()) || aiSettings.apiKey;
       const proxyResponse = await fetch(productionProxyChatEndpoint, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${aiSettings.apiKey}`,
+          "Authorization": `Bearer ${bearerToken}`,
           "Content-Type": "application/json",
           "X-Second-Brain-Request-Id": requestId
         },
         body: JSON.stringify({
-          userIdOrKey: aiSettings.apiKey,
           model: typeof payload.model === "string" ? payload.model : aiSettings.model,
           groundingEnabled: false,
           requestId,
@@ -2157,7 +2159,7 @@ export class GraphifyController {
     return null;
   }
 
-  private runGraphifyInvocation(
+  private async runGraphifyInvocation(
     invocation: GraphifyInvocation,
     settings: GraphifyLocalModelSettings,
     aiSettings: AiSettings
@@ -2166,7 +2168,7 @@ export class GraphifyController {
       cwd: this.rawVaultPath,
       timeout: Number(process.env.SECOND_BRAIN_GRAPHIFY_TIMEOUT_MS ?? updateTimeoutMs),
       maxBuffer: maxExecBuffer,
-      env: this.buildGraphifyEnvironment(settings, aiSettings),
+      env: await this.buildGraphifyEnvironment(settings, aiSettings),
       windowsHide: true,
       shell: invocation.shell
     };
@@ -2259,13 +2261,15 @@ export class GraphifyController {
     await writeFile(providerPath, `${JSON.stringify(providerConfig, null, 2)}\n`, "utf8");
   }
 
-  private buildGraphifyEnvironment(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): NodeJS.ProcessEnv {
+  private async buildGraphifyEnvironment(settings: GraphifyLocalModelSettings, aiSettings: AiSettings): Promise<NodeJS.ProcessEnv> {
     const endpoint = this.getGraphifyLlmEndpoint(aiSettings);
     const baseUrl = this.getGraphifyOpenAiBaseUrl(aiSettings, endpoint);
     const model = this.getGraphifyLlmModel(aiSettings);
+    const sessionToken = isProxyAiSettings(aiSettings) ? await this.accessTokenProvider?.() : null;
     const apiKey =
       process.env.SECOND_BRAIN_GRAPHIFY_LLM_API_KEY ??
       process.env.OPENAI_API_KEY ??
+      sessionToken ??
       aiSettings.apiKey ??
       "second-brain-local";
     const graphifyModel = process.env.SECOND_BRAIN_GRAPHIFY_LLM_MODEL ?? process.env.OPENAI_MODEL ?? model;

@@ -12,11 +12,10 @@ files:
   - package.json
 
 extraResources:
-  - from: scripts/production-runtime
-    to: installer
+  - from: resources/production-runtime
+    to: runtime
     filter:
-      - install-second-brain-runtime.ps1
-      - install-second-brain-runtime.command
+      - "**/*"
 
 asar: true
 

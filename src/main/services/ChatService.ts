@@ -24,6 +24,7 @@ import { LocalMcpServer } from "./LocalMcpServer";
 import type { LocalToolName, LocalToolSpec } from "./LocalToolRegistry";
 
 type AppSettingsProvider = () => Promise<AppSettings>;
+type AccessTokenProvider = () => Promise<string | null>;
 type ArtifactIngestor = (items: ProcessDroppedItem[]) => Promise<GraphifyIngestionResult>;
 
 type ChatState = {
@@ -69,10 +70,6 @@ type ProxyAttachment = {
   content?: string | undefined;
   url?: string | undefined;
 };
-
-function proxySecret(settings: AppSettings): string {
-  return process.env.OPENAI_API_KEY?.trim() || settings.managedProxy.secretKey.trim();
-}
 
 function proxyModel(settings: AppSettings): string {
   return process.env.OPENAI_MODEL?.trim() || settings.managedProxy.model.trim();
@@ -631,7 +628,8 @@ export class ChatService {
     projectRootPath: string,
     private readonly mcpServer: LocalMcpServer,
     private readonly settingsProvider: AppSettingsProvider,
-    private readonly artifactIngestor?: ArtifactIngestor
+    private readonly artifactIngestor?: ArtifactIngestor,
+    private readonly accessTokenProvider?: AccessTokenProvider
   ) {
     this.chatPath = path.join(projectRootPath, "chat", "threads.json");
     this.artifactRootPath = path.join(projectRootPath, "chat", artifactDirectoryName);
@@ -1037,7 +1035,7 @@ export class ChatService {
     try {
       if (settings.aiMode === "proxy") {
         const proxy = settings.managedProxy;
-        const secret = proxySecret(settings);
+        const secret = await this.proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
           return normalizeSemanticRouting({}, question, searchScope);
@@ -1055,7 +1053,6 @@ export class ChatService {
               "X-Second-Brain-Request-Id": requestId
             },
             body: JSON.stringify({
-              userIdOrKey: secret,
               model,
               requestId,
               messages,
@@ -1109,7 +1106,7 @@ export class ChatService {
     try {
       if (settings.aiMode === "proxy") {
         const proxy = settings.managedProxy;
-        const secret = proxySecret(settings);
+        const secret = await this.proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
           thread.title = fallback;
@@ -1128,7 +1125,6 @@ export class ChatService {
               "X-Second-Brain-Request-Id": requestId
             },
             body: JSON.stringify({
-              userIdOrKey: secret,
               model,
               requestId,
               messages,
@@ -1233,7 +1229,7 @@ export class ChatService {
     try {
       if (settings.aiMode === "proxy") {
         const proxy = settings.managedProxy;
-        const secret = proxySecret(settings);
+        const secret = await this.proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
           return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
@@ -1251,7 +1247,6 @@ export class ChatService {
               "X-Second-Brain-Request-Id": requestId
             },
             body: JSON.stringify({
-              userIdOrKey: secret,
               model,
               requestId,
               messages,
@@ -1397,7 +1392,7 @@ export class ChatService {
     semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const proxy = settings.managedProxy;
-    const secret = proxySecret(settings);
+    const secret = await this.proxySecret(settings);
     const createdAt = new Date().toISOString();
 
     if (settings.aiMode !== "proxy" || !proxy.endpoint.trim()) {
@@ -1417,11 +1412,11 @@ export class ChatService {
       return {
         id: randomUUID(),
         role: "assistant",
-        content: "Managed proxy secret key is missing. Add the beta key in Settings or set OPENAI_API_KEY to enable chat answers.",
+        content: "Your account session is not ready. Sign in again to continue.",
         createdAt,
         grounding: { graphify },
         semantic,
-        error: "Managed proxy secret key is missing."
+        error: "Managed proxy credential is missing."
       };
     }
 
@@ -1486,7 +1481,7 @@ export class ChatService {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
     const proxy = settings.managedProxy;
-    const secret = proxySecret(settings);
+    const secret = await this.proxySecret(settings);
     const model = proxyModel(settings);
     const requestId = randomUUID();
 
@@ -1499,7 +1494,6 @@ export class ChatService {
           "X-Second-Brain-Request-Id": requestId
         },
         body: JSON.stringify({
-          userIdOrKey: secret,
           model,
           groundingEnabled: proxy.groundingEnabled,
           requestId,
@@ -1528,6 +1522,14 @@ export class ChatService {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private async proxySecret(settings: AppSettings): Promise<string> {
+    return (
+      process.env.OPENAI_API_KEY?.trim() ||
+      (await this.accessTokenProvider?.()) ||
+      settings.managedProxy.secretKey.trim()
+    );
   }
 
   private buildGroundedMessages(
@@ -1736,7 +1738,7 @@ export class ChatService {
     userPrompt: string
   ): Promise<PlannedLocalToolCall> {
     const proxy = settings.managedProxy;
-    const secret = proxySecret(settings);
+    const secret = await this.proxySecret(settings);
     const model = proxyModel(settings);
     if (!proxy.endpoint.trim() || !secret) {
       throw new Error("Managed proxy artifact planning is not configured.");
@@ -1755,7 +1757,6 @@ export class ChatService {
           "X-Second-Brain-Request-Id": requestId
         },
         body: JSON.stringify({
-          userIdOrKey: secret,
           model,
           requestId,
           messages: [

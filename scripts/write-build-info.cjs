@@ -22,7 +22,11 @@ const buildInfo = {
   version: packageJson.version,
   buildId,
   gitCommit: process.env.SECOND_BRAIN_GIT_COMMIT || git("git rev-parse --short HEAD", "unknown"),
-  target: process.env.SECOND_BRAIN_BUILD_TARGET || process.platform
+  target: process.env.SECOND_BRAIN_BUILD_TARGET || process.platform,
+  websiteUrl: process.env.SECOND_BRAIN_WEBSITE_URL || "https://www.downloadsecondbrain.com",
+  proxyUrl: process.env.SECOND_BRAIN_PROXY_URL || "https://graphify-proxy-724616525781.us-central1.run.app",
+  supabaseUrl: process.env.SECOND_BRAIN_SUPABASE_URL || "https://hitlvdyrtnwprbsoafvs.supabase.co",
+  supabaseAnonKey: process.env.SECOND_BRAIN_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpdGx2ZHlydG53cHJic29hZnZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyODcwOTksImV4cCI6MjA5ODg2MzA5OX0.SZeziXrldpmJICpIJW-5LjxzJhZUNK4Bykx3NeL7vNU"
 };
 
 mkdirSync(path.join(rootDir, "dist"), { recursive: true });

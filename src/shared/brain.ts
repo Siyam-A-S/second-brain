@@ -22,6 +22,10 @@ export type AppBuildInfo = {
   buildId: string;
   gitCommit: string;
   target: string;
+  websiteUrl: string;
+  proxyUrl: string;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
 };
 
 export type BrainNode = BrainNodeFrontmatter & {
@@ -190,6 +194,28 @@ export type AccountSettings = {
   checkoutUrl: string;
   lastVerifiedAt: string;
   updatedAt: string;
+};
+
+export type AccountAuthState = {
+  signedIn: boolean;
+  email: string;
+  userId: string;
+  status: AccountAccessStatus;
+  planName: string;
+  trialEndsAt: string;
+  subscriptionRenewsAt: string;
+  usage: AccountUsageSnapshot | null;
+  websiteUrl: string;
+  accountUrl: string;
+  checkoutUrl: string;
+  lastVerifiedAt: string;
+  updatedAt: string;
+  configurationError?: string | undefined;
+};
+
+export type AccountSignInInput = {
+  email: string;
+  password: string;
 };
 
 export type UpdateAiSettingsInput = {

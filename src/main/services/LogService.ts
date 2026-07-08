@@ -4,6 +4,7 @@ import path from "node:path";
 import type { AppBuildInfo, AppSettings } from "../../shared/brain";
 
 type LogProvider = () => Promise<AppSettings>;
+type AccessTokenProvider = () => Promise<string | null>;
 
 type LogRecord = {
   timestamp: string;
@@ -79,7 +80,8 @@ export class LogService {
   constructor(
     private readonly userDataPath: string,
     private readonly buildInfo: AppBuildInfo,
-    private readonly settingsProvider: LogProvider
+    private readonly settingsProvider: LogProvider,
+    private readonly accessTokenProvider?: AccessTokenProvider
   ) {
     this.logDir = path.join(userDataPath, "logs");
     this.pendingPath = path.join(this.logDir, "pending-uploads.jsonl");
@@ -142,9 +144,9 @@ export class LogService {
 
   private async upload(records: LogRecord[]): Promise<void> {
     const settings = await this.settingsProvider();
-    const accessKey = settings.account.secretKey || settings.managedProxy.secretKey;
+    const accessKey = (await this.accessTokenProvider?.()) || settings.account.secretKey || settings.managedProxy.secretKey;
     if (!accessKey) {
-      throw new Error("No account access key available for log upload.");
+      throw new Error("No account token available for log upload.");
     }
 
     const response = await fetch(uploadUrl, {

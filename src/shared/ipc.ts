@@ -2,7 +2,9 @@ import type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AccountAuthState,
   AccountAccessStatus,
+  AccountSignInInput,
   AccountSettings,
   AccountUsageSnapshot,
   AppBuildInfo,
@@ -82,7 +84,9 @@ export type {
   BrainNode,
   BrainSearchResult,
   BoardChildNode,
+  AccountAuthState,
   AccountAccessStatus,
+  AccountSignInInput,
   AccountSettings,
   AccountUsageSnapshot,
   AppBuildInfo,
@@ -276,6 +280,13 @@ export const settingsChannels = {
   refreshAccount: "settings-refresh-account"
 } as const;
 
+export const accountChannels = {
+  getState: "account-get-state",
+  signIn: "account-sign-in",
+  signOut: "account-sign-out",
+  refresh: "account-refresh"
+} as const;
+
 export const chatChannels = {
   listThreads: "chat-list-threads",
   createThread: "chat-create-thread",
@@ -308,6 +319,7 @@ export type GraphBoardChannel = (typeof graphBoardChannels)[keyof typeof graphBo
 export type ResearchChannel = (typeof researchChannels)[keyof typeof researchChannels];
 export type ClipboardChannel = (typeof clipboardChannels)[keyof typeof clipboardChannels];
 export type SettingsChannel = (typeof settingsChannels)[keyof typeof settingsChannels];
+export type AccountChannel = (typeof accountChannels)[keyof typeof accountChannels];
 export type ChatChannel = (typeof chatChannels)[keyof typeof chatChannels];
 export type RuntimeChannel = (typeof runtimeChannels)[keyof typeof runtimeChannels];
 
@@ -431,6 +443,12 @@ export type SecondBrainApi = {
     updateApp: (input: UpdateAppSettingsInput) => Promise<AppSettings>;
     updateManagedProxy: (input: UpdateManagedProxySettingsInput) => Promise<ManagedProxySettings>;
     refreshAccount: () => Promise<AppSettings>;
+  };
+  account: {
+    getState: () => Promise<AccountAuthState>;
+    signIn: (input: AccountSignInInput) => Promise<AccountAuthState>;
+    signOut: () => Promise<AccountAuthState>;
+    refresh: () => Promise<AccountAuthState>;
   };
   chat: {
     listThreads: () => Promise<ChatThread[]>;

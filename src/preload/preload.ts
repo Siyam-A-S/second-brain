@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type {
   BoardRule,
+  AccountSignInInput,
   ChatStreamEvent,
   ChatSendInput,
   CreateProjectInput,
@@ -129,6 +130,13 @@ const settingsChannels = {
   refreshAccount: "settings-refresh-account"
 } as const;
 
+const accountChannels = {
+  getState: "account-get-state",
+  signIn: "account-sign-in",
+  signOut: "account-sign-out",
+  refresh: "account-refresh"
+} as const;
+
 const chatChannels = {
   listThreads: "chat-list-threads",
   createThread: "chat-create-thread",
@@ -252,6 +260,12 @@ const api: SecondBrainApi = {
     updateManagedProxy: (input: UpdateManagedProxySettingsInput) =>
       ipcRenderer.invoke(settingsChannels.updateManagedProxy, input),
     refreshAccount: () => ipcRenderer.invoke(settingsChannels.refreshAccount)
+  },
+  account: {
+    getState: () => ipcRenderer.invoke(accountChannels.getState),
+    signIn: (input: AccountSignInInput) => ipcRenderer.invoke(accountChannels.signIn, input),
+    signOut: () => ipcRenderer.invoke(accountChannels.signOut),
+    refresh: () => ipcRenderer.invoke(accountChannels.refresh)
   },
   chat: {
     listThreads: () => ipcRenderer.invoke(chatChannels.listThreads),

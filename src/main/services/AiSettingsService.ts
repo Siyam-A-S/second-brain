@@ -8,6 +8,7 @@ import type {
   AiSettings,
   AppearanceSettings,
   AppSettings,
+  BuildChannel,
   GraphifyRuntimeSettings,
   ManagedProxySettings,
   UpdateAiSettingsInput,
@@ -240,7 +241,7 @@ function normalizeAppearanceSettings(value: unknown): AppearanceSettings {
 export class AiSettingsService {
   private readonly settingsPath: string;
 
-  constructor(private readonly userDataPath: string) {
+  constructor(private readonly userDataPath: string, private readonly buildChannel: BuildChannel = "development") {
     this.settingsPath = path.join(userDataPath, "settings", "ai.json");
   }
 
@@ -292,7 +293,7 @@ export class AiSettingsService {
       const proxySecretKey = account.secretKey || legacyProxy.secretKey;
       const aiMode = normalizeAiMode(parsed.aiMode, "proxy");
       const settings = {
-        aiMode,
+        aiMode: this.productionMode() ? "proxy" : aiMode,
         ai: {
           mode: "local" as const,
           endpoint: normalizeEndpoint(process.env.SECOND_BRAIN_LLM_ENDPOINT ?? (aiRecord.endpoint as string | undefined)),
@@ -377,7 +378,7 @@ export class AiSettingsService {
 
   async updateAppSettings(input: UpdateAppSettingsInput): Promise<AppSettings> {
     const current = await this.getAppSettings();
-    const aiMode = normalizeAiMode(input.aiMode, current.aiMode);
+    const aiMode = this.productionMode() ? "proxy" : normalizeAiMode(input.aiMode, current.aiMode);
     const accountInput = input.account ?? {};
     const managedProxyInput = input.managedProxy ?? {};
     const accountSecretKey =
@@ -447,6 +448,10 @@ export class AiSettingsService {
       appearance: normalizeAppearanceSettings(undefined),
       updatedAt: new Date().toISOString()
     };
+  }
+
+  private productionMode(): boolean {
+    return this.buildChannel === "production";
   }
 
   private applyRuntimeSettings(settings: AppSettings): void {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AppSettings, ProcessDroppedItemsResult } from "../../shared/ipc";
+import type { AccountAuthState, AppBuildInfo, AppSettings, ProcessDroppedItemsResult } from "../../shared/ipc";
 import type { ThemeMode } from "../components/TitleBar";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
@@ -9,6 +9,7 @@ import { GraphBoardRenderer } from "../components/GraphBoardRenderer";
 import { SettingsPanel } from "../components/SettingsPanel";
 import { ExplorerWorkbench } from "../components/ExplorerWorkbench";
 import { ChatWorkbench } from "../components/ChatWorkbench";
+import { isProductionBuild, presentError } from "../lib/errorPresentation";
 
 type ActiveView = "graph" | "chat" | "explorer" | "tracker";
 
@@ -98,6 +99,14 @@ export function MainApp(): JSX.Element {
   const [themeMode, setThemeMode] = useState<ThemeMode>(initialThemeMode);
   const [accentHue, setAccentHue] = useState(initialAccentHue);
   const [topBarMirrored, setTopBarMirrored] = useState(() => initialStoredBoolean(topBarMirroredStorageKey));
+  const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
+  const [accountState, setAccountState] = useState<AccountAuthState | null>(null);
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [accountEmail, setAccountEmail] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [accountStatus, setAccountStatus] = useState("");
+  const [accountBusy, setAccountBusy] = useState(false);
+  const productionBuild = isProductionBuild(buildInfo);
 
   useEffect(() => {
     const handleError = (event: ErrorEvent): void => {
@@ -147,6 +156,33 @@ export function MainApp(): JSX.Element {
   }, [accentHue, themeMode]);
 
   useEffect(() => {
+    let mounted = true;
+    Promise.all([window.api.app.getBuildInfo(), window.api.account.getState()])
+      .then(([info, state]) => {
+        if (!mounted) {
+          return;
+        }
+        setBuildInfo(info);
+        setAccountState(state);
+        setAccountEmail(state.email || "");
+      })
+      .catch((error) => {
+        if (mounted) {
+          setAccountStatus(presentError(error, "Unable to load account.", buildInfo));
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setAccountLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem(activeViewStorageKey, activeView);
   }, [activeView]);
 
@@ -175,6 +211,10 @@ export function MainApp(): JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (buildInfo === null || (productionBuild && !accountState?.signedIn)) {
+      return undefined;
+    }
+
     let mounted = true;
     void window.api.runtime
       .getDependencyStatus()
@@ -192,7 +232,7 @@ export function MainApp(): JSX.Element {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [accountState?.signedIn, buildInfo, productionBuild]);
 
   function handleDropProcessed(result: ProcessDroppedItemsResult): void {
     setRefreshKey((key) => key + 1);
@@ -207,6 +247,127 @@ export function MainApp(): JSX.Element {
 
   function handleSettingsSaved(settings: AppSettings): void {
     setTopBarMirrored(settings.appearance.topBarMirrored);
+  }
+
+  async function handleAccountSignIn(): Promise<void> {
+    setAccountBusy(true);
+    setAccountStatus("");
+    try {
+      const state = await window.api.account.signIn({ email: accountEmail, password: accountPassword });
+      setAccountState(state);
+      setAccountEmail(state.email || accountEmail);
+      setAccountPassword("");
+      setAccountStatus(state.signedIn ? "Signed in." : "Account needs attention.");
+    } catch (error) {
+      setAccountStatus(presentError(error, "Unable to sign in.", buildInfo));
+    } finally {
+      setAccountBusy(false);
+    }
+  }
+
+  async function handleAccountWebSignIn(): Promise<void> {
+    const baseUrl = accountState?.accountUrl || buildInfo?.websiteUrl || "https://www.downloadsecondbrain.com";
+    const trimmedEmail = accountEmail.trim();
+    const target = trimmedEmail
+      ? `${baseUrl.replace(/\/$/, "")}/login?email=${encodeURIComponent(trimmedEmail)}&desktop=1`
+      : `${baseUrl.replace(/\/$/, "")}/login?desktop=1`;
+    try {
+      await window.api.window.openExternal(target);
+    } catch (error) {
+      setAccountStatus(presentError(error, "Unable to open account login.", buildInfo));
+    }
+  }
+
+  async function handleAccountRefresh(): Promise<void> {
+    setAccountBusy(true);
+    setAccountStatus("");
+    try {
+      const state = await window.api.account.refresh();
+      setAccountState(state);
+      setAccountEmail(state.email || accountEmail);
+      setAccountStatus(state.signedIn ? "Account refreshed." : "Please sign in.");
+    } catch (error) {
+      setAccountStatus(presentError(error, "Unable to refresh account.", buildInfo));
+    } finally {
+      setAccountBusy(false);
+    }
+  }
+
+  if (accountLoading || buildInfo === null) {
+    return <div className="keyboard-frame flex h-full flex-col bg-frame text-textMain" />;
+  }
+
+  if (productionBuild && !accountState?.signedIn) {
+    return (
+      <div className="keyboard-frame flex h-full flex-col bg-frame text-textMain">
+        <TitleBar
+          accentHue={accentHue}
+          mirrored={topBarMirrored}
+          themeMode={themeMode}
+          onAccentHueChange={setAccentHue}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onThemeModeChange={setThemeMode}
+        />
+        <main className="flex min-h-0 flex-1 items-center justify-center px-4 py-8">
+          <section className="material-frosted w-full max-w-md rounded-2xl border border-black/10 bg-panel p-6 shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-led">Second Brain</p>
+            <h1 className="mt-3 text-2xl font-semibold text-textMain">Sign in to continue</h1>
+            <p className="mt-2 text-sm leading-6 text-textMain/70">
+              Use the email and password for your Second Brain account. Your session stays on this device and desktop requests use it securely.
+            </p>
+            <div className="mt-5 space-y-3">
+              <label className="block text-sm font-medium text-textMain/80">
+                Email
+                <input
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white/70 px-3 py-2 font-mono text-sm text-textMain shadow-inner outline-none focus:border-highlight"
+                  type="email"
+                  value={accountEmail}
+                  onChange={(event) => setAccountEmail(event.target.value)}
+                  placeholder="you@example.com"
+                />
+              </label>
+              <label className="block text-sm font-medium text-textMain/80">
+                Password
+                <input
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white/70 px-3 py-2 font-mono text-sm text-textMain shadow-inner outline-none focus:border-highlight"
+                  type="password"
+                  value={accountPassword}
+                  onChange={(event) => setAccountPassword(event.target.value)}
+                  placeholder="Password"
+                />
+              </label>
+            </div>
+            {accountStatus ? <p className="mt-3 text-sm text-textMain/70">{accountStatus}</p> : null}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                className="rounded-xl bg-keycap px-4 py-2 font-mono text-sm font-semibold text-highlight shadow-keycap transition active:translate-y-[2px] active:shadow-inner disabled:opacity-60"
+                type="button"
+                disabled={accountBusy || !accountEmail.trim() || !accountPassword}
+                onClick={() => void handleAccountSignIn()}
+              >
+                {accountBusy ? "Signing in..." : "Sign in"}
+              </button>
+              <button
+                className="rounded-xl bg-keycap px-4 py-2 font-mono text-sm font-semibold text-legend shadow-keycap transition active:translate-y-[2px] active:shadow-inner"
+                type="button"
+                onClick={() => void handleAccountWebSignIn()}
+              >
+                Open web login
+              </button>
+              <button
+                className="rounded-xl bg-keycap px-4 py-2 font-mono text-sm font-semibold text-legend shadow-keycap transition active:translate-y-[2px] active:shadow-inner disabled:opacity-60"
+                type="button"
+                disabled={accountBusy}
+                onClick={() => void handleAccountRefresh()}
+              >
+                Refresh
+              </button>
+            </div>
+          </section>
+        </main>
+        <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} onSettingsSaved={handleSettingsSaved} />
+      </div>
+    );
   }
 
   return (

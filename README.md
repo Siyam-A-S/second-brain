@@ -1,19 +1,19 @@
 # Second Brain
 
-**Release: Second Brain 0.1.4**
+**Release: Second Brain 0.1.5**
 
 Second Brain is a local-first desktop app for turning dropped notes, code, documents, images, and research material into a browsable knowledge graph with chat, source exploration, and Graphify-powered ingestion.
 
-[Open the Second Brain 0.1.4 release](https://github.com/Siyam-A-S/second-brain/releases/tag/v0.1.4)
+[Open the latest development release](https://github.com/Siyam-A-S/second-brain/releases)
 
 ## Download
 
-- Windows: [Second-Brain-0.1.4-latest-win-unpacked.zip](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.4/Second-Brain-0.1.4-latest-win-unpacked.zip)
-- macOS Apple Silicon beta: [Second.Brain-0.1.4-mac-arm64.dmg](https://github.com/Siyam-A-S/second-brain/releases/download/v0.1.4/Second.Brain-0.1.4-mac-arm64.dmg)
+- Windows development zip: published on `vX.Y.Z` GitHub releases.
+- macOS Apple Silicon development DMG: published on `vX.Y.Z` GitHub releases.
 
 ## Production Distribution
 
-Production releases are distributed through [downloadsecondbrain.com](https://www.downloadsecondbrain.com) and use `prod-vX.Y.Z` release tags. Production builds are managed-account builds: users sign in on the website, copy their account access key into Settings, and the desktop app uses the managed Second Brain proxy for AI access.
+Production releases are distributed through [downloadsecondbrain.com](https://www.downloadsecondbrain.com) and use `prod-vX.Y.Z` release tags. Production builds are managed-account builds: users sign in with the same Supabase email/password account used on the website, and the desktop app uses the managed Second Brain proxy for AI access.
 
 Production bundles intentionally hide developer surfaces such as grounding inspection, raw Graphify command output, local endpoint/model controls, and detailed error messages. Customer-facing errors are shown as `Something went wrong. Try again.` while redacted diagnostic logs are stored locally and uploaded best-effort for support.
 
@@ -21,9 +21,8 @@ Production assets:
 
 - Windows installer: `Second-Brain-Setup-<version>-prod.exe`
 - macOS Apple Silicon DMG: `Second-Brain-<version>-prod-mac-arm64.dmg`
-- macOS runtime helper: `install-second-brain-runtime.command`
 
-See [PRODUCTION_RELEASE.md](PRODUCTION_RELEASE.md) for production tag rules, runtime dependency behavior, account access, and diagnostics policy.
+Production installers include the minimal Python/Graphify runtime needed for ingestion and PDF artifacts. See [PRODUCTION_RELEASE.md](PRODUCTION_RELEASE.md) for production tag rules, runtime bundle behavior, account access, and diagnostics policy.
 
 ## Development Windows Get Started
 
@@ -85,7 +84,7 @@ Development builds expose a single global AI mode.
 - Use Proxy AI: default mode for paid users. Enter your Secret Key in Settings; the app uses the managed Second Brain proxy for chat and Graphify workflows.
 - Use Local AI: advanced mode for local OpenAI-compatible servers. Enter the base URL, model name, and Graphify limits in Settings.
 
-Production builds are proxy-first and account-managed. End users should use the website account access key rather than local endpoint/model settings.
+Production builds are proxy-first and account-managed. End users sign in with their website email/password; local endpoint/model settings and raw grounding controls are not shown.
 
 For a local llama.cpp server:
 
@@ -144,6 +143,6 @@ npm run package:prod:win:installer
 npm run package:prod:mac:dmg
 ```
 
-Pushing the `v0.1.4` tag, or manually running the **Release Second Brain** GitHub Action, publishes the Windows zip and macOS Apple Silicon DMG to the 0.1.4 release.
+Pushing a `vX.Y.Z` tag, or manually running the **Release Second Brain** GitHub Action, publishes the Windows zip and macOS Apple Silicon DMG for development testing.
 
-Pushing a `prod-v0.1.4` style tag, or manually running **Production Release Second Brain**, publishes installer-style production assets for website-managed distribution.
+Pushing a `prod-vX.Y.Z` style tag, or manually running **Production Release Second Brain**, publishes bundled-runtime production assets for website-managed distribution.

@@ -15,6 +15,7 @@ import {
   X
 } from "lucide-react";
 import type {
+  AccountAuthState,
   AppBuildInfo,
   AppSettings,
   DependencyRuntimeStatus,
@@ -79,6 +80,7 @@ function statusTone(status: AppSettings["account"]["status"]): string {
 
 export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelProps): JSX.Element | null {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [accountState, setAccountState] = useState<AccountAuthState | null>(null);
   const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
   const [dependencyReport, setDependencyReport] = useState<ResearchDependencyReport | null>(null);
   const [runtimeStatus, setRuntimeStatus] = useState<DependencyRuntimeStatus | null>(null);
@@ -88,6 +90,9 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
   const [isCheckingDependencies, setIsCheckingDependencies] = useState(false);
   const [isRepairingRuntime, setIsRepairingRuntime] = useState(false);
   const [isRefreshingAccount, setIsRefreshingAccount] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -101,6 +106,16 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
         setBuildInfo(info);
       }
     }).catch(() => undefined);
+    void window.api.account
+      .getState()
+      .then((loaded) => {
+        if (!mounted) {
+          return;
+        }
+        setAccountState(loaded);
+        setSignInEmail((current) => current || loaded.email);
+      })
+      .catch(() => undefined);
 
     void window.api.settings
       .getApp()
@@ -162,7 +177,8 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
   const aiMode = settings?.aiMode ?? "proxy";
   const productionBuild = isProductionBuild(buildInfo);
   const isProxyMode = productionBuild || aiMode === "proxy";
-  const account = settings?.account;
+  const account = productionBuild ? accountState : settings?.account;
+  const accountSignedIn = productionBuild ? Boolean(accountState?.signedIn) : Boolean(settings?.account.secretKey);
   const usagePercent =
     account?.usage && account.usage.limit > 0
       ? Math.min(100, Math.round((account.usage.used / account.usage.limit) * 100))
@@ -243,14 +259,48 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
     setIsRefreshingAccount(true);
     setStatus("Refreshing account...");
     try {
-      const refreshed = await window.api.settings.refreshAccount();
-      setSettings(refreshed);
-      onSettingsSaved?.(refreshed);
+      if (productionBuild) {
+        const refreshed = await window.api.account.refresh();
+        setAccountState(refreshed);
+      } else {
+        const refreshed = await window.api.settings.refreshAccount();
+        setSettings(refreshed);
+        onSettingsSaved?.(refreshed);
+      }
       setStatus("Account refreshed.");
     } catch (error) {
       setStatus(presentError(error, "Unable to refresh account.", buildInfo));
     } finally {
       setIsRefreshingAccount(false);
+    }
+  }
+
+  async function signInAccount(): Promise<void> {
+    setIsSigningIn(true);
+    setStatus("Signing in...");
+    try {
+      const signedIn = await window.api.account.signIn({ email: signInEmail, password: signInPassword });
+      setAccountState(signedIn);
+      setSignInPassword("");
+      setStatus("Signed in.");
+    } catch (error) {
+      setStatus(presentError(error, "Unable to sign in.", buildInfo));
+    } finally {
+      setIsSigningIn(false);
+    }
+  }
+
+  async function signOutAccount(): Promise<void> {
+    setIsSigningIn(true);
+    setStatus("Signing out...");
+    try {
+      setAccountState(await window.api.account.signOut());
+      setSignInPassword("");
+      setStatus("Signed out.");
+    } catch (error) {
+      setStatus(presentError(error, "Unable to sign out.", buildInfo));
+    } finally {
+      setIsSigningIn(false);
     }
   }
 
@@ -388,56 +438,99 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <label className="block text-xs font-semibold text-slate-500">
-                  Account email
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    placeholder="you@downloadsecondbrain.com"
-                    type="email"
-                    value={account?.email ?? ""}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              account: { ...current.account, email: event.target.value }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
-                <label className="block text-xs font-semibold text-slate-500">
-                  Access key
-                  <input
-                    className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
-                    type="password"
-                    value={account?.secretKey ?? ""}
-                    onChange={(event) =>
-                      setSettings((current) =>
-                        current
-                          ? {
-                              ...current,
-                              account: { ...current.account, secretKey: event.target.value },
-                              managedProxy: { ...current.managedProxy, secretKey: event.target.value, enabled: true }
-                            }
-                          : current
-                      )
-                    }
-                  />
-                </label>
-              </div>
+              {productionBuild ? (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Account email
+                    <input
+                      autoComplete="email"
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      placeholder="you@downloadsecondbrain.com"
+                      type="email"
+                      value={signInEmail}
+                      onChange={(event) => setSignInEmail(event.target.value)}
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Password
+                    <input
+                      autoComplete="current-password"
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      type="password"
+                      value={signInPassword}
+                      onChange={(event) => setSignInPassword(event.target.value)}
+                    />
+                  </label>
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Account email
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      placeholder="you@downloadsecondbrain.com"
+                      type="email"
+                      value={settings?.account.email ?? ""}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                account: { ...current.account, email: event.target.value }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-500">
+                    Access key
+                    <input
+                      className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white/80 px-3 text-sm text-slate-800 outline-none transition focus:border-slate-400"
+                      type="password"
+                      value={settings?.account.secretKey ?? ""}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                account: { ...current.account, secretKey: event.target.value },
+                                managedProxy: { ...current.managedProxy, secretKey: event.target.value, enabled: true }
+                              }
+                            : current
+                        )
+                      }
+                    />
+                  </label>
+                </div>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
                   type="button"
-                  onClick={() => void openAccountUrl(account?.accountUrl)}
+                  onClick={() =>
+                    void openAccountUrl(
+                      productionBuild && signInEmail
+                        ? `${account?.accountUrl ?? "https://www.downloadsecondbrain.com/login"}?email=${encodeURIComponent(signInEmail)}&desktop=1`
+                        : account?.accountUrl
+                    )
+                  }
                 >
                   <ExternalLink size={15} />
                   Sign in on web
                 </button>
+                {productionBuild ? (
+                  <button
+                    className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-slate-950 px-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                    disabled={isSigningIn || (!accountSignedIn && (!signInEmail || !signInPassword))}
+                    type="button"
+                    onClick={() => void (accountSignedIn ? signOutAccount() : signInAccount())}
+                  >
+                    <KeyRound size={15} />
+                    {accountSignedIn ? "Sign out" : "Sign in"}
+                  </button>
+                ) : null}
                 <button
                   className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 transition hover:bg-white disabled:opacity-50"
                   disabled={isRefreshingAccount}
@@ -499,8 +592,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                   <div className="flex items-start gap-2">
                     <KeyRound className="mt-0.5 text-slate-500" size={16} />
                     <p>
-                      Cloud AI is authenticated with the account access key above. Model and endpoint details are managed by
-                      Second Brain for production users.
+                      Cloud AI is authenticated with your signed-in Second Brain account and managed securely by Second Brain.
                     </p>
                   </div>
                 </div>

@@ -9,6 +9,23 @@ export type RuntimeCommandCandidate = {
 
 const isWindows = process.platform === "win32";
 const isMac = process.platform === "darwin";
+const runtimePlatform = isWindows ? "win32" : isMac ? "darwin" : process.platform;
+
+function resourcesPath(): string {
+  return (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath || path.resolve(process.cwd(), "resources");
+}
+
+function bundledRuntimeDir(): string {
+  return path.join(resourcesPath(), "runtime", `${runtimePlatform}-${process.arch}`);
+}
+
+function bundledRuntimeBinDir(): string {
+  return isWindows ? path.join(bundledRuntimeDir(), "Scripts") : path.join(bundledRuntimeDir(), "bin");
+}
+
+export function bundledPythonCommand(): string {
+  return isWindows ? path.join(bundledRuntimeDir(), "python.exe") : path.join(bundledRuntimeBinDir(), "python3");
+}
 
 export function isCmdShim(filePath: string): boolean {
   return isWindows && /\.(cmd|bat)$/i.test(filePath);
@@ -65,34 +82,41 @@ export function runtimeUvCommands(): string[] {
 
 export function runtimeGraphifyCommands(): string[] {
   if (isWindows) {
-    return uniqueRuntimeCommands([windowsUserBin("graphify.exe"), windowsUserBin("graphify.cmd"), "graphify"]);
+    return uniqueRuntimeCommands([
+      path.join(bundledRuntimeBinDir(), "graphify.exe"),
+      path.join(bundledRuntimeBinDir(), "graphify.cmd"),
+      windowsUserBin("graphify.exe"),
+      windowsUserBin("graphify.cmd"),
+      "graphify"
+    ]);
   }
 
   if (isMac) {
-    return uniqueRuntimeCommands(macBinaryCandidates("graphify"));
+    return uniqueRuntimeCommands([path.join(bundledRuntimeBinDir(), "graphify"), ...macBinaryCandidates("graphify")]);
   }
 
-  return uniqueRuntimeCommands([path.join(os.homedir(), ".local", "bin", "graphify"), "graphify"]);
+  return uniqueRuntimeCommands([path.join(bundledRuntimeBinDir(), "graphify"), path.join(os.homedir(), ".local", "bin", "graphify"), "graphify"]);
 }
 
 export function runtimePythonCommands(): string[] {
   if (isWindows) {
-    return uniqueRuntimeCommands(["py", "python"]);
+    return uniqueRuntimeCommands([bundledPythonCommand(), "py", "python"]);
   }
 
   if (isMac) {
-    return uniqueRuntimeCommands([...macBinaryCandidates("python3"), "python"]);
+    return uniqueRuntimeCommands([bundledPythonCommand(), ...macBinaryCandidates("python3"), "python"]);
   }
 
-  return uniqueRuntimeCommands([path.join(os.homedir(), ".local", "bin", "python3"), "python3", "python"]);
+  return uniqueRuntimeCommands([bundledPythonCommand(), path.join(os.homedir(), ".local", "bin", "python3"), "python3", "python"]);
 }
 
 export function runtimePathSegments(): string[] {
   if (isWindows) {
-    return [];
+    return uniqueRuntimeCommands([bundledRuntimeBinDir(), bundledRuntimeDir()]);
   }
 
   return uniqueRuntimeCommands([
+    bundledRuntimeBinDir(),
     "/opt/homebrew/bin",
     "/usr/local/bin",
     path.join(os.homedir(), ".local", "bin"),
