@@ -175,12 +175,18 @@ function pruneDirectory(directory) {
     const fullPath = path.join(directory, entry);
     let stats;
     try {
-      stats = statSync(fullPath);
+      stats = lstatSync(fullPath);
     } catch {
       continue;
     }
 
-    if (stats.isDirectory()) {
+    if (stats.isSymbolicLink()) {
+      try {
+        statSync(fullPath);
+      } catch {
+        rmSync(fullPath, { force: true });
+      }
+    } else if (stats.isDirectory()) {
       if (
         entry === "__pycache__" ||
         entry === "tests" ||
