@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1783482413.4800029,
-    "ast_hash": "c6c8bbd4081242940d814d1e2193bb52",
+    "mtime": 1783585906.2532647,
+    "ast_hash": "634181229f5dc5aa17d776af2059b293",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-release.yml": {
-    "mtime": 1783568649.0123367,
-    "ast_hash": "14abcdae2494c0dbe1d19c31966fff7d",
+    "mtime": 1783585889.4446335,
+    "ast_hash": "3a33c2d6b5aa856a0a15b0114d774b27",
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
@@ -452,6 +452,11 @@
   "WEBSITE_SERVER_HANDOFF.md": {
     "mtime": 1783569045.3703566,
     "ast_hash": "08f1d11ad8f972586d62353ab0ae2760",
+    "semantic_hash": ""
+  },
+  "electron-builder.production.yml": {
+    "mtime": 1783585838.0153985,
+    "ast_hash": "e7cdc54fc2dda28cec88962ecbfdfa55",
     "semantic_hash": ""
   }
 }

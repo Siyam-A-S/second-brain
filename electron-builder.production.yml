@@ -1,0 +1,53 @@
+appId: com.secondbrain.desktop
+productName: Second Brain
+
+directories:
+  output: release
+  buildResources: build
+
+icon: icon.png
+
+files:
+  - dist/**/*
+  - package.json
+
+extraResources:
+  - from: resources/production-runtime
+    to: runtime
+    filter:
+      - "**/*"
+
+asar: true
+
+mac:
+  icon: icon.icns
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  notarize: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - target: dmg
+  artifactName: "${productName}-${version}-mac-${arch}.${ext}"
+
+win:
+  icon: icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  include: build/installer.nsh
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  artifactName: "${productName}-${version}-linux-${arch}.${ext}"

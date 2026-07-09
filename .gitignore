@@ -10,3 +10,10 @@ resources/production-runtime/*
 .codex
 __pycache__/
 *.pyc
+appledevID/
+*.p12
+*.key
+*.cer
+*.pem
+*.csr
+*p12.base64

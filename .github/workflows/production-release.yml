@@ -131,13 +131,46 @@ jobs:
       - name: Prepare macOS bundled runtime
         run: node scripts/prepare-production-runtime.cjs --platform darwin --arch arm64
 
+      - name: Assert macOS notarization secrets
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          test -n "$CSC_LINK" || (echo "MAC_CERTS_P12_BASE64 is missing" && exit 1)
+          test -n "$CSC_KEY_PASSWORD" || (echo "MAC_CERTS_PASSWORD is missing" && exit 1)
+          test -n "$APPLE_ID" || (echo "APPLE_ID is missing" && exit 1)
+          test -n "$APPLE_APP_SPECIFIC_PASSWORD" || (echo "APPLE_APP_SPECIFIC_PASSWORD is missing" && exit 1)
+          test -n "$APPLE_TEAM_ID" || (echo "APPLE_TEAM_ID is missing" && exit 1)
+
       - name: Build macOS production DMG
         env:
+          CSC_LINK: ${{ secrets.MAC_CERTS_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           SECOND_BRAIN_SUPABASE_URL: ${{ vars.SECOND_BRAIN_SUPABASE_URL }}
           SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ vars.SECOND_BRAIN_SUPABASE_ANON_KEY }}
           SECOND_BRAIN_WEBSITE_URL: https://www.downloadsecondbrain.com
           SECOND_BRAIN_PROXY_URL: https://graphify-proxy-724616525781.us-central1.run.app
         run: npm run package:prod:mac:dmg
+
+      - name: Verify macOS signing and notarization
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          APP_PATH="release/mac-arm64/Second Brain.app"
+          DMG_PATH="release/Second Brain-$VERSION-mac-arm64.dmg"
+
+          test -d "$APP_PATH" || (echo "Expected app bundle was not created: $APP_PATH" && find release -maxdepth 3 -print && exit 1)
+          test -f "$DMG_PATH" || (echo "Expected DMG was not created: $DMG_PATH" && find release -maxdepth 3 -print && exit 1)
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          xcrun stapler validate "$DMG_PATH"
+          spctl -a -vvv -t install "$DMG_PATH"
 
       - name: Publish production release
         shell: bash
