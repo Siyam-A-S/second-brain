@@ -66,12 +66,73 @@ It uploads:
 - `Second-Brain-Setup-<version>-prod.exe`
 - `Second-Brain-<version>-prod-mac-arm64.dmg`
 
-Production builds require these CI secrets:
+Production builds require these GitHub Actions repository variables:
 
 - `SECOND_BRAIN_SUPABASE_URL`
 - `SECOND_BRAIN_SUPABASE_ANON_KEY`
 
-The packaging script fails before Electron Builder runs if the compiled build metadata is not production or if the Supabase configuration is missing.
+The packaging script fails before Electron Builder runs if the compiled build metadata is not production or if the Supabase configuration is missing. Keep service-role keys, Stripe secrets, proxy signing secrets, and admin credentials in GitHub secrets or server-only environment variables; never ship them in desktop build metadata.
+
+## Production Release Commands
+
+Before cutting a production release, confirm the public Supabase build variables exist:
+
+```bash
+gh variable list --repo Siyam-A-S/second-brain
+```
+
+Run local validation from the repository root:
+
+```bash
+npm run typecheck
+npm run build
+
+SECOND_BRAIN_BUILD_CHANNEL=production \
+SECOND_BRAIN_BUILD_TARGET=test \
+SECOND_BRAIN_SUPABASE_URL="$(gh variable list --repo Siyam-A-S/second-brain --json name,value --jq '.[] | select(.name == "SECOND_BRAIN_SUPABASE_URL") | .value')" \
+SECOND_BRAIN_SUPABASE_ANON_KEY="$(gh variable list --repo Siyam-A-S/second-brain --json name,value --jq '.[] | select(.name == "SECOND_BRAIN_SUPABASE_ANON_KEY") | .value')" \
+SECOND_BRAIN_WEBSITE_URL="https://www.downloadsecondbrain.com" \
+SECOND_BRAIN_PROXY_URL="https://graphify-proxy-724616525781.us-central1.run.app" \
+npm run build
+
+node scripts/assert-production-build.cjs
+npm run build
+graphify update .
+git diff --check
+```
+
+Commit and publish a new production tag:
+
+```bash
+VERSION="$(node -p "require('./package.json').version")"
+git status --short
+git add -u
+# Add any intentional new files, for example:
+git add WEBSITE_SERVER_HANDOFF.md
+git commit -m "Prepare production release v$VERSION"
+git push origin master
+git tag -a "prod-v$VERSION" -m "Production release v$VERSION"
+git push origin "prod-v$VERSION"
+```
+
+Watch the workflow and verify uploaded assets:
+
+```bash
+RUN_ID="$(gh run list --repo Siyam-A-S/second-brain --workflow production-release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+gh run watch "$RUN_ID" --repo Siyam-A-S/second-brain --exit-status
+gh release view "prod-v$VERSION" --repo Siyam-A-S/second-brain --json url,assets,tagName,name
+```
+
+If you intentionally need to rebuild the same package version, for example after a CI variable or packaging-only fix, move the matching production tag and let the workflow upload assets with `--clobber`:
+
+```bash
+VERSION="$(node -p "require('./package.json').version")"
+git push origin master
+git tag -fa "prod-v$VERSION" -m "Production release v$VERSION"
+git push --force origin "prod-v$VERSION"
+```
+
+Prefer a new patch version for customer-visible application changes.
 
 ## Runtime Dependencies
 

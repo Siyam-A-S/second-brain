@@ -72,8 +72,8 @@ jobs:
       - name: Build Windows production installer
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          SECOND_BRAIN_SUPABASE_URL: ${{ secrets.SECOND_BRAIN_SUPABASE_URL }}
-          SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ secrets.SECOND_BRAIN_SUPABASE_ANON_KEY }}
+          SECOND_BRAIN_SUPABASE_URL: ${{ vars.SECOND_BRAIN_SUPABASE_URL }}
+          SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ vars.SECOND_BRAIN_SUPABASE_ANON_KEY }}
           SECOND_BRAIN_WEBSITE_URL: https://www.downloadsecondbrain.com
           SECOND_BRAIN_PROXY_URL: https://graphify-proxy-724616525781.us-central1.run.app
         run: npm run package:prod:win:installer
@@ -133,8 +133,8 @@ jobs:
 
       - name: Build macOS production DMG
         env:
-          SECOND_BRAIN_SUPABASE_URL: ${{ secrets.SECOND_BRAIN_SUPABASE_URL }}
-          SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ secrets.SECOND_BRAIN_SUPABASE_ANON_KEY }}
+          SECOND_BRAIN_SUPABASE_URL: ${{ vars.SECOND_BRAIN_SUPABASE_URL }}
+          SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ vars.SECOND_BRAIN_SUPABASE_ANON_KEY }}
           SECOND_BRAIN_WEBSITE_URL: https://www.downloadsecondbrain.com
           SECOND_BRAIN_PROXY_URL: https://graphify-proxy-724616525781.us-central1.run.app
         run: npm run package:prod:mac:dmg
