@@ -535,7 +535,7 @@ export class GraphifyController {
     this.graphPath = path.join(this.graphOutPath, "graph.json");
     this.graphHtmlPath = path.join(this.graphOutPath, "graph.html");
     this.reportPath = path.join(this.graphOutPath, "GRAPH_REPORT.md");
-    this.llm = new LlmService(settingsProvider);
+    this.llm = new LlmService(settingsProvider, accessTokenProvider);
   }
 
   getRawVaultPath(): string {

@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "src/main/services/LlmService.ts": {
-    "mtime": 1783578295.413925,
-    "ast_hash": "559acf82edddb319e5c39e67b922017d",
+    "mtime": 1782359327.879252,
+    "ast_hash": "7fbba33730740380b1a9cc6c8a6e59f7",
     "semantic_hash": ""
   },
   "src/main/services/LocalMcpServer.ts": {
@@ -220,8 +220,8 @@
     "semantic_hash": "4b4e8f802d3ce12e0ce5ac1e2b92075b"
   },
   "src/main/services/GraphifyController.ts": {
-    "mtime": 1783578301.0229526,
-    "ast_hash": "1154d307063c760e071e31dace5f5fcd",
+    "mtime": 1783482865.494149,
+    "ast_hash": "a9474ee235524343fa4ab28a3dea8420",
     "semantic_hash": ""
   },
   "src/main/services/GraphifyBoardService.ts": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ChatService.ts": {
-    "mtime": 1783578314.4821475,
-    "ast_hash": "033542e7e1bb0b8d62eef56efd8ce4e0",
+    "mtime": 1783482871.954199,
+    "ast_hash": "f9c9c108eee81f67205eb94d81e9305c",
     "semantic_hash": ""
   },
   "src/main/services/DependencyRuntimeService.ts": {
@@ -350,13 +350,13 @@
     "semantic_hash": ""
   },
   "proxy/main.py": {
-    "mtime": 1783575351.8393567,
-    "ast_hash": "6f6a17c24770460c5a52a6f9c5e66a6f",
+    "mtime": 1782239257.2391014,
+    "ast_hash": "0e8b26657d36add2bba140d6a48c4038",
     "semantic_hash": ""
   },
   "proxy/README.md": {
-    "mtime": 1783575296.4470675,
-    "ast_hash": "dbaa692478c96dd292f72a18745e1b1a",
+    "mtime": 1782239260.9351184,
+    "ast_hash": "b0d920889944dc8ead93f39212950f6b",
     "semantic_hash": ""
   },
   "proxy/requirements.txt": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
-    "mtime": 1783569150.8180387,
-    "ast_hash": "e34d56e2273a3212cf5939448ab02618",
+    "mtime": 1783569089.4536462,
+    "ast_hash": "8ea8fa6be5164e79b1bd675c87beae4c",
     "semantic_hash": ""
   },
   "src/main/services/SourceContentService.ts": {

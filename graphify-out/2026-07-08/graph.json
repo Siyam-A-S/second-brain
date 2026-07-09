@@ -639,7 +639,7 @@
       "label": "ProxyMessage",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L26",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "proxy_main_proxymessage",
       "community": 24,
@@ -659,27 +659,17 @@
       "label": "ProxyRequest",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L31",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "proxy_main_proxyrequest",
       "community": 24,
       "norm_label": "proxyrequest"
     },
     {
-      "label": "ProxyUser",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L40",
-      "_origin": "ast",
-      "id": "proxy_main_proxyuser",
-      "community": 24,
-      "norm_label": "proxyuser"
-    },
-    {
       "label": "env_int()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L45",
+      "source_location": "L37",
       "_origin": "ast",
       "id": "proxy_main_env_int",
       "community": 24,
@@ -689,7 +679,7 @@
       "label": "sha256()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L52",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "proxy_main_sha256",
       "community": 24,
@@ -699,7 +689,7 @@
       "label": "configured_key_hashes()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L56",
+      "source_location": "L48",
       "_origin": "ast",
       "id": "proxy_main_configured_key_hashes",
       "community": 24,
@@ -709,27 +699,17 @@
       "label": "extract_secret()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L70",
+      "source_location": "L62",
       "_origin": "ast",
       "id": "proxy_main_extract_secret",
       "community": 24,
       "norm_label": "extract_secret()"
     },
     {
-      "label": "extract_bearer_token()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L76",
-      "_origin": "ast",
-      "id": "proxy_main_extract_bearer_token",
-      "community": 24,
-      "norm_label": "extract_bearer_token()"
-    },
-    {
       "label": "validate_secret()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L82",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "proxy_main_validate_secret",
       "community": 24,
@@ -739,97 +719,17 @@
       "label": "enforce_rate_limit()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L91",
+      "source_location": "L77",
       "_origin": "ast",
       "id": "proxy_main_enforce_rate_limit",
       "community": 24,
       "norm_label": "enforce_rate_limit()"
     },
     {
-      "label": "supabase_url()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L102",
-      "_origin": "ast",
-      "id": "proxy_main_supabase_url",
-      "community": 24,
-      "norm_label": "supabase_url()"
-    },
-    {
-      "label": "supabase_service_role_key()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L109",
-      "_origin": "ast",
-      "id": "proxy_main_supabase_service_role_key",
-      "community": 24,
-      "norm_label": "supabase_service_role_key()"
-    },
-    {
-      "label": "supabase_service_headers()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L116",
-      "_origin": "ast",
-      "id": "proxy_main_supabase_service_headers",
-      "community": 24,
-      "norm_label": "supabase_service_headers()"
-    },
-    {
-      "label": "verify_supabase_token()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L125",
-      "_origin": "ast",
-      "id": "proxy_main_verify_supabase_token",
-      "community": 24,
-      "norm_label": "verify_supabase_token()"
-    },
-    {
-      "label": "consume_proxy_usage()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L151",
-      "_origin": "ast",
-      "id": "proxy_main_consume_proxy_usage",
-      "community": 24,
-      "norm_label": "consume_proxy_usage()"
-    },
-    {
-      "label": "Any",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L151",
-      "_origin": "ast",
-      "id": "any",
-      "community": 24,
-      "norm_label": "any"
-    },
-    {
-      "label": "authenticate_and_meter()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L177",
-      "_origin": "ast",
-      "id": "proxy_main_authenticate_and_meter",
-      "community": 24,
-      "norm_label": "authenticate_and_meter()"
-    },
-    {
-      "label": "log_event()",
-      "file_type": "code",
-      "source_file": "proxy/main.py",
-      "source_location": "L185",
-      "_origin": "ast",
-      "id": "proxy_main_log_event",
-      "community": 24,
-      "norm_label": "log_event()"
-    },
-    {
       "label": "vertex_access_token()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L200",
+      "source_location": "L88",
       "_origin": "ast",
       "id": "proxy_main_vertex_access_token",
       "community": 24,
@@ -839,17 +739,27 @@
       "label": "build_vertex_body()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L206",
+      "source_location": "L94",
       "_origin": "ast",
       "id": "proxy_main_build_vertex_body",
       "community": 24,
       "norm_label": "build_vertex_body()"
     },
     {
+      "label": "Any",
+      "file_type": "code",
+      "source_file": "proxy/main.py",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "any",
+      "community": 24,
+      "norm_label": "any"
+    },
+    {
       "label": "health()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L220",
+      "source_location": "L108",
       "_origin": "ast",
       "id": "proxy_main_health",
       "community": 24,
@@ -859,7 +769,7 @@
       "label": "enforce_request_limits()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L224",
+      "source_location": "L112",
       "_origin": "ast",
       "id": "proxy_main_enforce_request_limits",
       "community": 24,
@@ -869,7 +779,7 @@
       "label": "validate_request_secret()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L230",
+      "source_location": "L118",
       "_origin": "ast",
       "id": "proxy_main_validate_request_secret",
       "community": 24,
@@ -879,7 +789,7 @@
       "label": "chat()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L239",
+      "source_location": "L127",
       "_origin": "ast",
       "id": "proxy_main_chat",
       "community": 24,
@@ -889,7 +799,7 @@
       "label": "Request",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L239",
+      "source_location": "L127",
       "_origin": "ast",
       "id": "request",
       "community": 24,
@@ -899,7 +809,7 @@
       "label": "JSONResponse",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L239",
+      "source_location": "L127",
       "_origin": "ast",
       "id": "jsonresponse",
       "community": 24,
@@ -909,7 +819,7 @@
       "label": "chat_completions()",
       "file_type": "code",
       "source_file": "proxy/main.py",
-      "source_location": "L315",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "proxy_main_chat_completions",
       "community": 24,
@@ -1212,7 +1122,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "services_accountauthservice_accountauthservice_constructor",
-      "community": 49,
+      "community": 62,
       "norm_label": ".constructor()"
     },
     {
@@ -1362,7 +1272,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_agentcontroller",
-      "community": 10,
+      "community": 11,
       "norm_label": "agentcontroller.ts"
     },
     {
@@ -1372,7 +1282,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "services_agentcontroller_graphifyprovider",
-      "community": 10,
+      "community": 11,
       "norm_label": "graphifyprovider"
     },
     {
@@ -1382,7 +1292,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller",
-      "community": 10,
+      "community": 45,
       "norm_label": "agentcontroller"
     },
     {
@@ -1392,7 +1302,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_constructor",
-      "community": 10,
+      "community": 45,
       "norm_label": ".constructor()"
     },
     {
@@ -1402,7 +1312,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_registeripc",
-      "community": 10,
+      "community": 45,
       "norm_label": ".registeripc()"
     },
     {
@@ -1412,7 +1322,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_processdroppeditems",
-      "community": 10,
+      "community": 45,
       "norm_label": ".processdroppeditems()"
     },
     {
@@ -1422,7 +1332,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "services_agentcontroller_agentcontroller_sendstatus",
-      "community": 10,
+      "community": 45,
       "norm_label": ".sendstatus()"
     },
     {
@@ -1742,7 +1652,7 @@
       "source_location": "L330",
       "_origin": "ast",
       "id": "services_aisettingsservice_aisettingsservice_updatemanagedproxy",
-      "community": 35,
+      "community": 43,
       "norm_label": ".updatemanagedproxy()"
     },
     {
@@ -2182,7 +2092,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_buildinfoservice",
-      "community": 35,
+      "community": 49,
       "norm_label": "buildinfoservice.ts"
     },
     {
@@ -2192,7 +2102,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "services_buildinfoservice_normalizechannel",
-      "community": 35,
+      "community": 49,
       "norm_label": "normalizechannel()"
     },
     {
@@ -2202,7 +2112,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "services_buildinfoservice_stringvalue",
-      "community": 35,
+      "community": 49,
       "norm_label": "stringvalue()"
     },
     {
@@ -2212,7 +2122,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_buildinfoservice_loadbuildinfo",
-      "community": 35,
+      "community": 49,
       "norm_label": "loadbuildinfo()"
     },
     {
@@ -2222,7 +2132,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "services_buildinfoservice_firstreadablebuildinfopath",
-      "community": 35,
+      "community": 49,
       "norm_label": "firstreadablebuildinfopath()"
     },
     {
@@ -3382,7 +3292,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_embeddingservice",
-      "community": 56,
+      "community": 58,
       "norm_label": "embeddingservice.ts"
     },
     {
@@ -3392,7 +3302,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_embeddingservice_transformersmodule",
-      "community": 56,
+      "community": 58,
       "norm_label": "transformersmodule"
     },
     {
@@ -3402,7 +3312,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "services_embeddingservice_cachedembedding",
-      "community": 56,
+      "community": 58,
       "norm_label": "cachedembedding"
     },
     {
@@ -3412,7 +3322,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_embeddingservice_dynamicimport",
-      "community": 56,
+      "community": 58,
       "norm_label": "dynamicimport()"
     },
     {
@@ -3422,7 +3332,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "services_embeddingservice_dotproduct",
-      "community": 56,
+      "community": 58,
       "norm_label": "dotproduct()"
     },
     {
@@ -3432,7 +3342,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "services_embeddingservice_searchabletext",
-      "community": 56,
+      "community": 58,
       "norm_label": "searchabletext()"
     },
     {
@@ -3442,7 +3352,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "services_embeddingservice_fingerprintnode",
-      "community": 56,
+      "community": 58,
       "norm_label": "fingerprintnode()"
     },
     {
@@ -3452,7 +3362,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice",
-      "community": 56,
+      "community": 58,
       "norm_label": "embeddingservice"
     },
     {
@@ -3462,7 +3372,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_constructor",
-      "community": 56,
+      "community": 58,
       "norm_label": ".constructor()"
     },
     {
@@ -3472,7 +3382,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_generateembedding",
-      "community": 56,
+      "community": 58,
       "norm_label": ".generateembedding()"
     },
     {
@@ -3482,7 +3392,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embed",
-      "community": 56,
+      "community": 58,
       "norm_label": ".embed()"
     },
     {
@@ -3492,7 +3402,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_search",
-      "community": 56,
+      "community": 58,
       "norm_label": ".search()"
     },
     {
@@ -3502,7 +3412,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_embeddingfornode",
-      "community": 56,
+      "community": 58,
       "norm_label": ".embeddingfornode()"
     },
     {
@@ -3512,7 +3422,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_getextractor",
-      "community": 56,
+      "community": 58,
       "norm_label": ".getextractor()"
     },
     {
@@ -3522,7 +3432,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "services_embeddingservice_embeddingservice_loadextractor",
-      "community": 56,
+      "community": 58,
       "norm_label": ".loadextractor()"
     },
     {
@@ -4432,7 +4342,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "services_graphboardservice_graphboardservice_constructor",
-      "community": 33,
+      "community": 12,
       "norm_label": ".constructor()"
     },
     {
@@ -4622,7 +4532,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "services_graphragservice_graphragservice_constructor",
-      "community": 56,
+      "community": 58,
       "norm_label": ".constructor()"
     },
     {
@@ -5122,7 +5032,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_graphifycontextservice",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifycontextservice.ts"
     },
     {
@@ -5132,7 +5042,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifyinvocation",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifyinvocation"
     },
     {
@@ -5142,7 +5052,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifygraphnode",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifygraphnode"
     },
     {
@@ -5152,7 +5062,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifygraphlink",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifygraphlink"
     },
     {
@@ -5162,7 +5072,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifygraphdata",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifygraphdata"
     },
     {
@@ -5172,7 +5082,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "services_graphifycontextservice_readablecontextextensions",
-      "community": 36,
+      "community": 8,
       "norm_label": "readablecontextextensions"
     },
     {
@@ -5182,7 +5092,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphvocabularystoptokens",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphvocabularystoptokens"
     },
     {
@@ -5192,7 +5102,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "services_graphifycontextservice_quotecommandpart",
-      "community": 36,
+      "community": 8,
       "norm_label": "quotecommandpart()"
     },
     {
@@ -5202,7 +5112,7 @@
       "source_location": "L127",
       "_origin": "ast",
       "id": "services_graphifycontextservice_formatinvocation",
-      "community": 36,
+      "community": 8,
       "norm_label": "formatinvocation()"
     },
     {
@@ -5212,7 +5122,7 @@
       "source_location": "L131",
       "_origin": "ast",
       "id": "services_graphifycontextservice_formatmcptool",
-      "community": 36,
+      "community": 8,
       "norm_label": "formatmcptool()"
     },
     {
@@ -5222,7 +5132,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "services_graphifycontextservice_parseargs",
-      "community": 36,
+      "community": 8,
       "norm_label": "parseargs()"
     },
     {
@@ -5232,7 +5142,7 @@
       "source_location": "L185",
       "_origin": "ast",
       "id": "services_graphifycontextservice_normalizebudget",
-      "community": 36,
+      "community": 8,
       "norm_label": "normalizebudget()"
     },
     {
@@ -5242,7 +5152,7 @@
       "source_location": "L189",
       "_origin": "ast",
       "id": "services_graphifycontextservice_errormessage",
-      "community": 46,
+      "community": 8,
       "norm_label": "errormessage()"
     },
     {
@@ -5252,7 +5162,7 @@
       "source_location": "L193",
       "_origin": "ast",
       "id": "services_graphifycontextservice_extractcitations",
-      "community": 50,
+      "community": 8,
       "norm_label": "extractcitations()"
     },
     {
@@ -5262,7 +5172,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "services_graphifycontextservice_tokenize",
-      "community": 51,
+      "community": 8,
       "norm_label": "tokenize()"
     },
     {
@@ -5272,7 +5182,7 @@
       "source_location": "L226",
       "_origin": "ast",
       "id": "services_graphifycontextservice_linenumberfromlocation",
-      "community": 36,
+      "community": 8,
       "norm_label": "linenumberfromlocation()"
     },
     {
@@ -5282,7 +5192,7 @@
       "source_location": "L236",
       "_origin": "ast",
       "id": "services_graphifycontextservice_parseattributeblock",
-      "community": 36,
+      "community": 8,
       "norm_label": "parseattributeblock()"
     },
     {
@@ -5292,7 +5202,7 @@
       "source_location": "L254",
       "_origin": "ast",
       "id": "services_graphifycontextservice_sourcefilefromnode",
-      "community": 51,
+      "community": 8,
       "norm_label": "sourcefilefromnode()"
     },
     {
@@ -5302,7 +5212,7 @@
       "source_location": "L258",
       "_origin": "ast",
       "id": "services_graphifycontextservice_sourcelocationfromnode",
-      "community": 51,
+      "community": 8,
       "norm_label": "sourcelocationfromnode()"
     },
     {
@@ -5312,7 +5222,7 @@
       "source_location": "L262",
       "_origin": "ast",
       "id": "services_graphifycontextservice_nodelabel",
-      "community": 51,
+      "community": 8,
       "norm_label": "nodelabel()"
     },
     {
@@ -5322,7 +5232,7 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "services_graphifycontextservice_linkendpointid",
-      "community": 51,
+      "community": 8,
       "norm_label": "linkendpointid()"
     },
     {
@@ -5332,7 +5242,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "services_graphifycontextservice_parsetraversalnodehits",
-      "community": 36,
+      "community": 8,
       "norm_label": "parsetraversalnodehits()"
     },
     {
@@ -5342,7 +5252,7 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "services_graphifycontextservice_resolvetraversalnodehits",
-      "community": 50,
+      "community": 8,
       "norm_label": "resolvetraversalnodehits()"
     },
     {
@@ -5352,7 +5262,7 @@
       "source_location": "L380",
       "_origin": "ast",
       "id": "services_graphifycontextservice_citationfromnodehit",
-      "community": 36,
+      "community": 8,
       "norm_label": "citationfromnodehit()"
     },
     {
@@ -5362,7 +5272,7 @@
       "source_location": "L397",
       "_origin": "ast",
       "id": "services_graphifycontextservice_dedupecitations",
-      "community": 50,
+      "community": 8,
       "norm_label": "dedupecitations()"
     },
     {
@@ -5372,7 +5282,7 @@
       "source_location": "L409",
       "_origin": "ast",
       "id": "services_graphifycontextservice_buildinlinegraphtraversalstdout",
-      "community": 51,
+      "community": 8,
       "norm_label": "buildinlinegraphtraversalstdout()"
     },
     {
@@ -5382,7 +5292,7 @@
       "source_location": "L490",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontexttestutils",
-      "community": 36,
+      "community": 8,
       "norm_label": "graphifycontexttestutils"
     },
     {
@@ -5392,7 +5302,7 @@
       "source_location": "L498",
       "_origin": "ast",
       "id": "services_graphifycontextservice_normalizecandidatepath",
-      "community": 36,
+      "community": 8,
       "norm_label": "normalizecandidatepath()"
     },
     {
@@ -5402,7 +5312,7 @@
       "source_location": "L502",
       "_origin": "ast",
       "id": "services_graphifycontextservice_extractcontextpathcandidates",
-      "community": 36,
+      "community": 8,
       "norm_label": "extractcontextpathcandidates()"
     },
     {
@@ -5412,7 +5322,7 @@
       "source_location": "L527",
       "_origin": "ast",
       "id": "services_graphifycontextservice_slicebylocation",
-      "community": 50,
+      "community": 8,
       "norm_label": "slicebylocation()"
     },
     {
@@ -5422,7 +5332,7 @@
       "source_location": "L544",
       "_origin": "ast",
       "id": "services_graphifycontextservice_excerpttitle",
-      "community": 50,
+      "community": 8,
       "norm_label": "excerpttitle()"
     },
     {
@@ -5432,7 +5342,7 @@
       "source_location": "L548",
       "_origin": "ast",
       "id": "services_graphifycontextservice_asrecord",
-      "community": 51,
+      "community": 8,
       "norm_label": "asrecord()"
     },
     {
@@ -5442,7 +5352,7 @@
       "source_location": "L552",
       "_origin": "ast",
       "id": "services_graphifycontextservice_asstring",
-      "community": 51,
+      "community": 8,
       "norm_label": "asstring()"
     },
     {
@@ -5452,7 +5362,7 @@
       "source_location": "L556",
       "_origin": "ast",
       "id": "services_graphifycontextservice_compact",
-      "community": 36,
+      "community": 8,
       "norm_label": "compact()"
     },
     {
@@ -5462,7 +5372,7 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "services_graphifycontextservice_stringifymcptoolresult",
-      "community": 36,
+      "community": 8,
       "norm_label": "stringifymcptoolresult()"
     },
     {
@@ -5472,7 +5382,7 @@
       "source_location": "L589",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice",
-      "community": 46,
+      "community": 8,
       "norm_label": "graphifycontextservice"
     },
     {
@@ -5482,7 +5392,7 @@
       "source_location": "L595",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_constructor",
-      "community": 46,
+      "community": 8,
       "norm_label": ".constructor()"
     },
     {
@@ -5492,7 +5402,7 @@
       "source_location": "L602",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_query",
-      "community": 46,
+      "community": 8,
       "norm_label": ".query()"
     },
     {
@@ -5502,7 +5412,7 @@
       "source_location": "L623",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_explain",
-      "community": 46,
+      "community": 8,
       "norm_label": ".explain()"
     },
     {
@@ -5512,7 +5422,7 @@
       "source_location": "L640",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_tracepath",
-      "community": 46,
+      "community": 8,
       "norm_label": ".tracepath()"
     },
     {
@@ -5522,7 +5432,7 @@
       "source_location": "L663",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_saveresult",
-      "community": 46,
+      "community": 8,
       "norm_label": ".saveresult()"
     },
     {
@@ -5532,7 +5442,7 @@
       "source_location": "L690",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_rungraphifymcptool",
-      "community": 46,
+      "community": 8,
       "norm_label": ".rungraphifymcptool()"
     },
     {
@@ -5542,7 +5452,7 @@
       "source_location": "L779",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_buildcontextresult",
-      "community": 50,
+      "community": 8,
       "norm_label": ".buildcontextresult()"
     },
     {
@@ -5552,7 +5462,7 @@
       "source_location": "L824",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_rungraphifyclicontextcommand",
-      "community": 46,
+      "community": 8,
       "norm_label": ".rungraphifyclicontextcommand()"
     },
     {
@@ -5562,7 +5472,7 @@
       "source_location": "L858",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_readgraphdata",
-      "community": 51,
+      "community": 8,
       "norm_label": ".readgraphdata()"
     },
     {
@@ -5572,7 +5482,7 @@
       "source_location": "L866",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_expandquerytokens",
-      "community": 51,
+      "community": 8,
       "norm_label": ".expandquerytokens()"
     },
     {
@@ -5582,7 +5492,7 @@
       "source_location": "L912",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_resolvenodehits",
-      "community": 50,
+      "community": 8,
       "norm_label": ".resolvenodehits()"
     },
     {
@@ -5592,7 +5502,7 @@
       "source_location": "L916",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydratenodesourceexcerpts",
-      "community": 50,
+      "community": 8,
       "norm_label": ".hydratenodesourceexcerpts()"
     },
     {
@@ -5602,7 +5512,7 @@
       "source_location": "L1001",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_formatsourceexcerpts",
-      "community": 50,
+      "community": 8,
       "norm_label": ".formatsourceexcerpts()"
     },
     {
@@ -5612,7 +5522,7 @@
       "source_location": "L1012",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_runinlinegraphtraversal",
-      "community": 51,
+      "community": 8,
       "norm_label": ".runinlinegraphtraversal()"
     },
     {
@@ -5622,7 +5532,7 @@
       "source_location": "L1023",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_ensuremcpclient",
-      "community": 46,
+      "community": 8,
       "norm_label": ".ensuremcpclient()"
     },
     {
@@ -5632,7 +5542,7 @@
       "source_location": "L1069",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_stopmcp",
-      "community": 46,
+      "community": 8,
       "norm_label": ".stopmcp()"
     },
     {
@@ -5642,7 +5552,7 @@
       "source_location": "L1080",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_getgraphifymcpinvocations",
-      "community": 46,
+      "community": 8,
       "norm_label": ".getgraphifymcpinvocations()"
     },
     {
@@ -5652,7 +5562,7 @@
       "source_location": "L1138",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_getgraphifyinvocations",
-      "community": 46,
+      "community": 8,
       "norm_label": ".getgraphifyinvocations()"
     },
     {
@@ -5662,7 +5572,7 @@
       "source_location": "L1201",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifycommand",
-      "community": 46,
+      "community": 8,
       "norm_label": ".findbundledgraphifycommand()"
     },
     {
@@ -5672,7 +5582,7 @@
       "source_location": "L1219",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_findbundledgraphifypythoncommand",
-      "community": 46,
+      "community": 8,
       "norm_label": ".findbundledgraphifypythoncommand()"
     },
     {
@@ -5682,7 +5592,7 @@
       "source_location": "L1238",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifycommand",
-      "community": 46,
+      "community": 8,
       "norm_label": ".finduvtoolgraphifycommand()"
     },
     {
@@ -5692,7 +5602,7 @@
       "source_location": "L1272",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_finduvtoolgraphifypythoncommand",
-      "community": 46,
+      "community": 8,
       "norm_label": ".finduvtoolgraphifypythoncommand()"
     },
     {
@@ -5702,7 +5612,7 @@
       "source_location": "L1306",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_runinvocation",
-      "community": 46,
+      "community": 8,
       "norm_label": ".runinvocation()"
     },
     {
@@ -5712,7 +5622,7 @@
       "source_location": "L1314",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydratecontext",
-      "community": 50,
+      "community": 8,
       "norm_label": ".hydratecontext()"
     },
     {
@@ -5722,7 +5632,7 @@
       "source_location": "L1353",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydrategraphcarddefinitions",
-      "community": 51,
+      "community": 8,
       "norm_label": ".hydrategraphcarddefinitions()"
     },
     {
@@ -5732,7 +5642,7 @@
       "source_location": "L1407",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_hydratewikicontext",
-      "community": 36,
+      "community": 8,
       "norm_label": ".hydratewikicontext()"
     },
     {
@@ -5742,7 +5652,7 @@
       "source_location": "L1468",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_resolvecontextpath",
-      "community": 50,
+      "community": 8,
       "norm_label": ".resolvecontextpath()"
     },
     {
@@ -5752,7 +5662,7 @@
       "source_location": "L1479",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_isreadablecontextfile",
-      "community": 50,
+      "community": 8,
       "norm_label": ".isreadablecontextfile()"
     },
     {
@@ -5762,7 +5672,7 @@
       "source_location": "L1483",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_execcapture",
-      "community": 46,
+      "community": 8,
       "norm_label": ".execcapture()"
     },
     {
@@ -5772,7 +5682,7 @@
       "source_location": "L1512",
       "_origin": "ast",
       "id": "services_graphifycontextservice_graphifycontextservice_fileexists",
-      "community": 46,
+      "community": 8,
       "norm_label": ".fileexists()"
     },
     {
@@ -6212,7 +6122,7 @@
       "source_location": "L490",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller",
-      "community": 26,
+      "community": 46,
       "norm_label": "graphifycontroller"
     },
     {
@@ -6222,7 +6132,7 @@
       "source_location": "L519",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_constructor",
-      "community": 26,
+      "community": 46,
       "norm_label": ".constructor()"
     },
     {
@@ -6232,7 +6142,7 @@
       "source_location": "L541",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getrawvaultpath",
-      "community": 26,
+      "community": 46,
       "norm_label": ".getrawvaultpath()"
     },
     {
@@ -6242,7 +6152,7 @@
       "source_location": "L545",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphpath",
-      "community": 26,
+      "community": 46,
       "norm_label": ".getgraphpath()"
     },
     {
@@ -6252,7 +6162,7 @@
       "source_location": "L549",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphhtmlpath",
-      "community": 26,
+      "community": 46,
       "norm_label": ".getgraphhtmlpath()"
     },
     {
@@ -6262,7 +6172,7 @@
       "source_location": "L553",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getdefinitionstatus",
-      "community": 26,
+      "community": 46,
       "norm_label": ".getdefinitionstatus()"
     },
     {
@@ -6272,7 +6182,7 @@
       "source_location": "L557",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getmcpservercommand",
-      "community": 26,
+      "community": 46,
       "norm_label": ".getmcpservercommand()"
     },
     {
@@ -6282,7 +6192,7 @@
       "source_location": "L561",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readgraphhtml",
-      "community": 26,
+      "community": 29,
       "norm_label": ".readgraphhtml()"
     },
     {
@@ -6352,7 +6262,7 @@
       "source_location": "L737",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_groupgraphnodes",
-      "community": 29,
+      "community": 0,
       "norm_label": ".groupgraphnodes()"
     },
     {
@@ -6392,7 +6302,7 @@
       "source_location": "L953",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listmcptools",
-      "community": 8,
+      "community": 3,
       "norm_label": ".listmcptools()"
     },
     {
@@ -6562,7 +6472,7 @@
       "source_location": "L1613",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_updatedefinitionstatus",
-      "community": 26,
+      "community": 46,
       "norm_label": ".updatedefinitionstatus()"
     },
     {
@@ -6592,7 +6502,7 @@
       "source_location": "L1666",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldexportgraphhtml",
-      "community": 26,
+      "community": 29,
       "norm_label": ".shouldexportgraphhtml()"
     },
     {
@@ -6602,7 +6512,7 @@
       "source_location": "L1675",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_rungraphifycommandwithretry",
-      "community": 29,
+      "community": 46,
       "norm_label": ".rungraphifycommandwithretry()"
     },
     {
@@ -6622,7 +6532,7 @@
       "source_location": "L1763",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_withgraphifyproxyadapter",
-      "community": 29,
+      "community": 46,
       "norm_label": ".withgraphifyproxyadapter()"
     },
     {
@@ -6632,7 +6542,7 @@
       "source_location": "L1780",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_startgraphifyproxyadapter",
-      "community": 29,
+      "community": 46,
       "norm_label": ".startgraphifyproxyadapter()"
     },
     {
@@ -6642,7 +6552,7 @@
       "source_location": "L1805",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_closeserver",
-      "community": 29,
+      "community": 46,
       "norm_label": ".closeserver()"
     },
     {
@@ -6652,7 +6562,7 @@
       "source_location": "L1818",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_handlegraphifyproxyadapterrequest",
-      "community": 29,
+      "community": 46,
       "norm_label": ".handlegraphifyproxyadapterrequest()"
     },
     {
@@ -6662,7 +6572,7 @@
       "source_location": "L1884",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_readhttprequestbody",
-      "community": 26,
+      "community": 46,
       "norm_label": ".readhttprequestbody()"
     },
     {
@@ -6842,7 +6752,7 @@
       "source_location": "L2350",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getgraphifyretrymaxtokens",
-      "community": 29,
+      "community": 46,
       "norm_label": ".getgraphifyretrymaxtokens()"
     },
     {
@@ -6862,7 +6772,7 @@
       "source_location": "L2361",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_getstrictretrysettings",
-      "community": 29,
+      "community": 46,
       "norm_label": ".getstrictretrysettings()"
     },
     {
@@ -6872,7 +6782,7 @@
       "source_location": "L2368",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_canretrygraphifycommand",
-      "community": 29,
+      "community": 46,
       "norm_label": ".canretrygraphifycommand()"
     },
     {
@@ -6882,7 +6792,7 @@
       "source_location": "L2375",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_shouldretrywithstrictjson",
-      "community": 29,
+      "community": 46,
       "norm_label": ".shouldretrywithstrictjson()"
     },
     {
@@ -6892,7 +6802,7 @@
       "source_location": "L2381",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_enrichgraphifyerror",
-      "community": 29,
+      "community": 46,
       "norm_label": ".enrichgraphifyerror()"
     },
     {
@@ -6962,7 +6872,7 @@
       "source_location": "L2550",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_listcallflowhtmlcandidates",
-      "community": 26,
+      "community": 29,
       "norm_label": ".listcallflowhtmlcandidates()"
     },
     {
@@ -7002,7 +6912,7 @@
       "source_location": "L2627",
       "_origin": "ast",
       "id": "services_graphifycontroller_graphifycontroller_hasrawsourcefiles",
-      "community": 26,
+      "community": 46,
       "norm_label": ".hasrawsourcefiles()"
     },
     {
@@ -7072,7 +6982,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "services_llmservice_graphifymcptoolspec",
-      "community": 32,
+      "community": 3,
       "norm_label": "graphifymcptoolspec"
     },
     {
@@ -7166,20 +7076,10 @@
       "norm_label": "aisettingsprovider"
     },
     {
-      "label": "AccessTokenProvider",
-      "file_type": "code",
-      "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L98",
-      "_origin": "ast",
-      "id": "services_llmservice_accesstokenprovider",
-      "community": 32,
-      "norm_label": "accesstokenprovider"
-    },
-    {
       "label": "TokenParameterName",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L99",
+      "source_location": "L98",
       "_origin": "ast",
       "id": "services_llmservice_tokenparametername",
       "community": 32,
@@ -7189,7 +7089,7 @@
       "label": "ChatAttemptOptions",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L101",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "services_llmservice_chatattemptoptions",
       "community": 32,
@@ -7199,7 +7099,7 @@
       "label": "normalizeOptionalLine()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L108",
+      "source_location": "L107",
       "_origin": "ast",
       "id": "services_llmservice_normalizeoptionalline",
       "community": 32,
@@ -7209,7 +7109,7 @@
       "label": "normalizeDefinition()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L112",
+      "source_location": "L111",
       "_origin": "ast",
       "id": "services_llmservice_normalizedefinition",
       "community": 32,
@@ -7219,7 +7119,7 @@
       "label": "shouldRetryWithFallback()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L126",
+      "source_location": "L125",
       "_origin": "ast",
       "id": "services_llmservice_shouldretrywithfallback",
       "community": 32,
@@ -7229,7 +7129,7 @@
       "label": "sanitizeErrorText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L130",
+      "source_location": "L129",
       "_origin": "ast",
       "id": "services_llmservice_sanitizeerrortext",
       "community": 32,
@@ -7239,7 +7139,7 @@
       "label": "errorText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L134",
+      "source_location": "L133",
       "_origin": "ast",
       "id": "services_llmservice_errortext",
       "community": 32,
@@ -7249,7 +7149,7 @@
       "label": "providerRejectsMaxTokens()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L138",
+      "source_location": "L137",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectsmaxtokens",
       "community": 32,
@@ -7259,7 +7159,7 @@
       "label": "providerRejectsTemperature()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L142",
+      "source_location": "L141",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectstemperature",
       "community": 32,
@@ -7269,7 +7169,7 @@
       "label": "providerRejectsJsonMode()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L146",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "services_llmservice_providerrejectsjsonmode",
       "community": 32,
@@ -7279,7 +7179,7 @@
       "label": "extractContentPart()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L150",
+      "source_location": "L149",
       "_origin": "ast",
       "id": "services_llmservice_extractcontentpart",
       "community": 32,
@@ -7289,7 +7189,7 @@
       "label": "extractChatContent()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L177",
+      "source_location": "L176",
       "_origin": "ast",
       "id": "services_llmservice_extractchatcontent",
       "community": 32,
@@ -7299,7 +7199,7 @@
       "label": "extractProxyChatContent()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L188",
+      "source_location": "L187",
       "_origin": "ast",
       "id": "services_llmservice_extractproxychatcontent",
       "community": 32,
@@ -7309,7 +7209,7 @@
       "label": "extractChunkDelta()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L192",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "services_llmservice_extractchunkdelta",
       "community": 32,
@@ -7319,7 +7219,7 @@
       "label": "parseSseLines()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L209",
+      "source_location": "L208",
       "_origin": "ast",
       "id": "services_llmservice_parsesselines",
       "community": 32,
@@ -7329,7 +7229,7 @@
       "label": "LlmService",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L223",
+      "source_location": "L222",
       "_origin": "ast",
       "id": "services_llmservice_llmservice",
       "community": 32,
@@ -7339,7 +7239,7 @@
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L226",
+      "source_location": "L225",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_constructor",
       "community": 32,
@@ -7349,7 +7249,7 @@
       "label": ".completeJsonObject()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L237",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completejsonobject",
       "community": 32,
@@ -7359,7 +7259,7 @@
       "label": ".planLocalToolCall()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L264",
+      "source_location": "L262",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_planlocaltoolcall",
       "community": 32,
@@ -7369,7 +7269,7 @@
       "label": ".defineGraphCards()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L312",
+      "source_location": "L310",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_definegraphcards",
       "community": 32,
@@ -7379,7 +7279,7 @@
       "label": ".completeText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L355",
+      "source_location": "L353",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetext",
       "community": 32,
@@ -7389,7 +7289,7 @@
       "label": ".streamText()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L362",
+      "source_location": "L360",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_streamtext",
       "community": 32,
@@ -7399,7 +7299,7 @@
       "label": ".completeTextWithRetry()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L373",
+      "source_location": "L371",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetextwithretry",
       "community": 32,
@@ -7409,7 +7309,7 @@
       "label": ".completeTextAttempt()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L393",
+      "source_location": "L391",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_completetextattempt",
       "community": 32,
@@ -7419,7 +7319,7 @@
       "label": ".requestChatCompletion()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L445",
+      "source_location": "L443",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_requestchatcompletion",
       "community": 32,
@@ -7429,7 +7329,7 @@
       "label": ".streamTextAttempt()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L526",
+      "source_location": "L524",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_streamtextattempt",
       "community": 32,
@@ -7439,7 +7339,7 @@
       "label": ".requestProxyChat()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L663",
+      "source_location": "L661",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_requestproxychat",
       "community": 32,
@@ -7449,7 +7349,7 @@
       "label": ".enqueue()",
       "file_type": "code",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L723",
+      "source_location": "L716",
       "_origin": "ast",
       "id": "services_llmservice_llmservice_enqueue",
       "community": 32,
@@ -7752,7 +7652,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_logservice",
-      "community": 49,
+      "community": 36,
       "norm_label": "logservice.ts"
     },
     {
@@ -7762,7 +7662,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "services_logservice_logprovider",
-      "community": 49,
+      "community": 36,
       "norm_label": "logprovider"
     },
     {
@@ -7772,7 +7672,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "services_logservice_accesstokenprovider",
-      "community": 49,
+      "community": 36,
       "norm_label": "accesstokenprovider"
     },
     {
@@ -7782,7 +7682,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "services_logservice_logrecord",
-      "community": 49,
+      "community": 36,
       "norm_label": "logrecord"
     },
     {
@@ -7792,7 +7692,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "services_logservice_errormessage",
-      "community": 49,
+      "community": 36,
       "norm_label": "errormessage()"
     },
     {
@@ -7802,7 +7702,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "services_logservice_redactstring",
-      "community": 49,
+      "community": 36,
       "norm_label": "redactstring()"
     },
     {
@@ -7812,7 +7712,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "services_logservice_redact",
-      "community": 49,
+      "community": 36,
       "norm_label": "redact()"
     },
     {
@@ -7822,7 +7722,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "services_logservice_logservice",
-      "community": 49,
+      "community": 36,
       "norm_label": "logservice"
     },
     {
@@ -7832,7 +7732,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "services_logservice_logservice_constructor",
-      "community": 49,
+      "community": 62,
       "norm_label": ".constructor()"
     },
     {
@@ -7842,7 +7742,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "services_logservice_logservice_info",
-      "community": 49,
+      "community": 36,
       "norm_label": ".info()"
     },
     {
@@ -7852,7 +7752,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "services_logservice_logservice_warn",
-      "community": 49,
+      "community": 36,
       "norm_label": ".warn()"
     },
     {
@@ -7862,7 +7762,7 @@
       "source_location": "L98",
       "_origin": "ast",
       "id": "services_logservice_logservice_error",
-      "community": 49,
+      "community": 36,
       "norm_label": ".error()"
     },
     {
@@ -7872,7 +7772,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "services_logservice_logservice_flushpending",
-      "community": 49,
+      "community": 36,
       "norm_label": ".flushpending()"
     },
     {
@@ -7882,7 +7782,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "services_logservice_logservice_write",
-      "community": 49,
+      "community": 36,
       "norm_label": ".write()"
     },
     {
@@ -7892,7 +7792,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "services_logservice_logservice_upload",
-      "community": 49,
+      "community": 36,
       "norm_label": ".upload()"
     },
     {
@@ -8502,7 +8402,7 @@
       "source_location": "L253",
       "_origin": "ast",
       "id": "services_researchservice_researchservice_savenodenote",
-      "community": 43,
+      "community": 33,
       "norm_label": ".savenodenote()"
     },
     {
@@ -8642,7 +8542,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "services_runtimecommandpaths_iscmdshim",
-      "community": 36,
+      "community": 8,
       "norm_label": "iscmdshim()"
     },
     {
@@ -9092,7 +8992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "services_storageservice",
-      "community": 56,
+      "community": 51,
       "norm_label": "storageservice.ts"
     },
     {
@@ -9102,7 +9002,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "services_storageservice_uuidmodule",
-      "community": 56,
+      "community": 51,
       "norm_label": "uuidmodule"
     },
     {
@@ -9112,7 +9012,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "services_storageservice_createuuid",
-      "community": 56,
+      "community": 51,
       "norm_label": "createuuid()"
     },
     {
@@ -9122,7 +9022,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "services_storageservice_wordsin",
-      "community": 56,
+      "community": 51,
       "norm_label": "wordsin()"
     },
     {
@@ -9132,7 +9032,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "services_storageservice_stringarray",
-      "community": 56,
+      "community": 51,
       "norm_label": "stringarray()"
     },
     {
@@ -9142,7 +9042,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "services_storageservice_optionalstringarray",
-      "community": 56,
+      "community": 51,
       "norm_label": "optionalstringarray()"
     },
     {
@@ -9152,7 +9052,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "services_storageservice_clampimportance",
-      "community": 56,
+      "community": 51,
       "norm_label": "clampimportance()"
     },
     {
@@ -9162,7 +9062,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "services_storageservice_isuservalidationstate",
-      "community": 56,
+      "community": 51,
       "norm_label": "isuservalidationstate()"
     },
     {
@@ -9172,7 +9072,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "services_storageservice_slugifyfilepart",
-      "community": 56,
+      "community": 51,
       "norm_label": "slugifyfilepart()"
     },
     {
@@ -9182,7 +9082,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "services_storageservice_storageservice",
-      "community": 56,
+      "community": 51,
       "norm_label": "storageservice"
     },
     {
@@ -9192,7 +9092,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_constructor",
-      "community": 56,
+      "community": 51,
       "norm_label": ".constructor()"
     },
     {
@@ -9202,7 +9102,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_getvaultpath",
-      "community": 56,
+      "community": 51,
       "norm_label": ".getvaultpath()"
     },
     {
@@ -9212,7 +9112,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_initialize",
-      "community": 56,
+      "community": 51,
       "norm_label": ".initialize()"
     },
     {
@@ -9222,7 +9122,7 @@
       "source_location": "L82",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_writenode",
-      "community": 56,
+      "community": 51,
       "norm_label": ".writenode()"
     },
     {
@@ -9232,7 +9132,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnode",
-      "community": 56,
+      "community": 51,
       "norm_label": ".readnode()"
     },
     {
@@ -9242,7 +9142,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_ingestfragment",
-      "community": 56,
+      "community": 51,
       "norm_label": ".ingestfragment()"
     },
     {
@@ -9252,7 +9152,7 @@
       "source_location": "L126",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_addconnection",
-      "community": 56,
+      "community": 51,
       "norm_label": ".addconnection()"
     },
     {
@@ -9262,7 +9162,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_updatenodesignals",
-      "community": 56,
+      "community": 51,
       "norm_label": ".updatenodesignals()"
     },
     {
@@ -9272,7 +9172,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_fetchfilesegments",
-      "community": 56,
+      "community": 51,
       "norm_label": ".fetchfilesegments()"
     },
     {
@@ -9282,7 +9182,7 @@
       "source_location": "L180",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listnodes",
-      "community": 56,
+      "community": 51,
       "norm_label": ".listnodes()"
     },
     {
@@ -9292,7 +9192,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_normalizeinput",
-      "community": 56,
+      "community": 51,
       "norm_label": ".normalizeinput()"
     },
     {
@@ -9302,7 +9202,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_validatefrontmatter",
-      "community": 56,
+      "community": 51,
       "norm_label": ".validatefrontmatter()"
     },
     {
@@ -9312,7 +9212,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_readnodefile",
-      "community": 56,
+      "community": 51,
       "norm_label": ".readnodefile()"
     },
     {
@@ -9322,7 +9222,7 @@
       "source_location": "L295",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_findnodepath",
-      "community": 56,
+      "community": 51,
       "norm_label": ".findnodepath()"
     },
     {
@@ -9332,7 +9232,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_parsemarkdownsections",
-      "community": 56,
+      "community": 51,
       "norm_label": ".parsemarkdownsections()"
     },
     {
@@ -9342,7 +9242,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "services_storageservice_storageservice_listmarkdownfiles",
-      "community": 56,
+      "community": 51,
       "norm_label": ".listmarkdownfiles()"
     },
     {
@@ -10202,7 +10102,7 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "components_chatworkbench_chatworkbench",
-      "community": 25,
+      "community": 5,
       "norm_label": "chatworkbench()"
     },
     {
@@ -10272,7 +10172,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "components_droptarget_droptarget",
-      "community": 54,
+      "community": 59,
       "norm_label": "droptarget()"
     },
     {
@@ -10512,7 +10412,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_projectlist",
-      "community": 54,
+      "community": 59,
       "norm_label": "projectlist.tsx"
     },
     {
@@ -10522,7 +10422,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "components_projectlist_projectlistprops",
-      "community": 54,
+      "community": 59,
       "norm_label": "projectlistprops"
     },
     {
@@ -10532,7 +10432,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "components_projectlist_projectlist",
-      "community": 54,
+      "community": 59,
       "norm_label": "projectlist()"
     },
     {
@@ -10612,7 +10512,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_sidebar",
-      "community": 54,
+      "community": 59,
       "norm_label": "sidebar.tsx"
     },
     {
@@ -10622,7 +10522,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "components_sidebar_sidebarprops",
-      "community": 54,
+      "community": 59,
       "norm_label": "sidebarprops"
     },
     {
@@ -10632,7 +10532,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "components_sidebar_sidebar",
-      "community": 54,
+      "community": 59,
       "norm_label": "sidebar()"
     },
     {
@@ -10862,7 +10762,7 @@
       "source_location": "L81",
       "_origin": "ast",
       "id": "components_trackertable_trackertable",
-      "community": 25,
+      "community": 5,
       "norm_label": "trackertable()"
     },
     {
@@ -10872,7 +10772,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "lib_browserapifallback",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserapifallback.ts"
     },
     {
@@ -10882,7 +10782,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "lib_browserapifallback_trackerstatushandlers",
-      "community": 20,
+      "community": 31,
       "norm_label": "trackerstatushandlers"
     },
     {
@@ -10892,7 +10792,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "lib_browserapifallback_chatstreamhandlers",
-      "community": 20,
+      "community": 31,
       "norm_label": "chatstreamhandlers"
     },
     {
@@ -10902,7 +10802,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "lib_browserapifallback_browsertrackers",
-      "community": 20,
+      "community": 31,
       "norm_label": "browsertrackers"
     },
     {
@@ -10912,7 +10812,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserenv",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserenv"
     },
     {
@@ -10922,7 +10822,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserbuildinfo",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserbuildinfo"
     },
     {
@@ -10932,7 +10832,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserprojects",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserprojects"
     },
     {
@@ -10942,7 +10842,7 @@
       "source_location": "L69",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorertree",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserexplorertree"
     },
     {
@@ -10952,7 +10852,7 @@
       "source_location": "L121",
       "_origin": "ast",
       "id": "lib_browserapifallback_browseraisettings",
-      "community": 20,
+      "community": 31,
       "norm_label": "browseraisettings"
     },
     {
@@ -10962,7 +10862,7 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserappsettings",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserappsettings"
     },
     {
@@ -10972,7 +10872,7 @@
       "source_location": "L167",
       "_origin": "ast",
       "id": "lib_browserapifallback_createbrowserpreviewthread",
-      "community": 20,
+      "community": 31,
       "norm_label": "createbrowserpreviewthread()"
     },
     {
@@ -10982,7 +10882,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "lib_browserapifallback_unusedfreshthread",
-      "community": 20,
+      "community": 31,
       "norm_label": "unusedfreshthread()"
     },
     {
@@ -10992,7 +10892,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserthreads",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserthreads"
     },
     {
@@ -11002,7 +10902,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "lib_browserapifallback_browseraccountstate",
-      "community": 20,
+      "community": 31,
       "norm_label": "browseraccountstate()"
     },
     {
@@ -11012,7 +10912,7 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorernode",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserexplorernode()"
     },
     {
@@ -11022,7 +10922,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorerchild",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserexplorerchild()"
     },
     {
@@ -11032,7 +10932,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserexplorerchildren",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserexplorerchildren()"
     },
     {
@@ -11042,7 +10942,7 @@
       "source_location": "L235",
       "_origin": "ast",
       "id": "lib_browserapifallback_browsereffectiveaisettings",
-      "community": 20,
+      "community": 31,
       "norm_label": "browsereffectiveaisettings()"
     },
     {
@@ -11052,7 +10952,7 @@
       "source_location": "L249",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserresearchdependencyreport",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserresearchdependencyreport"
     },
     {
@@ -11062,7 +10962,7 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserruntimestatus",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserruntimestatus"
     },
     {
@@ -11072,7 +10972,7 @@
       "source_location": "L297",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaper",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserpaper"
     },
     {
@@ -11082,7 +10982,7 @@
       "source_location": "L306",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserdefinitionstatus",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserdefinitionstatus"
     },
     {
@@ -11092,7 +10992,7 @@
       "source_location": "L315",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserpaperdetails",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserpaperdetails"
     },
     {
@@ -11102,7 +11002,7 @@
       "source_location": "L331",
       "_origin": "ast",
       "id": "lib_browserapifallback_compact",
-      "community": 20,
+      "community": 31,
       "norm_label": "compact()"
     },
     {
@@ -11112,7 +11012,7 @@
       "source_location": "L335",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizeline",
-      "community": 20,
+      "community": 31,
       "norm_label": "normalizeline()"
     },
     {
@@ -11122,7 +11022,7 @@
       "source_location": "L339",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerstatus",
-      "community": 20,
+      "community": 31,
       "norm_label": "normalizetrackerstatus()"
     },
     {
@@ -11132,7 +11032,7 @@
       "source_location": "L349",
       "_origin": "ast",
       "id": "lib_browserapifallback_normalizetrackerpriority",
-      "community": 20,
+      "community": 31,
       "norm_label": "normalizetrackerpriority()"
     },
     {
@@ -11142,7 +11042,7 @@
       "source_location": "L353",
       "_origin": "ast",
       "id": "lib_browserapifallback_emittrackerstatus",
-      "community": 20,
+      "community": 31,
       "norm_label": "emittrackerstatus()"
     },
     {
@@ -11152,7 +11052,7 @@
       "source_location": "L359",
       "_origin": "ast",
       "id": "lib_browserapifallback_emitchatstreamevent",
-      "community": 20,
+      "community": 31,
       "norm_label": "emitchatstreamevent()"
     },
     {
@@ -11162,7 +11062,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "lib_browserapifallback_readdroppedcontent",
-      "community": 20,
+      "community": 31,
       "norm_label": "readdroppedcontent()"
     },
     {
@@ -11172,7 +11072,7 @@
       "source_location": "L373",
       "_origin": "ast",
       "id": "lib_browserapifallback_processdroppeditemsinbrowser",
-      "community": 20,
+      "community": 31,
       "norm_label": "processdroppeditemsinbrowser()"
     },
     {
@@ -11182,7 +11082,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "lib_browserapifallback_browserapifallback",
-      "community": 20,
+      "community": 31,
       "norm_label": "browserapifallback"
     },
     {
@@ -11192,7 +11092,7 @@
       "source_location": "L1152",
       "_origin": "ast",
       "id": "lib_browserapifallback_installbrowserapifallback",
-      "community": 5,
+      "community": 20,
       "norm_label": "installbrowserapifallback()"
     },
     {
@@ -11282,7 +11182,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "renderer_main",
-      "community": 5,
+      "community": 20,
       "norm_label": "main.tsx"
     },
     {
@@ -11292,7 +11192,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "renderer_main_params",
-      "community": 5,
+      "community": 20,
       "norm_label": "params"
     },
     {
@@ -11302,7 +11202,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "renderer_main_windowname",
-      "community": 5,
+      "community": 20,
       "norm_label": "windowname"
     },
     {
@@ -11352,7 +11252,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "stores_useprojectstore",
-      "community": 55,
+      "community": 27,
       "norm_label": "useprojectstore.ts"
     },
     {
@@ -11362,7 +11262,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "stores_useprojectstore_projectstate",
-      "community": 55,
+      "community": 27,
       "norm_label": "projectstate"
     },
     {
@@ -11372,7 +11272,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "stores_useprojectstore_activefrom",
-      "community": 55,
+      "community": 27,
       "norm_label": "activefrom()"
     },
     {
@@ -11382,7 +11282,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "stores_useprojectstore_useprojectstore",
-      "community": 54,
+      "community": 59,
       "norm_label": "useprojectstore"
     },
     {
@@ -11412,7 +11312,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "stores_usetrackerstore_usetrackerstore",
-      "community": 25,
+      "community": 5,
       "norm_label": "usetrackerstore"
     },
     {
@@ -11422,7 +11322,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "views_floatingwidget",
-      "community": 10,
+      "community": 20,
       "norm_label": "floatingwidget.tsx"
     },
     {
@@ -11432,7 +11332,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "views_floatingwidget_droptone",
-      "community": 10,
+      "community": 20,
       "norm_label": "droptone"
     },
     {
@@ -11442,7 +11342,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "views_floatingwidget_dragstate",
-      "community": 10,
+      "community": 20,
       "norm_label": "dragstate"
     },
     {
@@ -11452,7 +11352,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "views_floatingwidget_tonecolors",
-      "community": 10,
+      "community": 20,
       "norm_label": "tonecolors"
     },
     {
@@ -11462,7 +11362,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "views_floatingwidget_inferdroptone",
-      "community": 10,
+      "community": 20,
       "norm_label": "inferdroptone()"
     },
     {
@@ -11472,7 +11372,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "views_floatingwidget_toprocessitems",
-      "community": 10,
+      "community": 20,
       "norm_label": "toprocessitems()"
     },
     {
@@ -11482,7 +11382,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "views_floatingwidget_floatingwidget",
-      "community": 5,
+      "community": 20,
       "norm_label": "floatingwidget()"
     },
     {
@@ -11582,7 +11482,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "views_mainapp_mainapp",
-      "community": 5,
+      "community": 20,
       "norm_label": "mainapp()"
     },
     {
@@ -11602,7 +11502,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_brain_brainnodefrontmatter",
-      "community": 56,
+      "community": 51,
       "norm_label": "brainnodefrontmatter"
     },
     {
@@ -11612,7 +11512,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "shared_brain_uservalidationstate",
-      "community": 43,
+      "community": 53,
       "norm_label": "uservalidationstate"
     },
     {
@@ -11632,7 +11532,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "shared_brain_appbuildinfo",
-      "community": 49,
+      "community": 62,
       "norm_label": "appbuildinfo"
     },
     {
@@ -11642,7 +11542,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "shared_brain_brainnode",
-      "community": 56,
+      "community": 51,
       "norm_label": "brainnode"
     },
     {
@@ -11652,7 +11552,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "shared_brain_writebrainnodeinput",
-      "community": 47,
+      "community": 51,
       "norm_label": "writebrainnodeinput"
     },
     {
@@ -11662,7 +11562,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "shared_brain_listbrainnodesinput",
-      "community": 11,
+      "community": 51,
       "norm_label": "listbrainnodesinput"
     },
     {
@@ -11672,7 +11572,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "shared_brain_searchbrainnodesinput",
-      "community": 47,
+      "community": 58,
       "norm_label": "searchbrainnodesinput"
     },
     {
@@ -11682,7 +11582,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "shared_brain_brainsearchresult",
-      "community": 43,
+      "community": 58,
       "norm_label": "brainsearchresult"
     },
     {
@@ -11742,7 +11642,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "shared_brain_ingestandroutefragmentresult",
-      "community": 10,
+      "community": 11,
       "norm_label": "ingestandroutefragmentresult"
     },
     {
@@ -11752,7 +11652,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "shared_brain_boardchildnode",
-      "community": 43,
+      "community": 56,
       "norm_label": "boardchildnode"
     },
     {
@@ -11762,7 +11662,7 @@
       "source_location": "L113",
       "_origin": "ast",
       "id": "shared_brain_organizedboardtopic",
-      "community": 43,
+      "community": 56,
       "norm_label": "organizedboardtopic"
     },
     {
@@ -11772,7 +11672,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "shared_brain_exportboardplaintextinput",
-      "community": 11,
+      "community": 56,
       "norm_label": "exportboardplaintextinput"
     },
     {
@@ -11782,7 +11682,7 @@
       "source_location": "L122",
       "_origin": "ast",
       "id": "shared_brain_updatenodesignalsinput",
-      "community": 43,
+      "community": 51,
       "norm_label": "updatenodesignalsinput"
     },
     {
@@ -11792,7 +11692,7 @@
       "source_location": "L129",
       "_origin": "ast",
       "id": "shared_brain_processdroppeditem",
-      "community": 10,
+      "community": 3,
       "norm_label": "processdroppeditem"
     },
     {
@@ -11842,7 +11742,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "shared_brain_managedproxysettings",
-      "community": 35,
+      "community": 43,
       "norm_label": "managedproxysettings"
     },
     {
@@ -11852,7 +11752,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "shared_brain_accountaccessstatus",
-      "community": 43,
+      "community": 48,
       "norm_label": "accountaccessstatus"
     },
     {
@@ -11862,7 +11762,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "shared_brain_accountusagesnapshot",
-      "community": 43,
+      "community": 48,
       "norm_label": "accountusagesnapshot"
     },
     {
@@ -11892,7 +11792,7 @@
       "source_location": "L216",
       "_origin": "ast",
       "id": "shared_brain_accountsignininput",
-      "community": 20,
+      "community": 48,
       "norm_label": "accountsignininput"
     },
     {
@@ -11902,7 +11802,7 @@
       "source_location": "L221",
       "_origin": "ast",
       "id": "shared_brain_updateaisettingsinput",
-      "community": 47,
+      "community": 35,
       "norm_label": "updateaisettingsinput"
     },
     {
@@ -11912,7 +11812,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "shared_brain_updatemanagedproxysettingsinput",
-      "community": 20,
+      "community": 43,
       "norm_label": "updatemanagedproxysettingsinput"
     },
     {
@@ -11932,7 +11832,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "shared_brain_graphifyruntimesettings",
-      "community": 35,
+      "community": 43,
       "norm_label": "graphifyruntimesettings"
     },
     {
@@ -11942,7 +11842,7 @@
       "source_location": "L240",
       "_origin": "ast",
       "id": "shared_brain_appearancesettings",
-      "community": 35,
+      "community": 43,
       "norm_label": "appearancesettings"
     },
     {
@@ -11982,7 +11882,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "shared_brain_updateappsettingsinput",
-      "community": 20,
+      "community": 35,
       "norm_label": "updateappsettingsinput"
     },
     {
@@ -11992,7 +11892,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "shared_brain_graphifycontextcitation",
-      "community": 43,
+      "community": 8,
       "norm_label": "graphifycontextcitation"
     },
     {
@@ -12002,7 +11902,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "shared_brain_graphifycontextnodehit",
-      "community": 50,
+      "community": 8,
       "norm_label": "graphifycontextnodehit"
     },
     {
@@ -12012,7 +11912,7 @@
       "source_location": "L286",
       "_origin": "ast",
       "id": "shared_brain_graphifycontextsourceexcerpt",
-      "community": 50,
+      "community": 8,
       "norm_label": "graphifycontextsourceexcerpt"
     },
     {
@@ -12092,7 +11992,7 @@
       "source_location": "L347",
       "_origin": "ast",
       "id": "shared_brain_proposedtrackerdraft",
-      "community": 43,
+      "community": 25,
       "norm_label": "proposedtrackerdraft"
     },
     {
@@ -12132,7 +12032,7 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "shared_brain_chatsendinput",
-      "community": 47,
+      "community": 4,
       "norm_label": "chatsendinput"
     },
     {
@@ -12162,7 +12062,7 @@
       "source_location": "L403",
       "_origin": "ast",
       "id": "shared_brain_chatstreamevent",
-      "community": 20,
+      "community": 25,
       "norm_label": "chatstreamevent"
     },
     {
@@ -12232,7 +12132,7 @@
       "source_location": "L509",
       "_origin": "ast",
       "id": "shared_brain_createprojectinput",
-      "community": 55,
+      "community": 27,
       "norm_label": "createprojectinput"
     },
     {
@@ -12242,7 +12142,7 @@
       "source_location": "L513",
       "_origin": "ast",
       "id": "shared_brain_renameprojectinput",
-      "community": 55,
+      "community": 27,
       "norm_label": "renameprojectinput"
     },
     {
@@ -12252,7 +12152,7 @@
       "source_location": "L518",
       "_origin": "ast",
       "id": "shared_brain_projectselectioninput",
-      "community": 47,
+      "community": 27,
       "norm_label": "projectselectioninput"
     },
     {
@@ -12292,7 +12192,7 @@
       "source_location": "L548",
       "_origin": "ast",
       "id": "shared_brain_graphdefinitionstatus",
-      "community": 26,
+      "community": 46,
       "norm_label": "graphdefinitionstatus"
     },
     {
@@ -12302,7 +12202,7 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "shared_brain_graphboardneighbor",
-      "community": 43,
+      "community": 12,
       "norm_label": "graphboardneighbor"
     },
     {
@@ -12312,7 +12212,7 @@
       "source_location": "L569",
       "_origin": "ast",
       "id": "shared_brain_researchpaperstatus",
-      "community": 43,
+      "community": 12,
       "norm_label": "researchpaperstatus"
     },
     {
@@ -12342,7 +12242,7 @@
       "source_location": "L593",
       "_origin": "ast",
       "id": "shared_brain_researchdependencyreport",
-      "community": 20,
+      "community": 3,
       "norm_label": "researchdependencyreport"
     },
     {
@@ -12362,7 +12262,7 @@
       "source_location": "L611",
       "_origin": "ast",
       "id": "shared_brain_researchpapernote",
-      "community": 43,
+      "community": 33,
       "norm_label": "researchpapernote"
     },
     {
@@ -12372,7 +12272,7 @@
       "source_location": "L617",
       "_origin": "ast",
       "id": "shared_brain_researchliteraturematrix",
-      "community": 43,
+      "community": 33,
       "norm_label": "researchliteraturematrix"
     },
     {
@@ -12382,7 +12282,7 @@
       "source_location": "L626",
       "_origin": "ast",
       "id": "shared_brain_researchthesislink",
-      "community": 43,
+      "community": 33,
       "norm_label": "researchthesislink"
     },
     {
@@ -12392,7 +12292,7 @@
       "source_location": "L633",
       "_origin": "ast",
       "id": "shared_brain_researchpaperdetails",
-      "community": 20,
+      "community": 33,
       "norm_label": "researchpaperdetails"
     },
     {
@@ -12402,7 +12302,7 @@
       "source_location": "L648",
       "_origin": "ast",
       "id": "shared_brain_updateresearchpaperstatusinput",
-      "community": 47,
+      "community": 33,
       "norm_label": "updateresearchpaperstatusinput"
     },
     {
@@ -12412,7 +12312,7 @@
       "source_location": "L653",
       "_origin": "ast",
       "id": "shared_brain_saveresearchnodenoteinput",
-      "community": 43,
+      "community": 33,
       "norm_label": "saveresearchnodenoteinput"
     },
     {
@@ -12432,7 +12332,7 @@
       "source_location": "L663",
       "_origin": "ast",
       "id": "shared_brain_callflowhtmldocument",
-      "community": 43,
+      "community": 12,
       "norm_label": "callflowhtmldocument"
     },
     {
@@ -12482,7 +12382,7 @@
       "source_location": "L691",
       "_origin": "ast",
       "id": "shared_brain_trackerlistinput",
-      "community": 20,
+      "community": 31,
       "norm_label": "trackerlistinput"
     },
     {
@@ -12492,7 +12392,7 @@
       "source_location": "L695",
       "_origin": "ast",
       "id": "shared_brain_createtrackerinput",
-      "community": 47,
+      "community": 31,
       "norm_label": "createtrackerinput"
     },
     {
@@ -12502,7 +12402,7 @@
       "source_location": "L706",
       "_origin": "ast",
       "id": "shared_brain_updatetrackerinput",
-      "community": 45,
+      "community": 31,
       "norm_label": "updatetrackerinput"
     },
     {
@@ -12532,7 +12432,7 @@
       "source_location": "L729",
       "_origin": "ast",
       "id": "shared_brain_processdroppeditemsresult",
-      "community": 10,
+      "community": 59,
       "norm_label": "processdroppeditemsresult"
     },
     {
@@ -12552,7 +12452,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "shared_ipc",
-      "community": 43,
+      "community": 11,
       "norm_label": "ipc.ts"
     },
     {
@@ -12592,7 +12492,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "shared_ipc_brainchannels",
-      "community": 10,
+      "community": 11,
       "norm_label": "brainchannels"
     },
     {
@@ -12602,7 +12502,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannels",
-      "community": 10,
+      "community": 11,
       "norm_label": "trackerchannels"
     },
     {
@@ -12712,7 +12612,7 @@
       "source_location": "L310",
       "_origin": "ast",
       "id": "shared_ipc_windowchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "windowchannel"
     },
     {
@@ -12722,7 +12622,7 @@
       "source_location": "L311",
       "_origin": "ast",
       "id": "shared_ipc_appchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "appchannel"
     },
     {
@@ -12732,7 +12632,7 @@
       "source_location": "L312",
       "_origin": "ast",
       "id": "shared_ipc_filechannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "filechannel"
     },
     {
@@ -12742,7 +12642,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "shared_ipc_brainchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "brainchannel"
     },
     {
@@ -12752,7 +12652,7 @@
       "source_location": "L314",
       "_origin": "ast",
       "id": "shared_ipc_trackerchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "trackerchannel"
     },
     {
@@ -12762,7 +12662,7 @@
       "source_location": "L315",
       "_origin": "ast",
       "id": "shared_ipc_boardchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "boardchannel"
     },
     {
@@ -12772,7 +12672,7 @@
       "source_location": "L316",
       "_origin": "ast",
       "id": "shared_ipc_explorerchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "explorerchannel"
     },
     {
@@ -12782,7 +12682,7 @@
       "source_location": "L317",
       "_origin": "ast",
       "id": "shared_ipc_projectchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "projectchannel"
     },
     {
@@ -12792,7 +12692,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "shared_ipc_graphboardchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "graphboardchannel"
     },
     {
@@ -12802,7 +12702,7 @@
       "source_location": "L319",
       "_origin": "ast",
       "id": "shared_ipc_researchchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "researchchannel"
     },
     {
@@ -12812,7 +12712,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "shared_ipc_clipboardchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "clipboardchannel"
     },
     {
@@ -12822,7 +12722,7 @@
       "source_location": "L321",
       "_origin": "ast",
       "id": "shared_ipc_settingschannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "settingschannel"
     },
     {
@@ -12832,7 +12732,7 @@
       "source_location": "L322",
       "_origin": "ast",
       "id": "shared_ipc_accountchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "accountchannel"
     },
     {
@@ -12842,7 +12742,7 @@
       "source_location": "L323",
       "_origin": "ast",
       "id": "shared_ipc_chatchannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "chatchannel"
     },
     {
@@ -12852,7 +12752,7 @@
       "source_location": "L324",
       "_origin": "ast",
       "id": "shared_ipc_runtimechannel",
-      "community": 43,
+      "community": 11,
       "norm_label": "runtimechannel"
     },
     {
@@ -12882,7 +12782,7 @@
       "source_location": "L340",
       "_origin": "ast",
       "id": "shared_ipc_widgetbounds",
-      "community": 43,
+      "community": 11,
       "norm_label": "widgetbounds"
     },
     {
@@ -12892,7 +12792,7 @@
       "source_location": "L347",
       "_origin": "ast",
       "id": "shared_ipc_widgetmovepayload",
-      "community": 10,
+      "community": 20,
       "norm_label": "widgetmovepayload"
     },
     {
@@ -12912,7 +12812,7 @@
       "source_location": "L358",
       "_origin": "ast",
       "id": "shared_ipc_secondbrainapi",
-      "community": 58,
+      "community": 47,
       "norm_label": "secondbrainapi"
     },
     {
@@ -13032,7 +12932,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "types_board_boardrule",
-      "community": 47,
+      "community": 1,
       "norm_label": "boardrule"
     },
     {
@@ -13182,7 +13082,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "types_explorer_explorersearchinput",
-      "community": 47,
+      "community": 7,
       "norm_label": "explorersearchinput"
     },
     {
@@ -13212,7 +13112,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_vite_env_d",
-      "community": 58,
+      "community": 47,
       "norm_label": "vite-env.d.ts"
     },
     {
@@ -13222,7 +13122,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_vite_env_d_window",
-      "community": 58,
+      "community": 47,
       "norm_label": "window"
     },
     {
@@ -13846,20 +13746,10 @@
       "norm_label": "production packaging"
     },
     {
-      "label": "Production Release Commands",
-      "file_type": "document",
-      "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L76",
-      "_origin": "ast",
-      "id": "production_release_production_release_commands",
-      "community": 57,
-      "norm_label": "production release commands"
-    },
-    {
       "label": "Runtime Dependencies",
       "file_type": "document",
       "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L137",
+      "source_location": "L76",
       "_origin": "ast",
       "id": "production_release_runtime_dependencies",
       "community": 57,
@@ -13869,7 +13759,7 @@
       "label": "Managed Account Access",
       "file_type": "document",
       "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L151",
+      "source_location": "L90",
       "_origin": "ast",
       "id": "production_release_managed_account_access",
       "community": 57,
@@ -13879,7 +13769,7 @@
       "label": "Error And Log Policy",
       "file_type": "document",
       "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L174",
+      "source_location": "L113",
       "_origin": "ast",
       "id": "production_release_error_and_log_policy",
       "community": 57,
@@ -13889,7 +13779,7 @@
       "label": "Distribution",
       "file_type": "document",
       "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L190",
+      "source_location": "L129",
       "_origin": "ast",
       "id": "production_release_distribution",
       "community": 57,
@@ -13984,106 +13874,6 @@
       "id": "readme_develop",
       "community": 34,
       "norm_label": "develop"
-    },
-    {
-      "label": "WEBSITE_SERVER_HANDOFF.md",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "website_server_handoff",
-      "community": 52,
-      "norm_label": "website_server_handoff.md"
-    },
-    {
-      "label": "Website Server Handoff For Second Brain Desktop",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "id": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "community": 52,
-      "norm_label": "website server handoff for second brain desktop"
-    },
-    {
-      "label": "Required Public Build Config",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L5",
-      "_origin": "ast",
-      "id": "website_server_handoff_required_public_build_config",
-      "community": 52,
-      "norm_label": "required public build config"
-    },
-    {
-      "label": "Desktop Authentication Flow",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L18",
-      "_origin": "ast",
-      "id": "website_server_handoff_desktop_authentication_flow",
-      "community": 52,
-      "norm_label": "desktop authentication flow"
-    },
-    {
-      "label": "Required Website API",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L36",
-      "_origin": "ast",
-      "id": "website_server_handoff_required_website_api",
-      "community": 52,
-      "norm_label": "required website api"
-    },
-    {
-      "label": "`GET /api/desktop/account`",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L38",
-      "_origin": "ast",
-      "id": "website_server_handoff_get_api_desktop_account",
-      "community": 52,
-      "norm_label": "`get /api/desktop/account`"
-    },
-    {
-      "label": "`POST /api/desktop/logs`",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L84",
-      "_origin": "ast",
-      "id": "website_server_handoff_post_api_desktop_logs",
-      "community": 52,
-      "norm_label": "`post /api/desktop/logs`"
-    },
-    {
-      "label": "AI Proxy Contract",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L128",
-      "_origin": "ast",
-      "id": "website_server_handoff_ai_proxy_contract",
-      "community": 52,
-      "norm_label": "ai proxy contract"
-    },
-    {
-      "label": "Release Asset Integration",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L154",
-      "_origin": "ast",
-      "id": "website_server_handoff_release_asset_integration",
-      "community": 52,
-      "norm_label": "release asset integration"
-    },
-    {
-      "label": "Support Notes",
-      "file_type": "document",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L177",
-      "_origin": "ast",
-      "id": "website_server_handoff_support_notes",
-      "community": 52,
-      "norm_label": "support notes"
     },
     {
       "label": "APP_DEVELOPMENT_AGENT_INSTRUCTIONS.md",
@@ -14549,7 +14339,7 @@
       "label": "Run Locally",
       "file_type": "document",
       "source_file": "proxy/README.md",
-      "source_location": "L22",
+      "source_location": "L21",
       "_origin": "ast",
       "id": "proxy_readme_run_locally",
       "community": 44,
@@ -14559,7 +14349,7 @@
       "label": "Deploy",
       "file_type": "document",
       "source_file": "proxy/README.md",
-      "source_location": "L31",
+      "source_location": "L30",
       "_origin": "ast",
       "id": "proxy_readme_deploy",
       "community": 44,
@@ -15395,16 +15185,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L177",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_authenticate_and_meter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L94",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15445,16 +15225,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L151",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_consume_proxy_usage",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L77",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15485,16 +15255,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L76",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_extract_bearer_token",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L62",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15510,16 +15270,6 @@
       "confidence_score": 1.0,
       "source": "proxy_main",
       "target": "proxy_main_health"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L185",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_log_event",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15545,51 +15295,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L40",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_proxyuser",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L44",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "proxy_main",
       "target": "proxy_main_sha256"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L116",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_supabase_service_headers",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L109",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_supabase_service_role_key",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L102",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_supabase_url",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15610,16 +15320,6 @@
       "confidence_score": 1.0,
       "source": "proxy_main",
       "target": "proxy_main_validate_secret"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L125",
-      "weight": 1.0,
-      "source": "proxy_main",
-      "target": "proxy_main_verify_supabase_token",
-      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15661,39 +15361,6 @@
       "confidence_score": 1.0,
       "source": "proxy_main_build_vertex_body",
       "target": "proxy_main_proxyrequest"
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L177",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "proxy_main_proxyuser",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "parameter_type",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L151",
-      "weight": 1.0,
-      "source": "proxy_main_consume_proxy_usage",
-      "target": "proxy_main_proxyuser",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "return_type",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L125",
-      "weight": 1.0,
-      "source": "proxy_main_verify_supabase_token",
-      "target": "proxy_main_proxyuser",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -15788,17 +15455,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L178",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "proxy_main_extract_bearer_token",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L121",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15815,17 +15471,6 @@
       "confidence_score": 1.0,
       "source": "proxy_main_validate_request_secret",
       "target": "proxy_main_validate_secret"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L180",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "proxy_main_enforce_rate_limit",
-      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -15854,171 +15499,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "proxy/main.py",
-      "source_location": "L153",
-      "weight": 1.0,
-      "source": "proxy_main_consume_proxy_usage",
-      "target": "proxy_main_supabase_url",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L128",
-      "weight": 1.0,
-      "source": "proxy_main_verify_supabase_token",
-      "target": "proxy_main_supabase_url",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L117",
-      "weight": 1.0,
-      "source": "proxy_main_supabase_service_headers",
-      "target": "proxy_main_supabase_service_role_key",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L126",
-      "weight": 1.0,
-      "source": "proxy_main_verify_supabase_token",
-      "target": "proxy_main_supabase_service_role_key",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L154",
-      "weight": 1.0,
-      "source": "proxy_main_consume_proxy_usage",
-      "target": "proxy_main_supabase_service_headers",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L179",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "proxy_main_verify_supabase_token",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L181",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "proxy_main_consume_proxy_usage",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L151",
-      "weight": 1.0,
-      "source": "proxy_main_consume_proxy_usage",
-      "target": "any",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L177",
-      "weight": 1.0,
-      "source": "proxy_main_authenticate_and_meter",
-      "target": "any",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "references",
-      "context": "generic_arg",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L94",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "proxy_main_build_vertex_body",
-      "target": "any"
-    },
-    {
-      "relation": "references",
-      "context": "parameter_type",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L185",
-      "weight": 1.0,
-      "source": "proxy_main_log_event",
-      "target": "any",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L244",
-      "weight": 1.0,
-      "source": "proxy_main_chat",
-      "target": "proxy_main_authenticate_and_meter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L334",
-      "weight": 1.0,
-      "source": "proxy_main_chat_completions",
-      "target": "proxy_main_authenticate_and_meter",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L268",
-      "weight": 1.0,
-      "source": "proxy_main_chat",
-      "target": "proxy_main_log_event",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
-      "source_location": "L358",
-      "weight": 1.0,
-      "source": "proxy_main_chat_completions",
-      "target": "proxy_main_log_event",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "proxy/main.py",
       "source_location": "L131",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -16035,6 +15515,17 @@
       "confidence_score": 1.0,
       "source": "proxy_main_chat_completions",
       "target": "proxy_main_vertex_access_token"
+    },
+    {
+      "relation": "references",
+      "context": "generic_arg",
+      "confidence": "EXTRACTED",
+      "source_file": "proxy/main.py",
+      "source_location": "L94",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "proxy_main_build_vertex_body",
+      "target": "any"
     },
     {
       "relation": "calls",
@@ -37003,16 +36494,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/main/services/LlmService.ts",
-      "source_location": "L98",
-      "weight": 1.0,
-      "source": "services_llmservice",
-      "target": "services_llmservice_accesstokenprovider",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/main/services/LlmService.ts",
       "source_location": "L48",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -40926,9 +40407,9 @@
       "source_file": "src/main/services/RuntimeCommandPaths.ts",
       "source_location": "L27",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "services_runtimecommandpaths_bundledpythoncommand",
-      "target": "services_runtimecommandpaths_bundledruntimedir"
+      "target": "services_runtimecommandpaths_bundledruntimedir",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -40948,9 +40429,9 @@
       "source_file": "src/main/services/RuntimeCommandPaths.ts",
       "source_location": "L115",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "services_runtimecommandpaths_runtimepathsegments",
-      "target": "services_runtimecommandpaths_bundledruntimedir"
+      "target": "services_runtimecommandpaths_bundledruntimedir",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -51296,16 +50777,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "PRODUCTION_RELEASE.md",
-      "source_location": "L76",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "production_release_production_release_guide",
-      "target": "production_release_production_release_commands"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "PRODUCTION_RELEASE.md",
       "source_location": "L66",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -51391,96 +50862,6 @@
       "confidence_score": 1.0,
       "source": "readme_second_brain",
       "target": "readme_runtime_dependencies"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff",
-      "target": "website_server_handoff_website_server_handoff_for_second_brain_desktop"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L128",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_ai_proxy_contract"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L18",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_desktop_authentication_flow"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L154",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_release_asset_integration"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L5",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_required_public_build_config"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L36",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_required_website_api"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L177",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_website_server_handoff_for_second_brain_desktop",
-      "target": "website_server_handoff_support_notes"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L38",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_required_website_api",
-      "target": "website_server_handoff_get_api_desktop_account"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "WEBSITE_SERVER_HANDOFF.md",
-      "source_location": "L84",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "website_server_handoff_required_website_api",
-      "target": "website_server_handoff_post_api_desktop_logs"
     },
     {
       "relation": "contains",
@@ -52124,5 +51505,5 @@
       "source_file": "mockups/second-brain-live-demo/assets/vault-constellation.svg"
     }
   ],
-  "built_at_commit": "43db7ff63705e11ab461800c0ffbe3e30c08ae5b"
+  "built_at_commit": "068a52d168dbbeab22ffd62f41c2c8e975260677"
 }

@@ -924,7 +924,7 @@ export class ChatService {
             emit({ type: "artifact", generationId, messageId: assistant.id, artifact });
           }
         } else {
-          const llm = new LlmService(async () => settings.ai);
+          const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
           assistant.content = await llm.streamText(
             {
               method: {
@@ -1076,7 +1076,7 @@ export class ChatService {
         }
       }
 
-      const llm = new LlmService(async () => settings.ai);
+      const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
       return normalizeSemanticRouting(
         await llm.completeJsonObject({
           messages,
@@ -1146,7 +1146,7 @@ export class ChatService {
           clearTimeout(timeout);
         }
       } else {
-        const llm = new LlmService(async () => settings.ai);
+        const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
         const text = await llm.completeText({
           messages,
           method: { temperature: 0.1, maxTokens: 24 }
@@ -1274,7 +1274,7 @@ export class ChatService {
         return extractConversationKeywords(searchScope, maxSearchKeywords).join(" ") || question;
       }
 
-      const llm = new LlmService(async () => settings.ai);
+      const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
       const text = await llm.completeText({
         messages,
         method: { temperature: 0.1, maxTokens: 30 }
@@ -1351,7 +1351,7 @@ export class ChatService {
     }
 
     try {
-      const llm = new LlmService(async () => settings.ai);
+      const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
       const text = await llm.completeText({
         method: {
           temperature: 0.4,
@@ -1714,7 +1714,7 @@ export class ChatService {
       const planned =
         settings.aiMode === "proxy"
           ? await this.planProxyArtifactToolCall(settings, tools, prompt)
-          : await new LlmService(async () => settings.ai).planLocalToolCall({
+          : await new LlmService(async () => settings.ai, this.accessTokenProvider).planLocalToolCall({
               systemPrompt: artifactPlannerSystemPrompt(tools),
               userPrompt: prompt,
               tools,

@@ -95,6 +95,7 @@ const placeholderApiKey = "local-dev-placeholder";
 const maxErrorBodyLength = 2400;
 
 type AiSettingsProvider = () => Promise<AiSettings>;
+type AccessTokenProvider = () => Promise<string | null>;
 type TokenParameterName = "max_tokens" | "max_completion_tokens";
 
 type ChatAttemptOptions = {
@@ -229,7 +230,8 @@ export class LlmService {
       apiKey: process.env.SECOND_BRAIN_LLM_API_KEY ?? placeholderApiKey,
       model: process.env.SECOND_BRAIN_LLM_MODEL ?? process.env.OPENAI_MODEL ?? defaultModel,
       updatedAt: new Date().toISOString()
-    })
+    }),
+    private readonly accessTokenProvider?: AccessTokenProvider
   ) {}
 
   async completeJsonObject(input: {
@@ -667,15 +669,20 @@ export class LlmService {
     abortSignal?: AbortSignal
   ): Promise<string> {
     const requestId = randomUUID();
+    const bearerToken =
+      (await this.accessTokenProvider?.()) ||
+      process.env.OPENAI_API_KEY?.trim() ||
+      settings.apiKey ||
+      placeholderApiKey;
     const requestInit: RequestInit = {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${settings.apiKey || placeholderApiKey}`,
+        "Authorization": `Bearer ${bearerToken}`,
         "Content-Type": "application/json",
         "X-Second-Brain-Request-Id": requestId
       },
       body: JSON.stringify({
-        userIdOrKey: settings.apiKey || placeholderApiKey,
+        userIdOrKey: "",
         model: settings.model || defaultModel,
         groundingEnabled: true,
         requestId,
