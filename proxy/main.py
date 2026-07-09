@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import time
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from typing import Any
 
 import google.auth
@@ -32,6 +34,12 @@ class ProxyRequest(BaseModel):
     messages: list[ProxyMessage]
     groundingEnabled: bool = True
     requestId: str
+
+
+@dataclass(frozen=True)
+class ProxyUser:
+    user_id: str
+    email: str | None
 
 
 def env_int(name: str, fallback: int) -> int:
@@ -65,6 +73,12 @@ def extract_secret(authorization: str | None, body_key: str) -> str:
     return body_key.strip()
 
 
+def extract_bearer_token(authorization: str | None) -> str:
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[7:].strip()
+    raise HTTPException(status_code=401, detail="Missing Supabase bearer token.")
+
+
 def validate_secret(secret: str) -> str:
     key_hashes = configured_key_hashes()
     if not key_hashes:
@@ -83,6 +97,104 @@ def enforce_rate_limit(key_id: str) -> None:
     if len(queue) >= limit:
         raise HTTPException(status_code=429, detail="Rate limit exceeded.")
     queue.append(now)
+
+
+def supabase_url() -> str:
+    value = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    if not value:
+        raise HTTPException(status_code=500, detail="SUPABASE_URL is not configured.")
+    return value
+
+
+def supabase_service_role_key() -> str:
+    value = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not value:
+        raise HTTPException(status_code=500, detail="SUPABASE_SERVICE_ROLE_KEY is not configured.")
+    return value
+
+
+def supabase_service_headers() -> dict[str, str]:
+    service_key = supabase_service_role_key()
+    return {
+        "Authorization": f"Bearer {service_key}",
+        "Content-Type": "application/json",
+        "apikey": service_key,
+    }
+
+
+def verify_supabase_token(access_token: str) -> ProxyUser:
+    service_key = supabase_service_role_key()
+    response = requests.get(
+        f"{supabase_url()}/auth/v1/user",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "apikey": service_key,
+        },
+        timeout=10,
+    )
+
+    if response.status_code in {401, 403}:
+        raise HTTPException(status_code=401, detail="Invalid Supabase session.")
+
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Unable to validate Supabase session.")
+
+    payload = response.json()
+    user_id = str(payload.get("id") or "")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid Supabase session.")
+
+    email = payload.get("email")
+    return ProxyUser(user_id=user_id, email=email if isinstance(email, str) else None)
+
+
+def consume_proxy_usage(user: ProxyUser) -> dict[str, Any]:
+    response = requests.post(
+        f"{supabase_url()}/rest/v1/rpc/consume_proxy_usage",
+        headers=supabase_service_headers(),
+        json={"p_user_id": user.user_id, "p_increment": 1},
+        timeout=10,
+    )
+
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail="Unable to verify account usage.")
+
+    payload = response.json()
+    row = payload[0] if isinstance(payload, list) and payload else payload
+
+    if not isinstance(row, dict):
+        raise HTTPException(status_code=502, detail="Unable to verify account usage.")
+
+    if not row.get("allowed"):
+        reason = row.get("reason") or "not_allowed"
+        if reason == "over_limit":
+            raise HTTPException(status_code=429, detail="Usage limit exceeded.")
+        raise HTTPException(status_code=403, detail="Second Brain subscription is not active.")
+
+    return row
+
+
+def authenticate_and_meter(authorization: str | None) -> tuple[ProxyUser, dict[str, Any]]:
+    access_token = extract_bearer_token(authorization)
+    user = verify_supabase_token(access_token)
+    enforce_rate_limit(user.user_id)
+    usage = consume_proxy_usage(user)
+    return user, usage
+
+
+def log_event(level: str, message: str, **details: Any) -> None:
+    print(
+        json.dumps(
+            {
+                "level": level,
+                "message": message,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                **details,
+            },
+            separators=(",", ":"),
+        ),
+        flush=True,
+    )
 
 
 def vertex_access_token() -> str:
@@ -129,7 +241,7 @@ async def chat(request: Request, authorization: str | None = Header(default=None
     enforce_request_limits(raw_body)
 
     payload = ProxyRequest.model_validate_json(raw_body)
-    validate_request_secret(authorization, payload.userIdOrKey)
+    user, usage = authenticate_and_meter(authorization)
 
     vertex_endpoint = os.getenv("VERTEX_OPENAPI_ENDPOINT", "").strip()
     if not vertex_endpoint:
@@ -141,6 +253,7 @@ async def chat(request: Request, authorization: str | None = Header(default=None
             "Authorization": f"Bearer {vertex_access_token()}",
             "Content-Type": "application/json",
             "X-Second-Brain-Request-Id": payload.requestId,
+            "X-Second-Brain-User-Id": user.user_id,
         },
         json=build_vertex_body(payload),
         timeout=180,
@@ -152,7 +265,22 @@ async def chat(request: Request, authorization: str | None = Header(default=None
         response_payload = {"text": response.text}
 
     if response.status_code >= 400:
+        log_event(
+            "error",
+            "vertex_chat_failed",
+            requestId=payload.requestId,
+            statusCode=response.status_code,
+            userId=user.user_id,
+        )
         return JSONResponse(status_code=response.status_code, content={"error": response_payload})
+
+    log_event(
+        "info",
+        "proxy_chat_forwarded",
+        requestId=payload.requestId,
+        statusCode=response.status_code,
+        userId=user.user_id,
+    )
 
     text = (
         response_payload.get("text")
@@ -172,6 +300,7 @@ async def chat(request: Request, authorization: str | None = Header(default=None
             "groundingMetadata": response_payload.get("groundingMetadata")
             or response_payload.get("grounding_metadata"),
             "usage": response_payload.get("usage") or response_payload.get("usageMetadata"),
+            "accountUsage": usage,
             "model": payload.model,
             "requestId": payload.requestId,
         }
@@ -195,8 +324,14 @@ async def chat_completions(request: Request, authorization: str | None = Header(
     if not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Request body must be a JSON object.")
 
-    body_key = str(payload.pop("userIdOrKey", "") or "")
-    validate_request_secret(authorization, body_key)
+    payload.pop("userIdOrKey", None)
+    request_id = str(
+        request.headers.get("X-Second-Brain-Request-Id")
+        or payload.get("request_id")
+        or payload.get("requestId")
+        or ""
+    )
+    user, usage = authenticate_and_meter(authorization)
 
     vertex_endpoint = os.getenv("VERTEX_OPENAPI_ENDPOINT", "").strip()
     if not vertex_endpoint:
@@ -207,7 +342,8 @@ async def chat_completions(request: Request, authorization: str | None = Header(
         headers={
             "Authorization": f"Bearer {vertex_access_token()}",
             "Content-Type": "application/json",
-            "X-Second-Brain-Request-Id": request.headers.get("X-Second-Brain-Request-Id", ""),
+            "X-Second-Brain-Request-Id": request_id,
+            "X-Second-Brain-User-Id": user.user_id,
         },
         json=payload,
         timeout=180,
@@ -217,5 +353,25 @@ async def chat_completions(request: Request, authorization: str | None = Header(
         response_payload = response.json()
     except ValueError:
         response_payload = {"text": response.text}
+
+    if response.status_code >= 400:
+        log_event(
+            "error",
+            "vertex_chat_completions_failed",
+            requestId=request_id,
+            statusCode=response.status_code,
+            userId=user.user_id,
+        )
+    else:
+        log_event(
+            "info",
+            "proxy_chat_completions_forwarded",
+            requestId=request_id,
+            statusCode=response.status_code,
+            userId=user.user_id,
+        )
+
+    if isinstance(response_payload, dict):
+        response_payload.setdefault("account_usage", usage)
 
     return JSONResponse(status_code=response.status_code, content=response_payload)

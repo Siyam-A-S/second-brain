@@ -1,6 +1,6 @@
 # Second Brain Managed Proxy
 
-Tiny Cloud Run proxy for Second Brain AI calls. Chat sends only bounded local Graphify context plus the user question; Graphify ingestion and card-definition enrichment use OpenAI-compatible chat-completions routes. The service validates the beta secret key and forwards requests to Vertex AI using Cloud Run's attached service account.
+Tiny Cloud Run proxy for Second Brain AI calls. Chat sends only bounded local Graphify context plus the user question; Graphify ingestion and card-definition enrichment use OpenAI-compatible chat-completions routes. The service validates Supabase bearer tokens, enforces subscription/usage state in Supabase, and forwards approved requests to Vertex AI using Cloud Run's attached service account.
 
 ## Routes
 
@@ -11,12 +11,13 @@ Tiny Cloud Run proxy for Second Brain AI calls. Chat sends only bounded local Gr
 
 ```text
 VERTEX_OPENAPI_ENDPOINT=https://aiplatform.googleapis.com/v1/projects/.../locations/.../endpoints/openapi/chat/completions
-SECOND_BRAIN_PROXY_KEYS_SHA256=<comma-separated sha256 hashes>
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<server-only service role key>
 SECOND_BRAIN_PROXY_MAX_BODY_BYTES=262144
 SECOND_BRAIN_PROXY_RATE_LIMIT_PER_MINUTE=30
 ```
 
-For local development only, `SECOND_BRAIN_PROXY_KEYS` can contain comma-separated raw keys.
+`SUPABASE_SERVICE_ROLE_KEY` must be stored as a Cloud Run secret or runtime-only environment value. Do not ship it in desktop builds or frontend `VITE_` variables.
 
 ## Run Locally
 
@@ -34,5 +35,6 @@ gcloud run deploy second-brain-proxy \
   --source . \
   --region us-central1 \
   --service-account second-brain-api-service-account@PROJECT_ID.iam.gserviceaccount.com \
-  --set-env-vars VERTEX_OPENAPI_ENDPOINT=https://aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/us-central1/endpoints/openapi/chat/completions
+  --set-env-vars SUPABASE_URL=https://PROJECT_REF.supabase.co,VERTEX_OPENAPI_ENDPOINT=https://aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/us-central1/endpoints/openapi/chat/completions \
+  --set-secrets SUPABASE_SERVICE_ROLE_KEY=sb-supabase-service-role-key:latest
 ```
