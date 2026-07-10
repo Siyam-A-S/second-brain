@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-release.yml": {
-    "mtime": 1783585889.4446335,
-    "ast_hash": "3a33c2d6b5aa856a0a15b0114d774b27",
+    "mtime": 1783652415.1118646,
+    "ast_hash": "60d2f66af9b7595e333c3bda16d744d7",
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
@@ -457,6 +457,11 @@
   "electron-builder.production.yml": {
     "mtime": 1783585838.0153985,
     "ast_hash": "e7cdc54fc2dda28cec88962ecbfdfa55",
+    "semantic_hash": ""
+  },
+  ".github/workflows/production-macos-release.yml": {
+    "mtime": 1783652351.5015848,
+    "ast_hash": "8e194559d1e037b07825490c47ae85aa",
     "semantic_hash": ""
   }
 }

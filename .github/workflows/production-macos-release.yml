@@ -1,113 +1,16 @@
-name: Production Release Second Brain
+name: Production macOS Release Second Brain
 
 on:
-  push:
-    tags:
-      - "prod-v*"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: second-brain-production-release-${{ github.ref }}
+  group: second-brain-production-macos-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  windows-runtime:
-    name: Prepare Windows bundled runtime
-    runs-on: windows-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Prepare production runtime
-        run: node scripts/prepare-production-runtime.cjs --platform win32 --arch x64
-
-      - name: Upload Windows runtime
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-runtime-win32-x64
-          path: resources/production-runtime/win32-x64
-
-  windows-production:
-    name: Build and publish Windows production installer
-    runs-on: ubuntu-latest
-    needs: windows-runtime
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Download Windows bundled runtime
-        uses: actions/download-artifact@v4
-        with:
-          name: production-runtime-win32-x64
-          path: resources/production-runtime/win32-x64
-
-      - name: Install Wine for Windows packaging
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y wine64 wine32
-
-      - name: Build Windows production installer
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          SECOND_BRAIN_SUPABASE_URL: ${{ vars.SECOND_BRAIN_SUPABASE_URL }}
-          SECOND_BRAIN_SUPABASE_ANON_KEY: ${{ vars.SECOND_BRAIN_SUPABASE_ANON_KEY }}
-          SECOND_BRAIN_WEBSITE_URL: https://www.downloadsecondbrain.com
-          SECOND_BRAIN_PROXY_URL: https://graphify-proxy-724616525781.us-central1.run.app
-        run: npm run package:prod:win:installer
-
-      - name: Publish production release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="${GITHUB_REF_NAME}"
-          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
-            TAG="prod-v$VERSION"
-          fi
-          TITLE="Second Brain $VERSION Production"
-          SOURCE="release/Second Brain-Setup-$VERSION.exe"
-          ASSET="release/Second-Brain-Setup-$VERSION-prod.exe"
-
-          if [ "$TAG" != "prod-v$VERSION" ]; then
-            echo "Tag $TAG does not match package version $VERSION. Expected prod-v$VERSION."
-            exit 1
-          fi
-          if ! [ -f "$SOURCE" ]; then
-            echo "Expected production installer was not created: $SOURCE"
-            find release -maxdepth 2 -type f -print || true
-            exit 1
-          fi
-
-          mv "$SOURCE" "$ASSET"
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$TAG" --title "$TITLE" --generate-notes --repo "$GITHUB_REPOSITORY"
-          gh release upload "$TAG" "$ASSET" --clobber --repo "$GITHUB_REPOSITORY"
-          gh release edit "$TAG" --title "$TITLE" --repo "$GITHUB_REPOSITORY"
-
   macos-production:
     name: Build and publish macOS arm64 production DMG
     runs-on: macos-14
@@ -194,18 +97,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          TAG="${GITHUB_REF_NAME}"
-          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
-            TAG="prod-v$VERSION"
-          fi
+          TAG="prod-v$VERSION"
           TITLE="Second Brain $VERSION Production"
           SOURCE="release/Second Brain-$VERSION-mac-arm64.dmg"
           ASSET="release/Second-Brain-$VERSION-prod-mac-arm64.dmg"
 
-          if [ "$TAG" != "prod-v$VERSION" ]; then
-            echo "Tag $TAG does not match package version $VERSION. Expected prod-v$VERSION."
-            exit 1
-          fi
           if ! [ -f "$SOURCE" ]; then
             echo "Expected production DMG was not created: $SOURCE"
             find release -maxdepth 2 -type f -print || true
