@@ -7,6 +7,7 @@ const {
   lstatSync,
   mkdirSync,
   readdirSync,
+  readlinkSync,
   rmSync,
   statSync,
   symlinkSync,
@@ -214,6 +215,12 @@ function pruneDirectory(directory) {
 
     if (stats.isSymbolicLink()) {
       try {
+        const target = readlinkSync(fullPath);
+        const resolvedTarget = path.resolve(path.dirname(fullPath), target);
+        if (!resolvedTarget.startsWith(`${runtimeDir}${path.sep}`) && resolvedTarget !== runtimeDir) {
+          rmSync(fullPath, { force: true });
+          continue;
+        }
         statSync(fullPath);
       } catch {
         rmSync(fullPath, { force: true });
