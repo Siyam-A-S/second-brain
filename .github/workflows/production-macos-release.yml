@@ -116,7 +116,8 @@ jobs:
           test -f "$DMG_PATH" || (echo "Expected DMG was not created: $DMG_PATH" && find release -maxdepth 3 -print && exit 1)
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
           xcrun stapler validate "$DMG_PATH"
-          spctl -a -vvv -t install "$DMG_PATH"
+          spctl -a -t open --context context:primary-signature -v "$DMG_PATH"
+          spctl -a -vvv -t execute "$APP_PATH"
 
       - name: Publish production release
         shell: bash
