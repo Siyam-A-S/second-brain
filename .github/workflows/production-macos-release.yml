@@ -78,32 +78,6 @@ jobs:
           SECOND_BRAIN_PROXY_URL: https://graphify-proxy-724616525781.us-central1.run.app
         run: npm run package:prod:mac:dmg
 
-      - name: Manual notarytool test
-        shell: bash
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          DMG_PATH="release/Second Brain-$VERSION-mac-arm64.dmg"
-
-          xcrun notarytool submit "$DMG_PATH" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --wait \
-            --output-format json | tee /tmp/notary-result.json
-
-          SUBMISSION_ID=$(node -p "require('/tmp/notary-result.json').id")
-          echo "Submission ID: $SUBMISSION_ID"
-
-          xcrun notarytool log "$SUBMISSION_ID" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$APPLE_TEAM_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD"
-
-          xcrun stapler staple "$DMG_PATH"
 
       - name: Verify macOS signing and notarization
         shell: bash
@@ -116,7 +90,6 @@ jobs:
           test -f "$DMG_PATH" || (echo "Expected DMG was not created: $DMG_PATH" && find release -maxdepth 3 -print && exit 1)
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
           xcrun stapler validate "$DMG_PATH"
-          spctl -a -t open --context context:primary-signature -v "$DMG_PATH"
           spctl -a -vvv -t execute "$APP_PATH"
 
       - name: Publish production release
