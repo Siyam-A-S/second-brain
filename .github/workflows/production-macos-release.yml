@@ -103,6 +103,8 @@ jobs:
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD"
 
+          xcrun stapler staple "$DMG_PATH"
+
       - name: Verify macOS signing and notarization
         shell: bash
         run: |

@@ -17,3 +17,5 @@ appledevID/
 *.pem
 *.csr
 *p12.base64
+cert_base64.txt
+cert_b64.txt

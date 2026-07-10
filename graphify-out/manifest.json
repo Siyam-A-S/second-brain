@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1783587946.3803558,
-    "ast_hash": "a9cb679816b9c8b91513be55aa0277f7",
+    "mtime": 1783658907.1404104,
+    "ast_hash": "af1a09bc05eecdb4711e579eb4105df3",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-release.yml": {
-    "mtime": 1783657403.0977905,
-    "ast_hash": "ecc27d40341e210ef350b29c6f516870",
+    "mtime": 1783658923.2002418,
+    "ast_hash": "4d9addfccff01c0cbb294f636f91607a",
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
@@ -455,18 +455,13 @@
     "semantic_hash": ""
   },
   "electron-builder.production.yml": {
-    "mtime": 1783585838.0153985,
-    "ast_hash": "e7cdc54fc2dda28cec88962ecbfdfa55",
+    "mtime": 1783658891.5625818,
+    "ast_hash": "78583acee071505f7f932dae5e240304",
     "semantic_hash": ""
   },
   ".github/workflows/production-macos-release.yml": {
-    "mtime": 1783657415.39507,
-    "ast_hash": "211348d602e54be4965a4a0f478e7dda",
-    "semantic_hash": ""
-  },
-  "cert_base64.txt": {
-    "mtime": 1783656401.9162219,
-    "ast_hash": "276086dd78c4d8d96441cc8595f117e2",
+    "mtime": 1783658916.724309,
+    "ast_hash": "0cf6f4f0ca339637a3a0d9b2b0712836",
     "semantic_hash": ""
   }
 }
