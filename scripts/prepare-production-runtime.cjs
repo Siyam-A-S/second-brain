@@ -7,7 +7,6 @@ const {
   lstatSync,
   mkdirSync,
   readdirSync,
-  readlinkSync,
   rmSync,
   statSync,
   symlinkSync,
@@ -100,38 +99,39 @@ function copyDirectoryContents(source, destination) {
   }
 }
 
-function ensureRuntimePythonAlias() {
+function ensureRuntimePythonAliases() {
   if (platform === "win32") {
     return;
   }
 
   const binDir = path.join(runtimeDir, "bin");
-  const python3 = path.join(binDir, "python3");
-  if (existsSync(python3)) {
-    try {
-      const stats = lstatSync(python3);
-      if (!stats.isSymbolicLink()) {
-        return;
-      }
-      const target = readlinkSync(python3);
-      if (!path.isAbsolute(target) && !target.includes(".runtime-python-install")) {
-        return;
-      }
-      unlinkSync(python3);
-    } catch {
-      rmSync(python3, { force: true });
-    }
-  }
 
-  const target = ["python3.12", "python"].find((name) => existsSync(path.join(binDir, name)));
-  if (!target) {
+  const targetName = ["python3.12", "python3", "python"].find((name) => {
+    try {
+      const candidate = path.join(binDir, name);
+      return existsSync(candidate) && !lstatSync(candidate).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  });
+
+  if (!targetName) {
     return;
   }
 
-  try {
-    symlinkSync(target, python3);
-  } catch {
-    copyFileSync(path.join(binDir, target), python3);
+  for (const alias of ["python3", "python"]) {
+    if (alias === targetName) {
+      continue;
+    }
+
+    const aliasPath = path.join(binDir, alias);
+    rmSync(aliasPath, { force: true });
+    try {
+      symlinkSync(targetName, aliasPath);
+    } catch {
+      copyFileSync(path.join(binDir, targetName), aliasPath);
+      chmodSync(aliasPath, 0o755);
+    }
   }
 }
 
@@ -260,7 +260,7 @@ run(uv, [
 
 const installRoot = findPythonInstallRoot(standaloneInstallDir);
 copyDirectoryContents(installRoot, runtimeDir);
-ensureRuntimePythonAlias();
+ensureRuntimePythonAliases();
 
 const pythonBin = findPythonExecutable(runtimeDir);
 if (!pythonBin) {
@@ -279,6 +279,8 @@ run(pythonBin, ["-c", "import graphify, fpdf, pypdf; print('runtime ok')"], {
 
 removeUnixRuntimeHelperScripts();
 pruneDirectory(runtimeDir);
+pruneDirectory(runtimeDir);
+ensureRuntimePythonAliases();
 pruneDirectory(runtimeDir);
 rmSync(standaloneInstallDir, { recursive: true, force: true });
 console.log(`Prepared production runtime: ${runtimeDir}`);
