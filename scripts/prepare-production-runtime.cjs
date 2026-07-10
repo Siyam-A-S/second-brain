@@ -166,6 +166,38 @@ function createGraphifyLauncher() {
   chmodSync(launcher, 0o755);
 }
 
+function removeUnixRuntimeHelperScripts() {
+  if (platform === "win32") {
+    return;
+  }
+
+  const binDir = path.join(runtimeDir, "bin");
+  if (!existsSync(binDir)) {
+    return;
+  }
+
+  const keep = new Set(["python", "python3", "python3.12", "graphify"]);
+  for (const entry of readdirSync(binDir)) {
+    if (keep.has(entry)) {
+      continue;
+    }
+
+    if (
+      entry === "2to3" ||
+      entry.startsWith("2to3-") ||
+      entry === "idle3" ||
+      entry.startsWith("idle3.") ||
+      entry === "pydoc3" ||
+      entry.startsWith("pydoc3.") ||
+      entry === "python-config" ||
+      entry.startsWith("python3-config") ||
+      entry.endsWith("-config")
+    ) {
+      rmSync(path.join(binDir, entry), { force: true });
+    }
+  }
+}
+
 function pruneDirectory(directory) {
   if (!existsSync(directory)) {
     return;
@@ -245,6 +277,8 @@ run(pythonBin, ["-c", "import graphify, fpdf, pypdf; print('runtime ok')"], {
   env: { ...process.env, PYTHONNOUSERSITE: "1" }
 });
 
+removeUnixRuntimeHelperScripts();
+pruneDirectory(runtimeDir);
 pruneDirectory(runtimeDir);
 rmSync(standaloneInstallDir, { recursive: true, force: true });
 console.log(`Prepared production runtime: ${runtimeDir}`);
