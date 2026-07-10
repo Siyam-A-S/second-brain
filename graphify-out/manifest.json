@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-release.yml": {
-    "mtime": 1783652415.1118646,
-    "ast_hash": "60d2f66af9b7595e333c3bda16d744d7",
+    "mtime": 1783657403.0977905,
+    "ast_hash": "ecc27d40341e210ef350b29c6f516870",
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
@@ -460,8 +460,13 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-macos-release.yml": {
-    "mtime": 1783652351.5015848,
-    "ast_hash": "8e194559d1e037b07825490c47ae85aa",
+    "mtime": 1783657415.39507,
+    "ast_hash": "211348d602e54be4965a4a0f478e7dda",
+    "semantic_hash": ""
+  },
+  "cert_base64.txt": {
+    "mtime": 1783656401.9162219,
+    "ast_hash": "276086dd78c4d8d96441cc8595f117e2",
     "semantic_hash": ""
   }
 }
