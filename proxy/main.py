@@ -42,6 +42,23 @@ class ProxyUser:
     email: str | None
 
 
+class UsageLimitExceeded(Exception):
+    def __init__(self, usage: dict[str, Any]) -> None:
+        self.usage = usage
+
+
+@app.exception_handler(UsageLimitExceeded)
+async def usage_limit_exceeded_handler(_request: Request, exc: UsageLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "over_limit",
+            "reason": "over_limit",
+            **exc.usage,
+        },
+    )
+
+
 def env_int(name: str, fallback: int) -> int:
     try:
         return int(os.getenv(name, str(fallback)))
@@ -148,6 +165,16 @@ def verify_supabase_token(access_token: str) -> ProxyUser:
     return ProxyUser(user_id=user_id, email=email if isinstance(email, str) else None)
 
 
+def public_usage(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "planName": row.get("plan_name") or row.get("planName") or "Second Brain Free",
+        "used": int(row.get("used") or 0),
+        "limit": int(row.get("limit") or 0),
+        "resetAt": row.get("reset_at") or row.get("resetAt"),
+        "updatedAt": row.get("updated_at") or row.get("updatedAt"),
+    }
+
+
 def consume_proxy_usage(user: ProxyUser) -> dict[str, Any]:
     response = requests.post(
         f"{supabase_url()}/rest/v1/rpc/consume_proxy_usage",
@@ -168,10 +195,10 @@ def consume_proxy_usage(user: ProxyUser) -> dict[str, Any]:
     if not row.get("allowed"):
         reason = row.get("reason") or "not_allowed"
         if reason == "over_limit":
-            raise HTTPException(status_code=429, detail="Usage limit exceeded.")
-        raise HTTPException(status_code=403, detail="Second Brain subscription is not active.")
+            raise UsageLimitExceeded(public_usage(row))
+        raise HTTPException(status_code=403, detail="Second Brain account is not active.")
 
-    return row
+    return public_usage(row)
 
 
 def authenticate_and_meter(authorization: str | None) -> tuple[ProxyUser, dict[str, Any]]:
@@ -268,6 +295,8 @@ async def chat(request: Request, authorization: str | None = Header(default=None
         log_event(
             "error",
             "vertex_chat_failed",
+            model=payload.model,
+            plan=usage.get("planName"),
             requestId=payload.requestId,
             statusCode=response.status_code,
             userId=user.user_id,
@@ -277,6 +306,8 @@ async def chat(request: Request, authorization: str | None = Header(default=None
     log_event(
         "info",
         "proxy_chat_forwarded",
+        model=payload.model,
+        plan=usage.get("planName"),
         requestId=payload.requestId,
         statusCode=response.status_code,
         userId=user.user_id,
@@ -358,6 +389,8 @@ async def chat_completions(request: Request, authorization: str | None = Header(
         log_event(
             "error",
             "vertex_chat_completions_failed",
+            model=str(payload.get("model") or ""),
+            plan=usage.get("planName"),
             requestId=request_id,
             statusCode=response.status_code,
             userId=user.user_id,
@@ -366,6 +399,8 @@ async def chat_completions(request: Request, authorization: str | None = Header(
         log_event(
             "info",
             "proxy_chat_completions_forwarded",
+            model=str(payload.get("model") or ""),
+            plan=usage.get("planName"),
             requestId=request_id,
             statusCode=response.status_code,
             userId=user.user_id,
