@@ -1,6 +1,6 @@
 {
   "name": "second-brain",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Local-first AI-agent-driven desktop app.",
   "main": "dist/main/main.js",
   "author": "Second Brain",

@@ -5,8 +5,8 @@
     "semantic_hash": "adf7f5fd36ff1c4f83ae37bd93c63a93"
   },
   "package.json": {
-    "mtime": 1784220377.4435809,
-    "ast_hash": "cf2a6440f9db7fca81e7d8a83e5d9fe9",
+    "mtime": 1784222021.4285593,
+    "ast_hash": "bc257fe87bd29fa321f9cac2ee9ac1c2",
     "semantic_hash": ""
   },
   "src/main/main.ts": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   ".github/workflows/production-release.yml": {
-    "mtime": 1783660063.3250465,
-    "ast_hash": "e2c541df93a733dbf057cb5c7eea52f1",
+    "mtime": 1784222011.5325208,
+    "ast_hash": "bf8a73da2a4bb5cde8c39c6584c9b6b8",
     "semantic_hash": ""
   },
   "PRODUCTION_RELEASE.md": {
