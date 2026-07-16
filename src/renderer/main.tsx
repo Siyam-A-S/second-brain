@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "katex/dist/katex.min.css";
 import "./styles.css";
 import { installBrowserApiFallback } from "./lib/browserApiFallback";
 import { MainApp } from "./views/MainApp";

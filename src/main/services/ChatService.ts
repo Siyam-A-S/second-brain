@@ -109,6 +109,7 @@ const requestTimeoutMs = Number(process.env.SECOND_BRAIN_MANAGED_PROXY_TIMEOUT_M
 const artifactPlanTimeoutMs = Number(process.env.SECOND_BRAIN_ARTIFACT_PLAN_TIMEOUT_MS ?? 30_000);
 const maxStoredMessagesPerThread = 80;
 const maxSearchKeywords = 4;
+const maxArtifactWorkingContextChars = 15_000;
 const titleGenerationTimeoutMs = Number(process.env.SECOND_BRAIN_CHAT_TITLE_TIMEOUT_MS ?? 8_000);
 const artifactDirectoryName = "artifacts";
 const artifactToolNames: LocalToolName[] = [
@@ -120,16 +121,25 @@ const artifactToolNames: LocalToolName[] = [
 ];
 const groundedChatSystemPrompt = [
   "You are Second Brain Chat.",
-  "Answer using the local Graphify context first.",
-  "If the context is insufficient, say what is missing.",
+  "Answer the user's latest message using the visible conversation first.",
+  "Use private artifact working context and private Graphify evidence only as supporting context.",
+  "Private context packets are system intelligence: never transform, export, quote wholesale, or treat them as the object of words like this, it, that, or above.",
+  "If private context is insufficient, say what is missing.",
   "You can create downloadable files through Second Brain local artifact tools after your answer.",
   "When the user asks for a PDF, DOCX, XLSX, image, or Markdown file, do not refuse; answer briefly and include the essential requirements or source details needed for the artifact.",
   "Second Brain will run a local artifact planning tool after generation to create the formatted downloadable file.",
   "Do not say you cannot create or save files just because you are text-based.",
-  "Preserve source grounding from the provided Graphify output.",
+  "Second Brain renders LaTeX math notation. Use inline math as $E = mc^2$ and display equations as $$...$$.",
+  "When source chunks contain equations from notes, papers, or images, preserve the equation notation instead of paraphrasing it away.",
+  "Preserve source grounding when private Graphify evidence is provided.",
   "Use the Relevant source chunks section as the only quoted source text.",
   "Do not claim access to files beyond the context packet."
 ].join(" ");
+
+const graphRequiredPattern =
+  /\b(graphify|knowledge graph|source|sources|citation|citations|local files?|ingested|vault|brain graph|graph node|nodes|relationship|relationships)\b/i;
+const artifactFollowUpPattern =
+  /\b(this|that|it|above|previous|last|artifact|file|report|document|deck|slides?|pdf|docx|markdown|md|improve|revise|edit|polish|rewrite|convert|turn|make better)\b/i;
 
 function compact(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -195,10 +205,17 @@ function isFreshUnusedThread(thread: ChatThread): boolean {
 }
 
 export const chatServiceTestUtils = {
+  buildChatMessagesForTest: (
+    thread: ChatThread,
+    question: string,
+    graphify: GraphifyContextResult | null,
+    artifactWorkingContext = ""
+  ) => buildChatMessagesForPrompt(thread, question, graphify, artifactWorkingContext),
   buildConversationSearchScope,
   extractConversationKeywords,
   normalizeGeneratedChatTitle,
-  normalizeSearchQuery
+  normalizeSearchQuery,
+  shouldPreferConversationContext
 };
 
 function extractContentPart(value: unknown): string {
@@ -284,6 +301,38 @@ function hasGeneratedFileArtifacts(artifacts: ChatArtifact[] | undefined): boole
   return Boolean(artifacts?.some((artifact) => artifact.source === "local-tool" || artifact.source === "proxy-attachment"));
 }
 
+function threadHasRecentGeneratedArtifact(thread: ChatThread, question: string): boolean {
+  return recentThreadWithoutCurrentQuestion(thread, question)
+    .slice(-8)
+    .some((message) => message.role === "assistant" && hasGeneratedFileArtifacts(message.artifacts));
+}
+
+function shouldPreferConversationContext(thread: ChatThread, question: string): boolean {
+  return threadHasRecentGeneratedArtifact(thread, question) && artifactFollowUpPattern.test(question) && !graphRequiredPattern.test(question);
+}
+
+function normalizeGroundingMode(value: unknown, thread: ChatThread, question: string): "conversation" | "graph" {
+  if (shouldPreferConversationContext(thread, question)) {
+    return "conversation";
+  }
+
+  if (value === "conversation" || value === "graph") {
+    return value;
+  }
+
+  return graphRequiredPattern.test(question) ? "graph" : "conversation";
+}
+
+function normalizeTargetArtifactIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(value.filter((item): item is string => typeof item === "string" && Boolean(item.trim())).map((item) => item.trim()))
+  ).slice(0, 6);
+}
+
 function artifactChatConfirmation(artifacts: ChatArtifact[]): string {
   return artifacts.length === 1 ? "I generated the file." : `I generated ${artifacts.length} files.`;
 }
@@ -291,7 +340,7 @@ function artifactChatConfirmation(artifacts: ChatArtifact[]): string {
 function formatMessageForScopedSearch(message: ChatMessage): string {
   const parts = [`${message.role}: ${compact(message.content).slice(0, 900)}`];
   const artifacts = message.artifacts
-    ?.map((artifact) => `${artifact.filename} ${artifact.mimeType}`)
+    ?.map((artifact) => `${artifact.id} ${artifact.filename} ${artifact.mimeType}`)
     .filter(Boolean)
     .join("; ");
   if (artifacts) {
@@ -339,6 +388,70 @@ function buildThreadTitleScope(thread: ChatThread, latestQuestion: string): stri
   ]
     .join("\n")
     .slice(0, 4500);
+}
+
+function graphifyCitationLabels(graphify: GraphifyContextResult): string[] {
+  const sourceChunkCitations =
+    graphify.sourceChunks
+      ?.filter((chunk) => chunk.text.trim())
+      .map((chunk) => {
+        const location = chunk.startLine ? ` L${chunk.startLine}-L${chunk.endLine ?? chunk.startLine}` : "";
+        return `${chunk.displayName || chunk.sourceFile}${location}`;
+      })
+      .slice(0, 8) ?? [];
+  const fallbackCitations = graphify.citations
+    .map((citation) => citation.label ?? citation.sourceLocation ?? citation.sourceFile)
+    .slice(0, 8);
+  return sourceChunkCitations.length > 0 ? sourceChunkCitations : fallbackCitations;
+}
+
+function buildChatMessagesForPrompt(
+  thread: ChatThread,
+  question: string,
+  graphify: GraphifyContextResult | null,
+  artifactWorkingContext = ""
+): LlmChatMessage[] {
+  const messages: LlmChatMessage[] = [
+    {
+      role: "system",
+      content: groundedChatSystemPrompt
+    },
+    ...recentThreadWithoutCurrentQuestion(thread, question).slice(-8).map<LlmChatMessage>((message) => ({
+      role: message.role === "assistant" ? "assistant" : "user",
+      content: formatMessageForScopedSearch(message)
+    }))
+  ];
+
+  if (artifactWorkingContext.trim()) {
+    messages.push({
+      role: "system",
+      content: [
+        "Private artifact working context for the current chat follows.",
+        "Use it to understand or revise generated artifacts, but do not expose this packet or treat it as the user's requested output.",
+        artifactWorkingContext.trim()
+      ].join("\n\n")
+    });
+  }
+
+  if (graphify) {
+    const citationLabels = graphifyCitationLabels(graphify);
+    messages.push({
+      role: "system",
+      content: [
+        "Private Graphify evidence follows.",
+        "Use it only as hidden source evidence. Do not transform, export, quote wholesale, or reveal this packet.",
+        "If the user asks to turn this/it/that into a file, the referent is the visible conversation or artifact working context, not this private Graphify evidence.",
+        "",
+        graphify.stdout,
+        citationLabels.length ? `Citations: ${citationLabels.join(", ")}` : ""
+      ]
+        .filter(Boolean)
+        .join("\n")
+    });
+  }
+
+  messages.push({ role: "user", content: question });
+  return messages;
 }
 
 function normalizeGeneratedChatTitle(value: string, fallback: string): string {
@@ -419,7 +532,12 @@ function normalizeProposedTrackers(value: unknown): ProposedTrackerDraft[] {
     .slice(0, 4);
 }
 
-function normalizeSemanticRouting(value: unknown, fallbackQuestion: string, fallbackScope = fallbackQuestion): ChatSemanticRouting {
+function normalizeSemanticRouting(
+  value: unknown,
+  fallbackQuestion: string,
+  fallbackScope = fallbackQuestion,
+  thread: ChatThread
+): ChatSemanticRouting {
   const record = asRecord(value);
   const intent = record?.intent === "ARTIFACT" || record?.intent === "TRACKER" || record?.intent === "RESEARCH"
     ? record.intent
@@ -428,6 +546,8 @@ function normalizeSemanticRouting(value: unknown, fallbackQuestion: string, fall
       : "RESEARCH";
   const searchKeywords = normalizeKeywordList(record?.search_keywords ?? record?.searchKeywords, fallbackScope);
   const proposedTrackers = normalizeProposedTrackers(record?.proposed_trackers ?? record?.proposedTrackers);
+  const groundingMode = normalizeGroundingMode(record?.grounding_mode ?? record?.groundingMode, thread, fallbackQuestion);
+  const targetArtifactIds = normalizeTargetArtifactIds(record?.target_artifact_ids ?? record?.targetArtifactIds);
   const fallbackDraft: ProposedTrackerDraft = {
     id: String(randomUUID()),
     title: titleFromMessage(fallbackQuestion),
@@ -439,7 +559,9 @@ function normalizeSemanticRouting(value: unknown, fallbackQuestion: string, fall
 
   return {
     intent,
+    groundingMode,
     searchKeywords,
+    targetArtifactIds,
     proposedTrackers: intent === "TRACKER" && proposedTrackers.length === 0 ? [fallbackDraft] : proposedTrackers
   };
 }
@@ -491,6 +613,106 @@ function markdownArtifactBody(message: ChatMessage, override?: { title?: string 
     (override?.content ?? message.content).trim(),
     ""
   ].join("\n");
+}
+
+function truncateForWorkingContext(value: string, limit = 50_000): string {
+  const compacted = value.replace(/\r/g, "").trim();
+  return compacted.length > limit ? `${compacted.slice(0, limit)}\n\n[Truncated]` : compacted;
+}
+
+function astPayloadToPlainText(value: unknown): string {
+  const record = asRecord(value);
+  if (!record) {
+    return "";
+  }
+
+  const meta = asRecord(record.meta);
+  const lines: string[] = [];
+  const title = typeof meta?.title === "string" ? meta.title.trim() : "";
+  if (title) {
+    lines.push(`# ${title}`, "");
+  }
+
+  const nodes = Array.isArray(record.nodes) ? record.nodes : [];
+  for (const nodeValue of nodes) {
+    const node = asRecord(nodeValue);
+    if (!node) {
+      continue;
+    }
+
+    const type = typeof node.type === "string" ? node.type.toUpperCase() : "";
+    const text = typeof node.text === "string" ? node.text.trim() : "";
+    if (type === "SLIDE_BREAK") {
+      lines.push("", "---", "");
+      continue;
+    }
+
+    if (Array.isArray(node.spans)) {
+      const spanText = node.spans
+        .map((spanValue) => {
+          const span = asRecord(spanValue);
+          return typeof span?.text === "string" ? span.text : "";
+        })
+        .join("")
+        .trim();
+      if (spanText) {
+        lines.push(spanText);
+      }
+      continue;
+    }
+
+    if (type === "BULLET_ITEM") {
+      const prefix =
+        typeof node.bold_prefix === "string"
+          ? node.bold_prefix
+          : typeof node.boldPrefix === "string"
+            ? node.boldPrefix
+            : "";
+      lines.push(`- ${[prefix.trim(), text].filter(Boolean).join(" ")}`.trim());
+      continue;
+    }
+
+    if (type === "NUMBERED_ITEM") {
+      lines.push(text ? `1. ${text}` : "");
+      continue;
+    }
+
+    if (type === "BAR_CHART") {
+      if (text) {
+        lines.push(text);
+      }
+      const data = Array.isArray(node.data) ? node.data : Array.isArray(node.items) ? node.items : [];
+      for (const itemValue of data) {
+        const item = asRecord(itemValue);
+        const label = typeof item?.label === "string" ? item.label.trim() : "";
+        const itemValueText = item?.value === undefined ? "" : String(item.value);
+        if (label || itemValueText) {
+          lines.push(`- ${label}: ${itemValueText}`);
+        }
+      }
+      continue;
+    }
+
+    if (type === "MATH_INLINE") {
+      if (text) {
+        lines.push(`$${text}$`);
+      }
+      continue;
+    }
+
+    if (type === "MATH_BLOCK") {
+      if (text) {
+        lines.push("$$", text, "$$");
+      }
+      continue;
+    }
+
+    if (text) {
+      lines.push(text);
+    }
+  }
+
+  return truncateForWorkingContext(lines.join("\n").replace(/\n{3,}/g, "\n\n"));
 }
 
 function collectProxyAttachments(payload: ProxyResponse): ProxyAttachment[] {
@@ -581,7 +803,7 @@ function artifactPlannerSystemPrompt(tools: LocalToolSpec[]): string {
   return [
     "You are Second Brain's local artifact planner.",
     "Choose exactly one enabled local MCP artifact tool and return one raw JSON object only.",
-    "Schema: {\"tool\":\"tool_name\",\"input\":{\"title\":\"string\",\"filename\":\"string\",\"documentType\":\"letter|summary|resume|report|proposal|invoice|spreadsheet|diagram|presentation|document\",\"text\":\"complete artifact body as Markdown or SVG\",\"astPayload\":{\"meta\":{\"filename\":\"same filename\",\"title\":\"string\",\"layout_mode\":\"PORTRAIT|LANDSCAPE\",\"primary_color\":\"#006666\"},\"nodes\":[{\"type\":\"HEADING_1|HEADING_2|BODY_TEXT|BULLET_ITEM|NUMBERED_ITEM|QUOTE|SLIDE_TITLE|SLIDE_BREAK|SPACER|BAR_CHART\",\"text\":\"string\",\"spans\":[{\"text\":\"string\",\"bold\":true,\"italic\":false}],\"bold_prefix\":\"string\",\"data\":[{\"label\":\"string\",\"value\":42}]}]}},\"reason\":\"short reason\"}.",
+    "Schema: {\"tool\":\"tool_name\",\"input\":{\"title\":\"string\",\"filename\":\"string\",\"documentType\":\"letter|summary|resume|report|proposal|invoice|spreadsheet|diagram|presentation|document\",\"text\":\"complete artifact body as Markdown or SVG\",\"astPayload\":{\"meta\":{\"filename\":\"same filename\",\"title\":\"string\",\"layout_mode\":\"PORTRAIT|LANDSCAPE\",\"primary_color\":\"#006666\"},\"nodes\":[{\"type\":\"HEADING_1|HEADING_2|BODY_TEXT|BULLET_ITEM|NUMBERED_ITEM|QUOTE|SLIDE_TITLE|SLIDE_BREAK|SPACER|BAR_CHART|MATH_INLINE|MATH_BLOCK\",\"text\":\"string\",\"spans\":[{\"text\":\"string\",\"bold\":true,\"italic\":false}],\"bold_prefix\":\"string\",\"data\":[{\"label\":\"string\",\"value\":42}]}]}},\"reason\":\"short reason\"}.",
     "The artifact body must be the actual downloadable document content, not a transcript of the chat answer.",
     "The artifact name must be short and based of chat message.",
     "For create_pdf_artifact, provide astPayload, not Markdown. Do not put raw Markdown markers such as **, ###, or ``` inside astPayload text.",
@@ -589,6 +811,8 @@ function artifactPlannerSystemPrompt(tools: LocalToolSpec[]): string {
     "For deck, slides, or presentation PDFs use astPayload.meta.layout_mode LANDSCAPE and insert SLIDE_BREAK nodes between slides.",
     "Use BODY_TEXT spans for bold and italic emphasis. For bullet labels, use BULLET_ITEM.bold_prefix such as \"Risk:\" and put only the remaining sentence in text.",
     "For PDF bar charts, use BAR_CHART nodes with data items instead of text bars or Unicode block characters.",
+    "For mathematical notation, use MATH_INLINE for short inline equations and MATH_BLOCK for display equations. Preserve LaTeX notation such as \\frac, superscripts, subscripts, Greek symbols, and integrals in the text field.",
+    "For DOCX and Markdown math, preserve inline $...$ and display $$...$$ delimiters in text.",
     "For DOCX and Markdown, write structured Markdown with headings, sections, bullets, and tables where useful.",
     "For letters, use date, recipient or salutation when known, body paragraphs, closing, and signature placeholder.",
     "For summaries, use Overview, Key Points, Details, and Next Steps.",
@@ -759,9 +983,10 @@ export class ChatService {
 
     const settings = await this.settingsProvider();
     const semantic = await this.formulateSemanticRoute(thread, text, settings);
-    const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, text, settings));
-    const graphify = await this.queryGraphify(searchQuery, input.budget);
-    semantic.proposedTrackers = this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify);
+    const graphify = await this.queryGraphifyForSemantic(semantic, thread, text, settings, input.budget);
+    semantic.proposedTrackers = graphify
+      ? this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify)
+      : this.attachGraphNodesToDrafts(semantic.proposedTrackers, null);
     let assistant: ChatMessage =
       semantic.intent === "TRACKER"
         ? {
@@ -772,7 +997,7 @@ export class ChatService {
                 ? "I drafted grounded tracker items for review."
                 : "I drafted a floating tracker item for review.",
             createdAt: new Date().toISOString(),
-            grounding: graphify.error ? undefined : { graphify },
+            grounding: graphify && !graphify.error ? { graphify } : undefined,
             semantic
           }
         : semantic.intent === "ARTIFACT"
@@ -844,18 +1069,21 @@ export class ChatService {
       assistant.semantic = semantic;
       emit({ type: "semantic", generationId, messageId: assistant.id, semantic });
 
-      const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, text, settings));
-      const graphify = await this.queryGraphify(searchQuery, input.budget);
-      semantic.proposedTrackers = this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify);
+      const graphify = await this.queryGraphifyForSemantic(semantic, thread, text, settings, input.budget);
+      semantic.proposedTrackers = graphify
+        ? this.attachGraphNodesToDrafts(semantic.proposedTrackers, graphify)
+        : this.attachGraphNodesToDrafts(semantic.proposedTrackers, null);
       assistant.semantic = semantic;
-      assistant.grounding = graphify.error && semantic.intent === "TRACKER" ? undefined : { graphify };
+      assistant.grounding = graphify && !(graphify.error && semantic.intent === "TRACKER") ? { graphify } : undefined;
       emit({ type: "semantic", generationId, messageId: assistant.id, semantic });
-      emit({
-        type: "grounding",
-        generationId,
-        messageId: assistant.id,
-        grounding: graphify
-      });
+      if (graphify) {
+        emit({
+          type: "grounding",
+          generationId,
+          messageId: assistant.id,
+          grounding: graphify
+        });
+      }
 
       if (semantic.intent === "TRACKER") {
         assistant.content = semantic.proposedTrackers.some((draft) => draft.grounding === "grounded")
@@ -868,7 +1096,7 @@ export class ChatService {
           delta: assistant.content,
           content: assistant.content
         });
-      } else if (graphify.error) {
+      } else if (graphify?.error) {
         assistant.content = "Graphify context retrieval failed, so I did not send this question to the configured AI endpoint.";
         assistant.error = graphify.error;
       } else if (semantic.intent === "ARTIFACT") {
@@ -889,7 +1117,7 @@ export class ChatService {
           }
       } else {
         if (settings.aiMode === "proxy") {
-          const response = await this.requestProxy(thread, text, graphify, settings);
+          const response = await this.requestProxy(thread, text, graphify, settings, semantic);
           const model = proxyModel(settings);
           const content = extractProxyText(response);
           if (!content) {
@@ -897,14 +1125,12 @@ export class ChatService {
           }
 
           assistant.content = content;
-          assistant.grounding = {
-            graphify,
-            api: proxyResponseMetadata(response, model)
-          };
+          assistant.grounding = graphify ? { graphify, api: proxyResponseMetadata(response, model) } : undefined;
           assistant.artifacts = await this.createProxyArtifacts(thread.id, assistant.id, response);
+          const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, text);
           const toolArtifact =
             assistant.artifacts.length === 0
-              ? await this.createRequestedArtifact(thread.id, assistant.id, text, content, graphify, settings)
+              ? await this.createRequestedArtifact(thread.id, assistant.id, text, content, graphify, settings, undefined, artifactWorkingContext)
               : null;
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
@@ -928,7 +1154,7 @@ export class ChatService {
                 temperature: 0.4,
                 maxTokens: 4096
               },
-              messages: this.buildGroundedMessages(thread, text, graphify)
+              messages: await this.buildChatMessages(thread, text, graphify, semantic)
             },
             (delta, content) => {
               assistant.content = content;
@@ -942,7 +1168,17 @@ export class ChatService {
             },
             abortController.signal
           );
-          const toolArtifact = await this.createRequestedArtifact(thread.id, assistant.id, text, assistant.content, graphify, settings);
+          const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, text);
+          const toolArtifact = await this.createRequestedArtifact(
+            thread.id,
+            assistant.id,
+            text,
+            assistant.content,
+            graphify,
+            settings,
+            undefined,
+            artifactWorkingContext
+          );
           if (toolArtifact) {
             assistant.artifacts = [...(assistant.artifacts ?? []), toolArtifact];
             assistant.content = artifactChatConfirmation(assistant.artifacts);
@@ -969,7 +1205,7 @@ export class ChatService {
     } catch (error) {
       const detail = errorMessage(error);
       assistant.error = detail;
-      assistant.content = assistant.content || "The AI endpoint could not generate an answer. Local Graphify context is still available.";
+      assistant.content = assistant.content || "The AI endpoint could not generate an answer.";
       thread.messages.push(assistant);
       thread.messages = thread.messages.slice(-maxStoredMessagesPerThread);
       thread.updatedAt = new Date().toISOString();
@@ -1000,6 +1236,21 @@ export class ChatService {
     return result;
   }
 
+  private async queryGraphifyForSemantic(
+    semantic: ChatSemanticRouting,
+    thread: ChatThread,
+    question: string,
+    settings: AppSettings,
+    budget?: number
+  ): Promise<GraphifyContextResult | null> {
+    if (semantic.groundingMode !== "graph") {
+      return null;
+    }
+
+    const searchQuery = semantic.searchKeywords.join(" ") || (await this.formulateSearchQuery(thread, question, settings));
+    return this.queryGraphify(searchQuery, budget);
+  }
+
   private async formulateSemanticRoute(
     thread: ChatThread,
     question: string,
@@ -1013,10 +1264,12 @@ export class ChatService {
           "You are Second Brain's fast semantic router.",
           "Do not answer the user.",
           "Return exactly one raw JSON object and no markdown.",
-          "Schema: {\"intent\":\"ARTIFACT\"|\"TRACKER\"|\"RESEARCH\",\"search_keywords\":[\"string\"],\"proposed_trackers\":[{\"title\":\"string\",\"due_date\":\"ISO8601 string optional\",\"confidence\":0.0,\"context_keywords\":[\"string\"]}]}",
+          "Schema: {\"intent\":\"ARTIFACT\"|\"TRACKER\"|\"RESEARCH\",\"grounding_mode\":\"conversation\"|\"graph\",\"search_keywords\":[\"string\"],\"target_artifact_ids\":[\"string\"],\"proposed_trackers\":[{\"title\":\"string\",\"due_date\":\"ISO8601 string optional\",\"confidence\":0.0,\"context_keywords\":[\"string\"]}]}",
           "Use TRACKER only when the user is explicitly asking to remember, schedule, track, follow up, create a task, or set a deadline.",
           "Use ARTIFACT when the user asks to create/export a file such as PDF, DOCX, XLSX, image, diagram, markdown, resume, letter, or report.",
           "Use RESEARCH for normal questions and explanations.",
+          "Use grounding_mode conversation for follow-ups that refer to this, it, that, the previous answer, or a generated artifact/file/report.",
+          "Use grounding_mode graph only when the user asks about ingested sources, local files, citations, Graphify, the knowledge graph, or a new topic requiring project/source knowledge.",
           "Search keywords must be 3-4 precise terms for semantic graph retrieval.",
           "Choose keywords only from the provided running conversation scope: the latest user question, recent assistant answers, proposed tracker context, and generated artifact names or types.",
           "Do not use outside synonyms or unrelated graph-wide topics.",
@@ -1032,7 +1285,7 @@ export class ChatService {
         const secret = await this.proxySecret(settings);
         const model = proxyModel(settings);
         if (!proxy.endpoint.trim() || !secret) {
-          return normalizeSemanticRouting({}, question, searchScope);
+          return normalizeSemanticRouting({}, question, searchScope, thread);
         }
 
         const controller = new AbortController();
@@ -1060,11 +1313,11 @@ export class ChatService {
           const responseText = await response.text();
           if (!response.ok) {
             console.warn(`Semantic router failed with ${response.status} ${response.statusText}: ${responseText.slice(0, 500)}`);
-            return normalizeSemanticRouting({}, question);
+            return normalizeSemanticRouting({}, question, searchScope, thread);
           }
 
           const parsed = JSON.parse(responseText) as ProxyResponse;
-          return normalizeSemanticRouting(parseLocalModelJsonObject(extractProxyText(parsed) || responseText), question, searchScope);
+          return normalizeSemanticRouting(parseLocalModelJsonObject(extractProxyText(parsed) || responseText), question, searchScope, thread);
         } finally {
           clearTimeout(timeout);
         }
@@ -1077,11 +1330,12 @@ export class ChatService {
           method: { temperature: 0.1, maxTokens: 420, jsonMode: true }
         }),
         question,
-        searchScope
+        searchScope,
+        thread
       );
     } catch (error) {
       console.warn("Semantic router failed; falling back to research route.", error);
-      return normalizeSemanticRouting({}, question, searchScope);
+      return normalizeSemanticRouting({}, question, searchScope, thread);
     }
   }
 
@@ -1157,9 +1411,9 @@ export class ChatService {
 
   private attachGraphNodesToDrafts(
     drafts: ProposedTrackerDraft[],
-    graphify: GraphifyContextResult
+    graphify: GraphifyContextResult | null
   ): ProposedTrackerDraft[] {
-    const nodes = (graphify.nodeHits ?? []).map((hit) => hit.id).filter(Boolean).slice(0, 8);
+    const nodes = (graphify?.nodeHits ?? []).map((hit) => hit.id).filter(Boolean).slice(0, 8);
     if (nodes.length === 0) {
       return drafts.map((draft) => ({ ...draft, linkedNodeIds: [], grounding: "floating" }));
     }
@@ -1174,7 +1428,7 @@ export class ChatService {
   private async completeWithSelectedProvider(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings?: AppSettings,
     semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
@@ -1260,13 +1514,13 @@ export class ChatService {
   private async completeWithArtifactOnly(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings: AppSettings,
     semantic: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const messageId = randomUUID();
     const createdAt = new Date().toISOString();
-    if (graphify.error) {
+    if (graphify?.error) {
       return {
         id: messageId,
         role: "assistant",
@@ -1279,14 +1533,23 @@ export class ChatService {
     }
 
     const request = requestedArtifactFor(question) ?? { tool: "create_markdown_artifact", extension: ".md", mimeType: "text/markdown" };
+    const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, question);
     const artifactSeed = [
       "Generate the requested artifact silently.",
       `User request: ${question}`,
-      "",
-      "Relevant Graphify context:",
-      graphify.stdout.slice(0, 7000)
-    ].join("\n");
-    const artifact = await this.createRequestedArtifact(thread.id, messageId, question, artifactSeed, graphify, settings, request);
+      artifactWorkingContext ? ["", "Relevant generated artifact working context:", artifactWorkingContext].join("\n") : "",
+      graphify ? ["", "Relevant Graphify source evidence:", graphify.stdout.slice(0, 7000)].join("\n") : ""
+    ].filter(Boolean).join("\n");
+    const artifact = await this.createRequestedArtifact(
+      thread.id,
+      messageId,
+      question,
+      artifactSeed,
+      graphify,
+      settings,
+      request,
+      artifactWorkingContext
+    );
 
     return {
       id: messageId,
@@ -1294,7 +1557,7 @@ export class ChatService {
       content: artifact ? "I generated the file." : "I could not generate a file from that request.",
       createdAt,
       artifacts: artifact ? [artifact] : [],
-      grounding: { graphify },
+      grounding: graphify ? { graphify } : undefined,
       semantic,
       error: artifact ? undefined : "Artifact generation did not return a local file."
     };
@@ -1303,13 +1566,13 @@ export class ChatService {
   private async completeWithLocalEndpoint(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings: AppSettings,
     semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
     const createdAt = new Date().toISOString();
 
-    if (graphify.error) {
+    if (graphify?.error) {
       return {
         id: randomUUID(),
         role: "assistant",
@@ -1323,15 +1586,24 @@ export class ChatService {
 
     try {
       const llm = new LlmService(async () => settings.ai, this.accessTokenProvider);
+      const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, question);
       const text = await llm.completeText({
         method: {
           temperature: 0.4,
           maxTokens: 4096
         },
-        messages: this.buildGroundedMessages(thread, question, graphify)
+        messages: buildChatMessagesForPrompt(thread, question, graphify, artifactWorkingContext)
       });
       const messageId = randomUUID();
-      const artifacts = await this.createRequestedArtifactList(thread.id, messageId, question, text, graphify, settings);
+      const artifacts = await this.createRequestedArtifactList(
+        thread.id,
+        messageId,
+        question,
+        text,
+        graphify,
+        settings,
+        artifactWorkingContext
+      );
 
       return {
         id: messageId,
@@ -1340,15 +1612,15 @@ export class ChatService {
         createdAt,
         artifacts,
         semantic,
-        grounding: { graphify }
+        grounding: graphify ? { graphify } : undefined
       };
     } catch (error) {
       return {
         id: randomUUID(),
         role: "assistant",
-        content: "The local AI endpoint could not generate an answer. Local Graphify context is still available below.",
+        content: "The local AI endpoint could not generate an answer.",
         createdAt,
-        grounding: { graphify },
+        grounding: graphify ? { graphify } : undefined,
         semantic,
         error: errorMessage(error)
       };
@@ -1358,7 +1630,7 @@ export class ChatService {
   private async completeWithManagedProxy(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings: AppSettings,
     semantic?: ChatSemanticRouting
   ): Promise<ChatMessage> {
@@ -1370,10 +1642,9 @@ export class ChatService {
       return {
         id: randomUUID(),
         role: "assistant",
-        content:
-          "Managed proxy is not configured yet. Local Graphify context was retrieved, but remote answer generation is disabled.",
+        content: "Managed proxy is not configured yet.",
         createdAt,
-        grounding: { graphify },
+        grounding: graphify ? { graphify } : undefined,
         semantic,
         error: "Managed proxy is disabled or missing an endpoint."
       };
@@ -1385,13 +1656,13 @@ export class ChatService {
         role: "assistant",
         content: "Your account session is not ready. Sign in again to continue.",
         createdAt,
-        grounding: { graphify },
+        grounding: graphify ? { graphify } : undefined,
         semantic,
         error: "Managed proxy credential is missing."
       };
     }
 
-    if (graphify.error) {
+    if (graphify?.error) {
       return {
         id: randomUUID(),
         role: "assistant",
@@ -1404,7 +1675,7 @@ export class ChatService {
     }
 
     try {
-      const response = await this.requestProxy(thread, question, graphify, settings);
+      const response = await this.requestProxy(thread, question, graphify, settings, semantic);
       const model = proxyModel(settings);
       const text = extractProxyText(response);
 
@@ -1414,8 +1685,11 @@ export class ChatService {
 
       const messageId = randomUUID();
       const artifacts = await this.createProxyArtifacts(thread.id, messageId, response);
+      const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, question);
       const toolArtifact =
-        artifacts.length === 0 ? await this.createRequestedArtifact(thread.id, messageId, question, text, graphify, settings) : null;
+        artifacts.length === 0
+          ? await this.createRequestedArtifact(thread.id, messageId, question, text, graphify, settings, undefined, artifactWorkingContext)
+          : null;
       const allArtifacts = toolArtifact ? [...artifacts, toolArtifact] : artifacts;
 
       return {
@@ -1425,18 +1699,15 @@ export class ChatService {
         createdAt,
         artifacts: allArtifacts,
         semantic,
-        grounding: {
-          graphify,
-          api: proxyResponseMetadata(response, model)
-        }
+        grounding: graphify ? { graphify, api: proxyResponseMetadata(response, model) } : undefined
       };
     } catch (error) {
       return {
         id: randomUUID(),
         role: "assistant",
-        content: "The managed proxy could not generate an answer. Local Graphify context is still available below.",
+        content: "The managed proxy could not generate an answer.",
         createdAt,
-        grounding: { graphify },
+        grounding: graphify ? { graphify } : undefined,
         semantic,
         error: errorMessage(error)
       };
@@ -1446,8 +1717,9 @@ export class ChatService {
   private async requestProxy(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult,
-    settings: AppSettings
+    graphify: GraphifyContextResult | null,
+    settings: AppSettings,
+    semantic?: ChatSemanticRouting
   ): Promise<ProxyResponse> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), requestTimeoutMs);
@@ -1468,7 +1740,7 @@ export class ChatService {
           model,
           groundingEnabled: proxy.groundingEnabled,
           requestId,
-          messages: this.buildGroundedMessages(thread, question, graphify)
+          messages: await this.buildChatMessages(thread, question, graphify, semantic)
         }),
         signal: controller.signal
       });
@@ -1503,47 +1775,117 @@ export class ChatService {
     );
   }
 
-  private buildGroundedMessages(
+  private async buildChatMessages(
     thread: ChatThread,
     question: string,
-    graphify: GraphifyContextResult
-  ): LlmChatMessage[] {
-    const sourceChunkCitations =
-      graphify.sourceChunks
-        ?.filter((chunk) => chunk.text.trim())
-        .map((chunk) => {
-          const location = chunk.startLine ? ` L${chunk.startLine}-L${chunk.endLine ?? chunk.startLine}` : "";
-          return `${chunk.displayName || chunk.sourceFile}${location}`;
-        })
-        .slice(0, 8) ?? [];
-    const fallbackCitations = graphify.citations
-      .map((citation) => citation.label ?? citation.sourceLocation ?? citation.sourceFile)
-      .slice(0, 8);
-    const citationLabels = sourceChunkCitations.length > 0 ? sourceChunkCitations : fallbackCitations;
+    graphify: GraphifyContextResult | null,
+    semantic?: ChatSemanticRouting
+  ): Promise<LlmChatMessage[]> {
+    const artifactWorkingContext = await this.buildArtifactWorkingContext(thread, semantic, question);
+    return buildChatMessagesForPrompt(thread, question, graphify, artifactWorkingContext);
+  }
 
-    return [
-      {
-        role: "system",
-        content: groundedChatSystemPrompt
-      },
-      ...thread.messages.slice(-8).map<LlmChatMessage>((message) => ({
-        role: message.role === "assistant" ? "assistant" : "user",
-        content: formatMessageForScopedSearch(message)
-      })),
-      {
-        role: "user",
-        content: [
-          `Question: ${question}`,
-          "",
-          "Local Graphify context:",
-          graphify.stdout,
-          "",
-          `Graphify command: ${graphify.command}`,
-          `Context budget: ${graphify.budget}`,
-          citationLabels.length ? `Citations: ${citationLabels.join(", ")}` : ""
-        ].join("\n")
+  private async buildArtifactWorkingContext(
+    thread: ChatThread,
+    semantic: ChatSemanticRouting | undefined,
+    question: string
+  ): Promise<string> {
+    const history = recentThreadWithoutCurrentQuestion(thread, question);
+    const recentArtifacts = history
+      .flatMap((message) => message.artifacts ?? [])
+      .filter((artifact) => artifact.source === "local-tool" || artifact.source === "proxy-attachment" || artifact.source === "assistant-text");
+
+    if (recentArtifacts.length === 0) {
+      return "";
+    }
+
+    const targetIds = new Set(semantic?.targetArtifactIds ?? []);
+    const targeted = targetIds.size ? recentArtifacts.filter((artifact) => targetIds.has(artifact.id)) : [];
+    const shouldIncludeRecent =
+      targeted.length > 0 ||
+      semantic?.groundingMode === "conversation" ||
+      shouldPreferConversationContext(thread, question) ||
+      requestedArtifactFor(question) !== null;
+
+    if (!shouldIncludeRecent) {
+      return "";
+    }
+
+    const selected = (targeted.length ? targeted : recentArtifacts.slice(-4)).reverse();
+    const sections: string[] = [];
+    let remaining = maxArtifactWorkingContextChars;
+
+    for (const artifact of selected) {
+      if (remaining <= 0) {
+        break;
       }
-    ];
+
+      const content = await this.readArtifactWorkingContent(artifact);
+      if (!content.trim()) {
+        continue;
+      }
+
+      const header = `--- Artifact ${artifact.id}: ${artifact.filename} (${artifact.mimeType}) ---`;
+      const allowance = Math.max(0, remaining - header.length - 8);
+      if (allowance <= 0) {
+        break;
+      }
+
+      const body = content.length > allowance ? `${content.slice(0, allowance)}\n[Truncated]` : content;
+      sections.push(`${header}\n${body}`);
+      remaining -= header.length + body.length + 8;
+    }
+
+    return sections.join("\n\n").trim();
+  }
+
+  private async readArtifactWorkingContent(artifact: ChatArtifact): Promise<string> {
+    const candidates = [artifact.contextPath, artifact.kind === "text" ? artifact.storagePath : undefined].filter(
+      (candidate): candidate is string => typeof candidate === "string" && Boolean(candidate.trim())
+    );
+
+    for (const candidate of candidates) {
+      try {
+        const content = await readFile(candidate, "utf8");
+        return truncateForWorkingContext(content, maxArtifactWorkingContextChars);
+      } catch {
+        // Try the next candidate. Binary artifacts without sidecars intentionally fall back to preview only.
+      }
+    }
+
+    return artifact.contextPreview?.trim() ?? "";
+  }
+
+  private artifactContextFromInput(input: CreateToolArtifactInput, fallback: string): string {
+    const astText = astPayloadToPlainText(input.astPayload ?? (input as CreateToolArtifactInput & { ast_payload?: unknown }).ast_payload);
+    if (astText) {
+      return astText;
+    }
+
+    if (typeof input.text === "string" && input.text.trim()) {
+      return truncateForWorkingContext(input.text);
+    }
+
+    return truncateForWorkingContext(fallback);
+  }
+
+  private async writeArtifactContextFile(
+    threadId: string,
+    messageId: string,
+    filename: string,
+    content: string
+  ): Promise<Pick<ChatArtifact, "contextPath" | "contextPreview">> {
+    const normalized = truncateForWorkingContext(content);
+    if (!normalized) {
+      return {};
+    }
+
+    const contextFilename = `${safeFilePart(filename).replace(/\.[^.]+$/, "")}.context.md`;
+    const contextPath = await this.writeArtifactFile(threadId, messageId, contextFilename, Buffer.from(`${normalized}\n`, "utf8"));
+    return {
+      contextPath,
+      contextPreview: normalized.slice(0, 500)
+    };
   }
 
   private async findMessage(messageId: string): Promise<{ thread: ChatThread; message: ChatMessage }> {
@@ -1572,19 +1914,23 @@ export class ChatService {
     message: ChatMessage,
     override?: { title?: string | undefined; content?: string | undefined }
   ): Promise<ChatArtifact> {
+    const id = randomUUID();
     const title = override?.title?.trim() || "chat-response";
     const filename = safeFilePart(`${title}-${message.id}.md`);
     const content = markdownArtifactBody(message, override);
     const storagePath = await this.writeArtifactFile(threadId, message.id, filename, Buffer.from(content, "utf8"));
+    const context = await this.writeArtifactContextFile(threadId, message.id, filename, override?.content ?? message.content);
     const fileStat = await stat(storagePath);
     return {
-      id: randomUUID(),
+      id,
       messageId: message.id,
       filename,
       mimeType: "text/markdown",
       sizeBytes: fileStat.size,
       kind: "text",
       storagePath,
+      contextPath: context.contextPath,
+      contextPreview: context.contextPreview,
       createdAt: new Date().toISOString(),
       source: "assistant-text"
     };
@@ -1595,10 +1941,11 @@ export class ChatService {
     messageId: string,
     question: string,
     content: string,
-    graphify: GraphifyContextResult,
-    settings: AppSettings
+    graphify: GraphifyContextResult | null,
+    settings: AppSettings,
+    artifactWorkingContext = ""
   ): Promise<ChatArtifact[]> {
-    const artifact = await this.createRequestedArtifact(threadId, messageId, question, content, graphify, settings);
+    const artifact = await this.createRequestedArtifact(threadId, messageId, question, content, graphify, settings, undefined, artifactWorkingContext);
     return artifact ? [artifact] : [];
   }
 
@@ -1607,9 +1954,10 @@ export class ChatService {
     messageId: string,
     question: string,
     content: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings: AppSettings,
-    fallbackRequest?: RequestedArtifact
+    fallbackRequest?: RequestedArtifact,
+    artifactWorkingContext = ""
   ): Promise<ChatArtifact | null> {
     const request = requestedArtifactFor(question) ?? fallbackRequest;
     if (!request || !content.trim()) {
@@ -1621,7 +1969,7 @@ export class ChatService {
       return null;
     }
 
-    const planned = await this.planRequestedArtifact(question, content, graphify, settings, request);
+    const planned = await this.planRequestedArtifact(question, content, graphify, settings, request, artifactWorkingContext);
     const title = planned?.input.title?.trim() || artifactTitleFromQuestion(question);
     const toolName = planned?.tool && availableTools.has(planned.tool) ? planned.tool : request.tool;
     const input: CreateToolArtifactInput = {
@@ -1644,6 +1992,12 @@ export class ChatService {
     const filename = typeof result.filename === "string" ? result.filename : artifactFileName(title, request.extension);
     const mimeType = typeof result.mimeType === "string" ? result.mimeType : request.mimeType;
     const fileStat = await stat(storagePath);
+    const context = await this.writeArtifactContextFile(
+      threadId,
+      messageId,
+      filename,
+      this.artifactContextFromInput(input, content)
+    );
 
     return {
       id: typeof result.id === "string" ? result.id : randomUUID(),
@@ -1653,6 +2007,8 @@ export class ChatService {
       sizeBytes: typeof result.sizeBytes === "number" ? result.sizeBytes : fileStat.size,
       kind: mimeType.startsWith("text/") ? "text" : "binary",
       storagePath,
+      contextPath: context.contextPath,
+      contextPreview: context.contextPreview,
       createdAt: typeof result.createdAt === "string" ? result.createdAt : new Date().toISOString(),
       source: "local-tool"
     };
@@ -1661,9 +2017,10 @@ export class ChatService {
   private async planRequestedArtifact(
     question: string,
     answer: string,
-    graphify: GraphifyContextResult,
+    graphify: GraphifyContextResult | null,
     settings: AppSettings,
-    request: RequestedArtifact
+    request: RequestedArtifact,
+    artifactWorkingContext = ""
   ): Promise<{ tool: string; input: CreateToolArtifactInput } | null> {
     const tools = this.mcpServer.listToolSpecs(artifactToolNames);
     if (tools.length === 0) {
@@ -1676,9 +2033,10 @@ export class ChatService {
       preferred_document_type: requestedDocumentType(question),
       preferred_filename: artifactFileName(artifactTitleFromQuestion(question), request.extension),
       assistant_answer: answer,
-      graphify_context_excerpt: graphify.stdout.slice(0, 5000),
+      artifact_working_context: artifactWorkingContext.slice(0, 7000) || undefined,
+      graphify_source_evidence: graphify ? graphify.stdout.slice(0, 5000) : undefined,
       instruction:
-        "Create the actual artifact content. Keep chat framing out of the artifact. Preserve useful source facts, but write a polished document layout for the requested artifact type."
+        "Create the actual artifact content. Prefer artifact_working_context for follow-up conversions or revisions. Use graphify_source_evidence only when the user asked about source-backed project knowledge. Keep chat framing and private context labels out of the artifact. Preserve useful source facts, but write a polished document layout for the requested artifact type."
     });
 
     try {
@@ -1824,6 +2182,10 @@ export class ChatService {
       }
 
       const storagePath = await this.writeArtifactFile(threadId, messageId, filename, buffer);
+      const context =
+        text !== undefined
+          ? await this.writeArtifactContextFile(threadId, messageId, filename, text)
+          : {};
       artifacts.push({
         id: randomUUID(),
         messageId,
@@ -1832,6 +2194,8 @@ export class ChatService {
         sizeBytes: buffer.byteLength,
         kind: text !== undefined || mimeType.startsWith("text/") ? "text" : "binary",
         storagePath,
+        contextPath: context.contextPath,
+        contextPreview: context.contextPreview,
         createdAt: new Date().toISOString(),
         source: "proxy-attachment"
       });

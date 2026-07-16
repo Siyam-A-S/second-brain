@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import katex from "katex";
 import {
   AlertTriangle,
   DatabaseZap,
@@ -227,6 +228,7 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
   let codeLanguage = "";
   let codeLines: string[] | null = null;
   let mathLines: string[] | null = null;
+  let mathCloseFence: "$$" | "\\]" = "$$";
 
   const flushParagraph = (): void => {
     if (paragraph.length > 0) {
@@ -262,13 +264,24 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
       continue;
     }
 
-    if (line.trim() === "$$") {
+    const trimmed = line.trim();
+    const singleDollarMath = trimmed.match(/^\$\$(.+)\$\$$/);
+    const singleBracketMath = trimmed.match(/^\\\[(.+)\\\]$/);
+    if (!mathLines && (singleDollarMath || singleBracketMath)) {
+      flushParagraph();
+      flushList();
+      blocks.push({ kind: "math", content: (singleDollarMath?.[1] ?? singleBracketMath?.[1] ?? "").trim() });
+      continue;
+    }
+
+    if (trimmed === "$$" || trimmed === "\\[" || (mathLines && trimmed === mathCloseFence)) {
       if (mathLines) {
         blocks.push({ kind: "math", content: mathLines.join("\n").trim() });
         mathLines = null;
       } else {
         flushParagraph();
         flushList();
+        mathCloseFence = trimmed === "\\[" ? "\\]" : "$$";
         mathLines = [];
       }
       continue;
@@ -316,8 +329,39 @@ function parseMarkdownBlocks(content: string): MarkdownBlock[] {
   return blocks;
 }
 
+function MathText({
+  content,
+  displayMode = false,
+  inverted = false
+}: {
+  content: string;
+  displayMode?: boolean;
+  inverted?: boolean;
+}): JSX.Element {
+  try {
+    const html = katex.renderToString(content, {
+      displayMode,
+      throwOnError: false,
+      strict: "ignore",
+      trust: false
+    });
+    const className = displayMode
+      ? `${inverted ? "bg-white/10 text-white" : "bg-slate-50 text-slate-900"} overflow-auto rounded-md px-3 py-2 text-sm`
+      : `${inverted ? "text-white" : "text-slate-900"} inline-block max-w-full align-baseline`;
+    return <span className={className} dangerouslySetInnerHTML={{ __html: html }} />;
+  } catch {
+    return displayMode ? (
+      <pre className={`${inverted ? "bg-white/10 text-white" : "bg-slate-50 text-slate-900"} overflow-auto rounded-md px-3 py-2 font-serif text-sm italic`}>
+        {content}
+      </pre>
+    ) : (
+      <span className={`${inverted ? "text-white" : "text-slate-900"} font-serif italic`}>{content}</span>
+    );
+  }
+}
+
 function InlineMarkdown({ text, inverted = false }: { text: string; inverted?: boolean }): JSX.Element {
-  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\$[^$\n]+\$)/g;
+  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\\\([\s\S]*?\\\)|\$[^$\n]+\$)/g;
   const parts = text.split(pattern).filter((part) => part.length > 0);
   return (
     <>
@@ -336,11 +380,10 @@ function InlineMarkdown({ text, inverted = false }: { text: string; inverted?: b
           return <em key={index}>{part.slice(1, -1)}</em>;
         }
         if (/^\$[^$\n]+\$$/.test(part)) {
-          return (
-            <span key={index} className={`${inverted ? "text-white" : "text-slate-900"} font-serif italic`}>
-              {part.slice(1, -1)}
-            </span>
-          );
+          return <MathText key={index} content={part.slice(1, -1)} inverted={inverted} />;
+        }
+        if (/^\\\([\s\S]*\\\)$/.test(part)) {
+          return <MathText key={index} content={part.slice(2, -2)} inverted={inverted} />;
         }
         return <Fragment key={index}>{part}</Fragment>;
       })}
@@ -460,8 +503,8 @@ function MessageContent({
               }
               if (block.kind === "math") {
                 return (
-                  <div key={index} className={`${inverted ? "bg-white/10 text-white" : "bg-slate-50 text-slate-900"} overflow-auto rounded-md px-3 py-2 font-serif text-sm italic`}>
-                    {block.content}
+                  <div key={index} className="overflow-auto">
+                    <MathText content={block.content} displayMode inverted={inverted} />
                   </div>
                 );
               }

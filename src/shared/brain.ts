@@ -343,11 +343,14 @@ export type ChatArtifact = {
   sizeBytes: number;
   kind: "text" | "binary";
   storagePath: string;
+  contextPath?: string | undefined;
+  contextPreview?: string | undefined;
   createdAt: string;
   source: ChatArtifactSource;
 };
 
 export type SemanticRouterIntent = "ARTIFACT" | "TRACKER" | "RESEARCH";
+export type SemanticGroundingMode = "conversation" | "graph";
 
 export type ProposedTrackerDraft = {
   id: string;
@@ -361,7 +364,9 @@ export type ProposedTrackerDraft = {
 
 export type ChatSemanticRouting = {
   intent: SemanticRouterIntent;
+  groundingMode: SemanticGroundingMode;
   searchKeywords: string[];
+  targetArtifactIds?: string[] | undefined;
   proposedTrackers: ProposedTrackerDraft[];
 };
 

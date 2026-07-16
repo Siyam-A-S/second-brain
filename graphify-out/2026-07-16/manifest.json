@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "src/main/services/ArtifactToolService.ts": {
-    "mtime": 1784220695.492924,
-    "ast_hash": "9be9bd8b14b9b1308de3f3efcefb164f",
+    "mtime": 1784220590.8904698,
+    "ast_hash": "b58dabc628d0ecb83a40994880d7153a",
     "semantic_hash": ""
   },
   "dev/mcp-graphify-serve.md": {

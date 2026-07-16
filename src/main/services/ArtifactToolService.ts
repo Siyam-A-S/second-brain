@@ -21,7 +21,9 @@ export type ArtifactAstNode = {
     | "SLIDE_TITLE"
     | "SLIDE_BREAK"
     | "SPACER"
-    | "BAR_CHART";
+    | "BAR_CHART"
+    | "MATH_INLINE"
+    | "MATH_BLOCK";
   text?: string | undefined;
   spans?: ArtifactAstSpan[] | undefined;
   bold_prefix?: string | undefined;
@@ -190,6 +192,8 @@ SUPPORTED_TYPES = {
     "SLIDE_BREAK",
     "SPACER",
     "BAR_CHART",
+    "MATH_INLINE",
+    "MATH_BLOCK",
 }
 
 def clean_text(value):
@@ -233,6 +237,45 @@ def clean_text(value):
 
 def latin_safe_text(value):
     return clean_text(value).encode("latin-1", errors="replace").decode("latin-1")
+
+def readable_math(value):
+    text = clean_text(value)
+    replacements = {
+        "\\left": "",
+        "\\right": "",
+        "\\cdot": "·",
+        "\\times": "x",
+        "\\pm": "+/-",
+        "\\leq": "<=",
+        "\\geq": ">=",
+        "\\neq": "!=",
+        "\\approx": "~",
+        "\\to": "->",
+        "\\infty": "∞",
+        "\\int": "∫",
+        "\\sum": "Σ",
+        "\\prod": "Π",
+        "\\partial": "∂",
+        "\\nabla": "∇",
+        "\\alpha": "α",
+        "\\beta": "β",
+        "\\gamma": "γ",
+        "\\delta": "δ",
+        "\\epsilon": "ε",
+        "\\theta": "θ",
+        "\\lambda": "λ",
+        "\\mu": "μ",
+        "\\pi": "π",
+        "\\sigma": "σ",
+        "\\omega": "ω",
+    }
+    for source, target in replacements.items():
+        text = text.replace(source, target)
+    text = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"(\1)/(\2)", text)
+    text = re.sub(r"\\sqrt\{([^{}]+)\}", r"sqrt(\1)", text)
+    text = re.sub(r"\\[a-zA-Z]+", "", text)
+    text = text.replace("{", "").replace("}", "")
+    return re.sub(r"\s+", " ", text).strip()
 
 def first_existing(paths):
     for candidate in paths:
@@ -421,6 +464,30 @@ class SecondBrainCompiler(FPDF):
         self.multi_cell(width, line_height, text)
         self.ln(1)
 
+    def render_math(self, text, display=True):
+        text = self.pdf_text(readable_math(text))
+        if not text:
+            self.ln(2)
+            return
+        r, g, b = self.primary_rgb()
+        size = 13 if self.layout_mode == "LANDSCAPE" else 11
+        line_height = 7 if self.layout_mode == "LANDSCAPE" else 6
+        self.ensure_space(line_height * 3)
+        if display:
+            x = self.l_margin + 4
+            width = self.usable_width() - 8
+            y = self.get_y()
+            self.set_fill_color(248, 250, 252)
+            self.set_draw_color(203, 213, 225)
+            self.rect(x, y, width, max(12, line_height + 5), style="DF")
+            self.set_xy(x + 4, y + 3)
+            self.set_text_color(r, g, b)
+            self.set_doc_font("I", size=size)
+            self.multi_cell(width - 8, line_height, text, align="C")
+            self.ln(3)
+        else:
+            self.render_multiline(text, size=size, style="I", line_height=line_height, color=(r, g, b))
+
     def render_bullet(self, node):
         prefix = self.pdf_text(node.get("bold_prefix") or node.get("boldPrefix") or "")
         text = self.pdf_text(node.get("text", ""))
@@ -561,6 +628,10 @@ class SecondBrainCompiler(FPDF):
                 self.render_multiline(node.get("text", ""), size=11, style="I", line_height=6, indent=5, color=(71, 85, 105))
             elif node_type == "BAR_CHART":
                 self.render_bar_chart(node)
+            elif node_type == "MATH_INLINE":
+                self.render_math(node.get("text", ""), display=False)
+            elif node_type == "MATH_BLOCK":
+                self.render_math(node.get("text", ""), display=True)
 
 def run_generation(ast_payload, output_directory):
     meta = ast_payload.get("meta") if isinstance(ast_payload.get("meta"), dict) else {}
@@ -645,6 +716,56 @@ function splitBoldPrefix(value: string): { boldPrefix?: string | undefined; text
   return { text: stripMarkdownMarkers(value) };
 }
 
+function stripMathDelimiters(value: string): string {
+  const trimmed = value.trim();
+  const dollarBlock = /^\$\$([\s\S]+)\$\$$/.exec(trimmed);
+  if (dollarBlock) {
+    return dollarBlock[1]?.trim() ?? "";
+  }
+  const bracketBlock = /^\\\[([\s\S]+)\\\]$/.exec(trimmed);
+  if (bracketBlock) {
+    return bracketBlock[1]?.trim() ?? "";
+  }
+  const inlineDollar = /^\$([^$\n]+)\$$/.exec(trimmed);
+  if (inlineDollar) {
+    return inlineDollar[1]?.trim() ?? "";
+  }
+  const inlineParen = /^\\\(([\s\S]+)\\\)$/.exec(trimmed);
+  if (inlineParen) {
+    return inlineParen[1]?.trim() ?? "";
+  }
+  return trimmed;
+}
+
+function pushInlineMathAwareBody(nodes: ArtifactAstNode[], value: string): void {
+  const pattern = /(\\\(([\s\S]*?)\\\)|\$([^$\n]+)\$)/g;
+  let lastIndex = 0;
+  let matched = false;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(value)) !== null) {
+    matched = true;
+    const before = value.slice(lastIndex, match.index).trim();
+    if (before) {
+      nodes.push({ type: "BODY_TEXT", spans: parseInlineSpans(before) });
+    }
+    const math = (match[2] ?? match[3] ?? "").trim();
+    if (math) {
+      nodes.push({ type: "MATH_INLINE", text: math });
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  const after = value.slice(lastIndex).trim();
+  if (after) {
+    nodes.push({ type: "BODY_TEXT", spans: parseInlineSpans(after) });
+  }
+
+  if (!matched && !after) {
+    nodes.push({ type: "BODY_TEXT", spans: parseInlineSpans(value) });
+  }
+}
+
 function normalizeAstPayload(value: unknown): ArtifactAstPayload | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -679,9 +800,34 @@ function textToArtifactAst(input: {
 }): ArtifactAstPayload {
   const lines = applyDocumentLayout(input.text, input.title, input.documentType).replace(/\r/g, "").split("\n");
   const nodes: ArtifactAstNode[] = [];
+  let mathLines: string[] | null = null;
+  let mathCloseFence: "$$" | "\\]" = "$$";
 
   for (const line of lines) {
     const trimmed = line.trim();
+    if (mathLines) {
+      if (trimmed === mathCloseFence) {
+        nodes.push({ type: "MATH_BLOCK", text: mathLines.join("\n").trim() });
+        mathLines = null;
+      } else {
+        mathLines.push(line);
+      }
+      continue;
+    }
+
+    const singleDollarMath = /^\$\$([\s\S]+)\$\$$/.exec(trimmed);
+    const singleBracketMath = /^\\\[([\s\S]+)\\\]$/.exec(trimmed);
+    if (singleDollarMath || singleBracketMath) {
+      nodes.push({ type: "MATH_BLOCK", text: stripMathDelimiters(trimmed) });
+      continue;
+    }
+
+    if (trimmed === "$$" || trimmed === "\\[") {
+      mathLines = [];
+      mathCloseFence = trimmed === "\\[" ? "\\]" : "$$";
+      continue;
+    }
+
     if (!trimmed) {
       nodes.push({ type: "SPACER" });
       continue;
@@ -719,7 +865,11 @@ function textToArtifactAst(input: {
       continue;
     }
 
-    nodes.push({ type: "BODY_TEXT", spans: parseInlineSpans(trimmed) });
+    pushInlineMathAwareBody(nodes, trimmed);
+  }
+
+  if (mathLines) {
+    nodes.push({ type: "MATH_BLOCK", text: mathLines.join("\n").trim() });
   }
 
   return {
@@ -753,7 +903,7 @@ function wrapLines(value: string, max = 86): string[] {
 }
 
 type DocumentLine = {
-  kind: "heading1" | "heading2" | "heading3" | "bullet" | "numbered" | "blank" | "paragraph";
+  kind: "heading1" | "heading2" | "heading3" | "bullet" | "numbered" | "blank" | "paragraph" | "math";
   text: string;
 };
 
@@ -824,34 +974,77 @@ function applyDocumentLayout(text: string, title: string, documentType: string):
 }
 
 function parseDocumentLines(markdown: string): DocumentLine[] {
-  return markdown.replace(/\r/g, "").split("\n").map((line) => {
+  const lines: DocumentLine[] = [];
+  let mathLines: string[] | null = null;
+  let mathCloseFence: "$$" | "\\]" = "$$";
+
+  for (const line of markdown.replace(/\r/g, "").split("\n")) {
     const trimmed = line.trim();
+    if (mathLines) {
+      if (trimmed === mathCloseFence) {
+        lines.push({ kind: "math", text: mathLines.join("\n").trim() });
+        mathLines = null;
+      } else {
+        mathLines.push(line);
+      }
+      continue;
+    }
+
+    const singleDollarMath = /^\$\$([\s\S]+)\$\$$/.exec(trimmed);
+    const singleBracketMath = /^\\\[([\s\S]+)\\\]$/.exec(trimmed);
+    if (singleDollarMath || singleBracketMath) {
+      lines.push({ kind: "math", text: stripMathDelimiters(trimmed) });
+      continue;
+    }
+
+    if (trimmed === "$$" || trimmed === "\\[") {
+      mathLines = [];
+      mathCloseFence = trimmed === "\\[" ? "\\]" : "$$";
+      continue;
+    }
+
     if (!trimmed) {
-      return { kind: "blank", text: "" };
+      lines.push({ kind: "blank", text: "" });
+      continue;
     }
     const heading = /^(#{1,3})\s+(.+)$/.exec(trimmed);
     if (heading) {
       const level = heading[1]?.length ?? 1;
-      return {
+      lines.push({
         kind: level === 1 ? "heading1" : level === 2 ? "heading2" : "heading3",
         text: heading[2]?.trim() ?? ""
-      };
+      });
+      continue;
     }
     const bullet = /^[-*]\s+(.+)$/.exec(trimmed);
     if (bullet) {
-      return { kind: "bullet", text: bullet[1]?.trim() ?? "" };
+      lines.push({ kind: "bullet", text: bullet[1]?.trim() ?? "" });
+      continue;
     }
     const numbered = /^\d+[.)]\s+(.+)$/.exec(trimmed);
     if (numbered) {
-      return { kind: "numbered", text: numbered[1]?.trim() ?? "" };
+      lines.push({ kind: "numbered", text: numbered[1]?.trim() ?? "" });
+      continue;
     }
-    return { kind: "paragraph", text: trimmed };
-  });
+    lines.push({ kind: "paragraph", text: trimmed });
+  }
+
+  if (mathLines) {
+    lines.push({ kind: "math", text: mathLines.join("\n").trim() });
+  }
+
+  return lines;
 }
 
 function docxParagraph(line: DocumentLine, orderedIndex: number): string {
   if (line.kind === "blank") {
     return "<w:p/>";
+  }
+
+  if (line.kind === "math") {
+    const paragraphProperties = '<w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="160"/></w:pPr>';
+    const runProperties = '<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/><w:i/><w:sz w:val="24"/><w:color w:val="006666"/></w:rPr>';
+    return `<w:p>${paragraphProperties}<w:r>${runProperties}<w:t xml:space="preserve">${escapeXml(stripMathDelimiters(line.text))}</w:t></w:r></w:p>`;
   }
 
   const isHeading = line.kind.startsWith("heading");
@@ -967,6 +1160,12 @@ function renderSvg(text: string, title: string): Buffer {
     "utf8"
   );
 }
+
+export const artifactToolServiceTestUtils = {
+  parseDocumentLines,
+  renderDocx,
+  textToArtifactAst
+};
 
 export class ArtifactToolService {
   private readonly rootPath: string;
