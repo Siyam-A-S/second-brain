@@ -660,33 +660,6 @@ export class GraphifyContextService {
     );
   }
 
-  async saveResult(input: { question: string; answer: string; type?: string | undefined; nodes?: string[] | undefined }): Promise<string> {
-    const question = input.question.trim();
-    const answer = input.answer.trim();
-    if (!question || !answer) {
-      throw new Error("Both question and answer are required to save a Graphify result.");
-    }
-
-    const type = input.type?.trim() || "query";
-    const nodes = [...new Set((input.nodes ?? []).map((node) => node.trim()).filter(Boolean))].slice(0, maxNodeHits);
-    const args = ["save-result", "--question", question, "--answer", answer, "--type", type];
-    if (nodes.length > 0) {
-      args.push("--nodes", ...nodes);
-    }
-
-    const invocations = await this.getGraphifyInvocations(args);
-    const failures: string[] = [];
-    for (const invocation of invocations) {
-      try {
-        return await this.runInvocation(invocation);
-      } catch (error) {
-        failures.push(`${invocation.label}: ${errorMessage(error)}`);
-      }
-    }
-
-    throw new Error(["Graphify result save failed.", "Tried:", ...failures.map((failure) => `- ${failure}`)].join("\n"));
-  }
-
   private async runGraphifyMcpTool(
     query: string,
     traversalQuery: string,

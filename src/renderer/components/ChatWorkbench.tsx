@@ -2,7 +2,6 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   AlertTriangle,
-  BrainCircuit,
   DatabaseZap,
   Download,
   FilePlus,
@@ -17,23 +16,29 @@ import {
   RefreshCcw,
   SearchCheck,
   Send,
-  Trash2,
-  User
+  Trash2
 } from "lucide-react";
 import type {
+  AppSettings,
   AppBuildInfo,
   ChatArtifact,
   ChatMessage,
   ChatStreamEvent,
   ChatThread,
   GraphifyContextResult,
-  ProposedTrackerDraft
+  ProposedTrackerDraft,
+  UserPersona
 } from "../../shared/ipc";
 import { isProductionBuild, presentError, presentPossiblyDetailedError, productionErrorMessage } from "../lib/errorPresentation";
 import { useTrackerStore } from "../stores/useTrackerStore";
 
 type ChatWorkbenchProps = {
   refreshKey: number;
+};
+
+const defaultAppearance: AppSettings["appearance"] = {
+  topBarMirrored: false,
+  persona: "dolphin"
 };
 
 type MarkdownBlock =
@@ -48,6 +53,50 @@ type ResponseSection = {
   title: string;
   content: string;
 };
+
+const appIconUrl = new URL("../../../build/second-brain-app-icon.PNG", import.meta.url).href;
+
+const dolphinPersonaAsset = { label: "Dolphin", src: new URL("../../../build/Dolphin.PNG", import.meta.url).href };
+const personaAssets: Record<UserPersona, { label: string; src: string }> = {
+  dolphin: dolphinPersonaAsset,
+  jellyfish: { label: "Jellyfish", src: new URL("../../../build/Jellyfish.PNG", import.meta.url).href },
+  ant: { label: "Ant", src: new URL("../../../build/Ant.PNG", import.meta.url).href },
+  monkey: { label: "Monkey", src: new URL("../../../build/Monkey.PNG", import.meta.url).href },
+  hippo: { label: "Hippo", src: new URL("../../../build/Hippo.PNG", import.meta.url).href }
+};
+
+function SecondBrainAvatar(): JSX.Element {
+  return (
+    <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-950 shadow-sm ring-1 ring-emerald-200/60">
+      <img alt="" className="h-full w-full object-cover" src={appIconUrl} />
+    </span>
+  );
+}
+
+function PersonaAvatar({ persona }: { persona: UserPersona }): JSX.Element {
+  const asset = personaAssets[persona] ?? dolphinPersonaAsset;
+  return (
+    <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-900/10">
+      <img alt={asset.label} className="h-full w-full object-cover" src={asset.src} />
+    </span>
+  );
+}
+
+function NeuronPulse(): JSX.Element {
+  return (
+    <svg aria-hidden="true" className="neuron-pulse" viewBox="0 0 86 34">
+      <path className="neuron-pulse__edge" d="M13 17 L31 8 L48 18 L67 9" />
+      <path className="neuron-pulse__edge" d="M13 17 L31 26 L48 18 L67 25" />
+      <path className="neuron-pulse__signal neuron-pulse__signal--one" d="M13 17 L31 8 L48 18 L67 9" />
+      <path className="neuron-pulse__signal neuron-pulse__signal--two" d="M13 17 L31 26 L48 18 L67 25" />
+      {[13, 31, 48, 67].map((x, index) => (
+        <circle key={`top-${x}`} className={`neuron-pulse__node neuron-pulse__node--${index + 1}`} cx={x} cy={index === 1 ? 8 : index === 3 ? 9 : 17} r="3.8" />
+      ))}
+      <circle className="neuron-pulse__node neuron-pulse__node--5" cx="31" cy="26" r="3.8" />
+      <circle className="neuron-pulse__node neuron-pulse__node--6" cx="67" cy="25" r="3.8" />
+    </svg>
+  );
+}
 
 function formatBytes(value: number): string {
   if (value < 1024) {
@@ -353,34 +402,38 @@ function MessageContent({
   content,
   inverted,
   canAddParts,
+  disabledAddParts,
+  busyPartId,
   onAddPart
 }: {
   content: string;
   inverted: boolean;
   canAddParts: boolean;
+  disabledAddParts?: boolean;
+  busyPartId?: string;
   onAddPart?: (part: ResponseSection) => void;
 }): JSX.Element {
   const sections = canAddParts ? splitResponseSections(content) : [{ id: "message", title: "Message", content }];
   return (
     <div className={`space-y-4 text-sm leading-7 ${inverted ? "text-white" : "text-slate-800"}`}>
       {sections.map((section, sectionIndex) => (
-        <section key={section.id} className="group/section">
+        <section key={section.id} className="response-section group/section rounded-lg px-2 py-2 transition">
           {canAddParts && sections.length > 1 ? (
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <span className={`text-xs font-semibold uppercase ${inverted ? "text-white/55" : "text-slate-400"}`}>
-                {section.title}
-              </span>
+            <div className="mb-2 flex justify-end">
               <button
-                className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-xs font-semibold opacity-0 transition group-hover/section:opacity-100 ${
+                aria-label={`Add ${section.title} to brain`}
+                className={`add-to-brain-button inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold shadow-[0_0_14px_rgba(16,185,129,0.16)] transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   inverted
-                    ? "border-white/20 bg-white/10 text-white/80 hover:bg-white/15"
-                    : "border-slate-200 bg-white/80 text-slate-500 hover:text-slate-950"
+                    ? "border-emerald-200/30 bg-emerald-300/15 text-emerald-50 hover:bg-emerald-300/25"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-900"
                 }`}
+                disabled={disabledAddParts}
+                title={`Add ${section.title} to brain`}
                 type="button"
                 onClick={() => onAddPart?.(section)}
               >
-                <FilePlus size={12} />
-                Add part
+                {busyPartId === section.id ? <Loader2 className="animate-spin" size={12} /> : <FilePlus size={12} />}
+                Add to brain
               </button>
             </div>
           ) : sectionIndex > 0 ? null : null}
@@ -572,6 +625,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const [expandedSuggestionMessageId, setExpandedSuggestionMessageId] = useState("");
   const [discardedDraftIds, setDiscardedDraftIds] = useState<Set<string>>(() => new Set());
   const [trackedDraftIds, setTrackedDraftIds] = useState<Set<string>>(() => new Set());
+  const [appearance, setAppearance] = useState<AppSettings["appearance"]>(defaultAppearance);
   const upsertTracker = useTrackerStore((state) => state.upsertTracker);
 
   const activeThread = useMemo(
@@ -581,6 +635,9 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
   const hasFreshUnusedThread = useMemo(() => threads.some(isFreshUnusedThread), [threads]);
   const productionBuild = isProductionBuild(buildInfo);
   const effectiveGroundingCollapsed = productionBuild || groundingCollapsed;
+  const hasPendingAssistantPlaceholder = Boolean(
+    activeGenerationId && activeThread?.messages.some((message) => message.role === "assistant" && !message.content.trim() && !message.error)
+  );
   const productionBuildRef = useRef(false);
 
   useEffect(() => {
@@ -589,6 +646,7 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
 
   useEffect(() => {
     void window.api.app.getBuildInfo().then(setBuildInfo).catch(() => undefined);
+    void window.api.settings.getApp().then((settings) => setAppearance(settings.appearance)).catch(() => undefined);
     void loadThreads();
   }, [refreshKey]);
 
@@ -632,14 +690,14 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
     if (event.type === "started") {
       setActiveGenerationId(event.generationId);
       upsertThread(event.thread);
-      setStatus(productionBuildRef.current ? "Thinking..." : "Querying local Graphify context...");
+      setStatus(productionBuildRef.current ? "Firing up neurons..." : "Querying local Graphify context...");
       return;
     }
 
     if (event.type === "grounding") {
       setSelectedGrounding(event.grounding);
       updateStreamingMessage(event);
-      setStatus("Composing answer...");
+      setStatus("Firing up neurons...");
       return;
     }
 
@@ -1000,14 +1058,11 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
           {activeThread?.messages.map((message) => {
             const modelName = apiModelName(message.grounding?.api);
             const generatedFileMessage = hasGeneratedFileArtifacts(message);
+            const pendingAssistant = Boolean(activeGenerationId && message.role === "assistant" && !message.content.trim() && !message.error);
 
             return (
               <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                {message.role !== "user" ? (
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-sm">
-                    <BrainCircuit className="-rotate-90" size={15} />
-                  </span>
-                ) : null}
+                {message.role !== "user" ? <SecondBrainAvatar /> : null}
                 <div
                   className={`max-w-[min(58rem,92%)] rounded-2xl border px-4 py-3 shadow-sm ${
                     message.role === "user"
@@ -1025,12 +1080,21 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                       {formatTime(message.createdAt)}
                     </span>
                   </div>
-                  <MessageContent
-                    canAddParts={message.role === "assistant" && !generatedFileMessage}
-                    content={message.content}
-                    inverted={message.role === "user"}
-                    onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
-                  />
+                  {pendingAssistant ? (
+                    <div className="inline-flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-sm font-semibold text-emerald-800">
+                      <NeuronPulse />
+                      Firing up neurons
+                    </div>
+                  ) : (
+                    <MessageContent
+                      canAddParts={message.role === "assistant" && !generatedFileMessage}
+                      busyPartId={artifactBusyId.startsWith(`${message.id}:`) ? artifactBusyId.slice(message.id.length + 1) : ""}
+                      content={message.content}
+                      disabledAddParts={Boolean(artifactBusyId)}
+                      inverted={message.role === "user"}
+                      onAddPart={(part) => void addResponsePartToBrain(message.id, part)}
+                    />
+                  )}
                   {message.role === "assistant" && message.semantic?.intent === "TRACKER" ? (
                     <TrackerDraftCards
                       busyId={artifactBusyId}
@@ -1134,21 +1198,17 @@ export function ChatWorkbench({ refreshKey }: ChatWorkbenchProps): JSX.Element {
                 ) : null}
               </div>
               {message.role === "user" ? (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-slate-700 shadow-sm">
-                  <User size={15} />
-                </span>
+                <PersonaAvatar persona={appearance.persona} />
               ) : null}
             </div>
             );
           })}
-          {isSending ? (
+          {isSending && !hasPendingAssistantPlaceholder ? (
             <div className="flex justify-start gap-3">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950 text-white shadow-sm">
-                <BrainCircuit className="-rotate-90" size={15} />
-              </span>
+              <SecondBrainAvatar />
               <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/75 px-4 py-3 text-sm font-semibold text-slate-500 shadow-sm">
-                <Loader2 className="animate-spin" size={15} />
-                {productionBuild ? "Composing answer" : "Querying graph and composing answer"}
+                <NeuronPulse />
+                Firing up neurons
               </div>
             </div>
           ) : null}

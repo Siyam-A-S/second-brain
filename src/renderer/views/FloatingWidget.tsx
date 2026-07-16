@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { motion } from "framer-motion";
+import { File, FileCode, FileImage, FileQuestion, FileSpreadsheet, FileText } from "lucide-react";
 import { createDropPayload } from "../lib/dropPayload";
 import type { FilesDroppedPayload, ProcessDroppedItem, TrackerIngestionStatus, WidgetMovePayload } from "../../shared/ipc";
-
-type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
+import { inferDropHint, type DropHint, type DropHintKind, type DropTone } from "../lib/dropHints";
 
 type DragState = {
   pointerId: number;
@@ -22,39 +22,22 @@ const toneColors: Record<DropTone, string> = {
   pdf: "rgba(254, 226, 226, 0.95)",
   image: "rgba(243, 232, 255, 0.95)",
   doc: "rgba(219, 234, 254, 0.95)",
+  spreadsheet: "rgba(220, 252, 231, 0.95)",
+  code: "rgba(224, 242, 254, 0.95)",
   unknown: "rgba(245, 245, 244, 0.95)",
   success: "rgba(209, 250, 229, 0.95)",
   error: "rgba(254, 226, 226, 0.98)"
 };
 
-function inferDropTone(dataTransfer: DataTransfer): DropTone {
-  const items = Array.from(dataTransfer.items);
-  const files = Array.from(dataTransfer.files);
-  const typeHints = [...items.map((item) => item.type), ...files.map((file) => file.type)];
-  const nameHints = files.map((file) => file.name.toLowerCase());
-
-  if (typeHints.some((type) => type.startsWith("image/")) || nameHints.some((name) => /\.(png|jpe?g)$/i.test(name))) {
-    return "image";
-  }
-
-  if (typeHints.includes("application/pdf") || nameHints.some((name) => name.endsWith(".pdf"))) {
-    return "pdf";
-  }
-
-  if (
-    typeHints.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
-    typeHints.includes("application/msword") ||
-    nameHints.some((name) => name.endsWith(".docx") || name.endsWith(".doc"))
-  ) {
-    return "doc";
-  }
-
-  if (typeHints.some((type) => type.startsWith("text/")) || nameHints.some((name) => /\.(txt|md|markdown)$/i.test(name))) {
-    return "text";
-  }
-
-  return "unknown";
-}
+const dropHintIcons: Record<DropHintKind, typeof File> = {
+  text: FileText,
+  pdf: FileText,
+  image: FileImage,
+  doc: FileText,
+  spreadsheet: FileSpreadsheet,
+  code: FileCode,
+  unknown: FileQuestion
+};
 
 function toProcessItems(payload: FilesDroppedPayload): ProcessDroppedItem[] {
   const fileItems = payload.files.map((file) => ({
@@ -86,6 +69,7 @@ export function FloatingWidget(): JSX.Element {
   const [isIngesting, setIsIngesting] = useState(false);
   const [tone, setTone] = useState<DropTone>("idle");
   const [queueCount, setQueueCount] = useState(0);
+  const [dropHint, setDropHint] = useState<DropHint | null>(null);
 
   useEffect(() => {
     return () => {
@@ -265,28 +249,34 @@ export function FloatingWidget(): JSX.Element {
   return (
     <div
       aria-label="Second Brain drop zone"
-      className={`no-drag grid h-full w-full select-none place-items-center bg-transparent ${
+      className={`no-drag relative grid h-full w-full select-none place-items-center bg-transparent ${
         isDragging ? "cursor-grabbing" : "cursor-grab"
       }`}
       onDragEnter={(event) => {
+        const hint = inferDropHint(event.dataTransfer);
         setIsDropActive(true);
-        setTone(inferDropTone(event.dataTransfer));
+        setDropHint(hint);
+        setTone(hint.tone);
       }}
       onDragLeave={() => {
         setIsDropActive(false);
+        setDropHint(null);
         if (!isIngesting) {
           setTone("idle");
         }
       }}
       onDragOver={(event) => {
         event.preventDefault();
+        const hint = inferDropHint(event.dataTransfer);
         setIsDropActive(true);
-        setTone(inferDropTone(event.dataTransfer));
+        setDropHint(hint);
+        setTone(hint.tone);
       }}
       onDrop={(event) => {
         event.preventDefault();
         event.stopPropagation();
         setIsDropActive(false);
+        setDropHint(null);
 
         const dataTransfer = event.dataTransfer;
         setIsIngesting(true);
@@ -324,6 +314,19 @@ export function FloatingWidget(): JSX.Element {
             repeat: Infinity
           }}
         />
+      ) : null}
+      {isDropActive && dropHint ? (
+        <motion.div
+          animate={{ opacity: 1, scale: 1 }}
+          className="pointer-events-none absolute right-1 top-1 z-10 grid h-8 min-w-8 place-items-center rounded-full border border-emerald-200 bg-white/95 px-1.5 text-[9px] font-bold text-emerald-800 shadow-[0_10px_22px_rgba(15,118,110,0.22)]"
+          initial={{ opacity: 0, scale: 0.82 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+        >
+          {(() => {
+            const Icon = dropHintIcons[dropHint.kind];
+            return dropHint.kind === "unknown" ? <Icon size={14} /> : dropHint.shortLabel;
+          })()}
+        </motion.div>
       ) : null}
       <motion.div
         animate={{

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import type { DragEvent as ReactDragEvent } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, Loader2, UploadCloud, XCircle } from "lucide-react";
+import { CheckCircle2, File, FileCode, FileImage, FileQuestion, FileSpreadsheet, FileText, Loader2, UploadCloud, XCircle } from "lucide-react";
 import type { FilesDroppedPayload, ProcessDroppedItem, ProcessDroppedItemsResult, TrackerIngestionStatus } from "../../shared/ipc";
+import { dropZoneTips } from "../content/dropZoneTips";
 import { createDropPayload } from "../lib/dropPayload";
+import { inferDropHint, type DropHint, type DropHintKind, type DropTone } from "../lib/dropHints";
 
-type DropTone = "idle" | "text" | "pdf" | "image" | "doc" | "unknown" | "success" | "error";
 type DropTargetProps = {
   onProcessed: (result: ProcessDroppedItemsResult) => void;
 };
@@ -15,38 +17,29 @@ const toneColors: Record<DropTone, string> = {
   pdf: "rgba(254, 226, 226, 0.5)",
   image: "rgba(243, 232, 255, 0.5)",
   doc: "rgba(219, 234, 254, 0.5)",
+  spreadsheet: "rgba(220, 252, 231, 0.5)",
+  code: "rgba(224, 242, 254, 0.5)",
   unknown: "rgba(245, 245, 244, 0.6)",
   success: "rgba(209, 250, 229, 0.5)",
   error: "rgba(254, 226, 226, 0.7)"
 };
 
-function inferDropTone(dataTransfer: DataTransfer): DropTone {
-  const items = Array.from(dataTransfer.items);
-  const files = Array.from(dataTransfer.files);
-  const typeHints = [...items.map((item) => item.type), ...files.map((file) => file.type)];
-  const nameHints = files.map((file) => file.name.toLowerCase());
+const dropHintIcons: Record<DropHintKind, typeof File> = {
+  text: FileText,
+  pdf: FileText,
+  image: FileImage,
+  doc: FileText,
+  spreadsheet: FileSpreadsheet,
+  code: FileCode,
+  unknown: FileQuestion
+};
 
-  if (typeHints.some((type) => type.startsWith("image/")) || nameHints.some((name) => /\.(png|jpe?g)$/i.test(name))) {
-    return "image";
-  }
-
-  if (typeHints.includes("application/pdf") || nameHints.some((name) => name.endsWith(".pdf"))) {
-    return "pdf";
-  }
-
-  if (
-    typeHints.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
-    typeHints.includes("application/msword") ||
-    nameHints.some((name) => name.endsWith(".docx") || name.endsWith(".doc"))
-  ) {
-    return "doc";
-  }
-
-  if (typeHints.some((type) => type.startsWith("text/")) || nameHints.some((name) => /\.(txt|md|markdown)$/i.test(name))) {
-    return "text";
-  }
-
-  return "unknown";
+function pointerPosition(event: ReactDragEvent<HTMLElement>): { x: number; y: number } {
+  const bounds = event.currentTarget.getBoundingClientRect();
+  return {
+    x: event.clientX - bounds.left,
+    y: event.clientY - bounds.top
+  };
 }
 
 function toProcessItems(payload: FilesDroppedPayload): ProcessDroppedItem[] {
@@ -71,9 +64,12 @@ function toProcessItems(payload: FilesDroppedPayload): ProcessDroppedItem[] {
 export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
   const [tone, setTone] = useState<DropTone>("idle");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [statusText, setStatusText] = useState("Drop notes, PDFs, code, or copied text.");
+  const [statusText, setStatusText] = useState("");
+  const [tipIndex, setTipIndex] = useState(0);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<ProcessDroppedItemsResult | null>(null);
+  const [dropHint, setDropHint] = useState<DropHint | null>(null);
+  const [dropPointer, setDropPointer] = useState<{ x: number; y: number } | null>(null);
   const dragDepth = useRef(0);
   const resetTimer = useRef<number | null>(null);
 
@@ -85,6 +81,17 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
     },
     []
   );
+
+  useEffect(() => {
+    if (dropZoneTips.length === 0) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setTipIndex((index) => (index + 1) % dropZoneTips.length);
+    }, 7_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     return window.api.tracker.onIngestionStatus((status: TrackerIngestionStatus) => {
@@ -135,9 +142,11 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
     resetTimer.current = window.setTimeout(() => {
       setIsProcessing(false);
       setTone("idle");
-      setStatusText("Drop notes, PDFs, code, or copied text.");
+      setStatusText("");
       setErrorDetails(null);
       setLastResult(null);
+      setDropHint(null);
+      setDropPointer(null);
       dragDepth.current = 0;
     }, 5_000);
   }
@@ -223,6 +232,9 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       });
   }
 
+  const activeTip = dropZoneTips.length ? dropZoneTips[tipIndex % dropZoneTips.length] : "Drop local context into Second Brain.";
+  const visibleStatusText = statusText || activeTip;
+
   return (
     <motion.div
       animate={{
@@ -244,7 +256,10 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
       onDragEnter={(event) => {
         event.preventDefault();
         dragDepth.current += 1;
-        setTone(inferDropTone(event.dataTransfer));
+        const hint = inferDropHint(event.dataTransfer);
+        setDropHint(hint);
+        setDropPointer(pointerPosition(event));
+        setTone(hint.tone);
       }}
       onDragLeave={(event) => {
         event.preventDefault();
@@ -252,16 +267,23 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
         dragDepth.current = Math.max(0, dragDepth.current - 1);
         if (dragDepth.current === 0 && !isProcessing) {
           setTone("idle");
+          setDropHint(null);
+          setDropPointer(null);
         }
       }}
       onDragOver={(event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = "copy";
-        setTone(inferDropTone(event.dataTransfer));
+        const hint = inferDropHint(event.dataTransfer);
+        setDropHint(hint);
+        setDropPointer(pointerPosition(event));
+        setTone(hint.tone);
       }}
       onDrop={(event) => {
         event.preventDefault();
         dragDepth.current = 0;
+        setDropHint(null);
+        setDropPointer(null);
 
         const dataTransfer = event.dataTransfer;
         setIsProcessing(true);
@@ -280,6 +302,18 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
           });
       }}
     >
+      {dropHint && dropPointer ? (
+        <div
+          className="pointer-events-none absolute z-20 flex -translate-y-1/2 translate-x-3 items-center gap-1.5 rounded-full border border-emerald-200 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 shadow-[0_10px_28px_rgba(15,118,110,0.22)]"
+          style={{ left: dropPointer.x, top: dropPointer.y }}
+        >
+          {(() => {
+            const Icon = dropHintIcons[dropHint.kind];
+            return <Icon size={14} />;
+          })()}
+          {dropHint.shortLabel}
+        </div>
+      ) : null}
       {isProcessing ? (
         <motion.div
           animate={{ scaleX: 1, opacity: 1 }}
@@ -308,7 +342,8 @@ export function DropTarget({ onProcessed }: DropTargetProps): JSX.Element {
         </div>
 
         <div>
-          <p className="text-sm leading-6 text-textMain">{statusText}</p>
+          <p className="text-sm leading-6 text-textMain">{visibleStatusText}</p>
+          {isProcessing && statusText ? <p className="mt-1 text-xs leading-5 text-textMain/60">{activeTip}</p> : null}
           {lastResult ? (
             <div className="mt-4 rounded-xl border border-highlight bg-keycap p-3 shadow-inner">
               <p className="font-mono text-xs font-semibold uppercase text-highlight">

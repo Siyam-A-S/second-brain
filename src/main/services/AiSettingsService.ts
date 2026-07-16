@@ -3,7 +3,6 @@ import path from "node:path";
 import type {
   AccountAccessStatus,
   AccountSettings,
-  AccountUsageSnapshot,
   AiMode,
   AiSettings,
   AppearanceSettings,
@@ -15,6 +14,8 @@ import type {
   UpdateAppSettingsInput,
   UpdateManagedProxySettingsInput
 } from "../../shared/brain";
+import { userPersonas, type UserPersona } from "../../shared/brain";
+import { normalizeAccountUsageSnapshot } from "../../shared/accountUsage";
 
 const defaultEndpoint = "http://localhost:8080/v1/chat/completions";
 const defaultModel = "local-model";
@@ -38,7 +39,8 @@ const defaultGraphifySettings: GraphifyRuntimeSettings = {
   paperComponents: true
 };
 const defaultAppearanceSettings: AppearanceSettings = {
-  topBarMirrored: false
+  topBarMirrored: false,
+  persona: "dolphin"
 };
 const defaultAccountSettings: AccountSettings = {
   email: "",
@@ -121,26 +123,14 @@ function booleanSetting(value: unknown, fallback: boolean): boolean {
   return fallback;
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+function normalizeUserPersona(value: unknown, fallback: UserPersona = defaultAppearanceSettings.persona): UserPersona {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  const repaired = normalized === "moneky" ? "monkey" : normalized;
+  return userPersonas.includes(repaired as UserPersona) ? (repaired as UserPersona) : fallback;
 }
 
-function normalizeAccountUsage(value: unknown): AccountUsageSnapshot | null {
-  const parsed = asRecord(value);
-  const used = numberSetting(parsed.used, NaN, 0);
-  const limit = numberSetting(parsed.limit, NaN, 0);
-
-  if (!Number.isFinite(used) || !Number.isFinite(limit)) {
-    return null;
-  }
-
-  return {
-    label: typeof parsed.label === "string" && parsed.label.trim() ? parsed.label.trim() : "AI usage",
-    used,
-    limit,
-    resetAt: typeof parsed.resetAt === "string" ? parsed.resetAt : undefined,
-    updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : undefined
-  };
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
 function normalizeAccountSettings(value: unknown, fallbackSecretKey = ""): AccountSettings {
@@ -153,7 +143,7 @@ function normalizeAccountSettings(value: unknown, fallbackSecretKey = ""): Accou
     planName: typeof parsed.planName === "string" && parsed.planName.trim() ? parsed.planName.trim() : defaultAccountSettings.planName,
     trialEndsAt: typeof parsed.trialEndsAt === "string" ? parsed.trialEndsAt : "",
     subscriptionRenewsAt: typeof parsed.subscriptionRenewsAt === "string" ? parsed.subscriptionRenewsAt : "",
-    usage: normalizeAccountUsage(parsed.usage),
+    usage: normalizeAccountUsageSnapshot(parsed.usage),
     websiteUrl: productionWebsiteUrl,
     accountUrl: productionAccountUrl,
     checkoutUrl: productionCheckoutUrl,
@@ -234,7 +224,8 @@ function normalizeAppearanceSettings(value: unknown): AppearanceSettings {
   const parsed = asRecord(value);
 
   return {
-    topBarMirrored: booleanSetting(parsed.topBarMirrored, defaultAppearanceSettings.topBarMirrored)
+    topBarMirrored: booleanSetting(parsed.topBarMirrored, defaultAppearanceSettings.topBarMirrored),
+    persona: normalizeUserPersona(parsed.persona)
   };
 }
 

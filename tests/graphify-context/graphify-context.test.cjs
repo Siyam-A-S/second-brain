@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { chmod, mkdir, mkdtemp, readFile, writeFile } = require("node:fs/promises");
+const { mkdir, mkdtemp, writeFile } = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
@@ -98,66 +98,6 @@ test("builds inline BFS traversal text from graph.json data", () => {
   assert.match(stdout, /NODE AuthService \[src=src\/auth\.ts loc=L12 community=1\]/);
   assert.match(stdout, /NODE Database \[src=src\/db\.ts loc=L7 community=2\]/);
   assert.match(stdout, /EDGE AuthService --calls \[EXTRACTED\]--> Database/);
-});
-
-test("saveResult invokes graphify save-result with supported arguments", async () => {
-  const tempRoot = await mkdtemp(path.join(os.tmpdir(), "second-brain-graphify-save-"));
-  const rawRoot = path.join(tempRoot, "raw");
-  const fakeGraphify = path.join(tempRoot, "fake-graphify.cjs");
-  const argsPath = path.join(tempRoot, "args.json");
-  await mkdir(rawRoot, { recursive: true });
-  await writeFile(
-    fakeGraphify,
-    [
-      "#!/usr/bin/env node",
-      "const fs = require('node:fs');",
-      "fs.writeFileSync(process.env.SECOND_BRAIN_TEST_ARGS_PATH, JSON.stringify(process.argv.slice(2)));",
-      "console.log('saved');"
-    ].join("\n"),
-    "utf8"
-  );
-  await chmod(fakeGraphify, 0o755);
-
-  const previousBin = process.env.SECOND_BRAIN_GRAPHIFY_BIN;
-  const previousArgsPath = process.env.SECOND_BRAIN_TEST_ARGS_PATH;
-  process.env.SECOND_BRAIN_GRAPHIFY_BIN = fakeGraphify;
-  process.env.SECOND_BRAIN_TEST_ARGS_PATH = argsPath;
-  try {
-    const service = new GraphifyContextService(rawRoot);
-    const stdout = await service.saveResult({
-      question: "How does auth use db?",
-      answer: "Auth calls Database.",
-      type: "query",
-      nodes: ["auth_service", "database"]
-    });
-
-    assert.equal(stdout, "saved");
-    const args = JSON.parse(await readFile(argsPath, "utf8"));
-    assert.deepEqual(args, [
-      "save-result",
-      "--question",
-      "How does auth use db?",
-      "--answer",
-      "Auth calls Database.",
-      "--type",
-      "query",
-      "--nodes",
-      "auth_service",
-      "database"
-    ]);
-  } finally {
-    if (previousBin === undefined) {
-      delete process.env.SECOND_BRAIN_GRAPHIFY_BIN;
-    } else {
-      process.env.SECOND_BRAIN_GRAPHIFY_BIN = previousBin;
-    }
-
-    if (previousArgsPath === undefined) {
-      delete process.env.SECOND_BRAIN_TEST_ARGS_PATH;
-    } else {
-      process.env.SECOND_BRAIN_TEST_ARGS_PATH = previousArgsPath;
-    }
-  }
 });
 
 test("SourceContentService chunks exact node source locations", async () => {

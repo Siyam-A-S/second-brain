@@ -4,7 +4,6 @@ import type {
   FetchFileSegmentsInput,
   GraphifyContextResult,
   IngestAndRouteFragmentInput,
-  SaveGraphifyResultInput,
   SearchBoardTopologyInput
 } from "../../shared/brain";
 import type { GraphRagService } from "./GraphRagService";
@@ -19,7 +18,6 @@ export type LocalToolName =
   | "query_graphify_context"
   | "explain_graph_node"
   | "trace_graph_path"
-  | "save_graphify_result"
   | "create_markdown_artifact"
   | "create_pdf_artifact"
   | "create_docx_artifact"
@@ -73,13 +71,6 @@ const explainGraphNodeSchema = {
 const traceGraphPathSchema = {
   from: z.string().min(1),
   to: z.string().min(1)
-};
-
-const saveGraphifyResultSchema = {
-  question: z.string().min(1),
-  answer: z.string().min(1),
-  type: z.string().optional(),
-  nodes: z.array(z.string()).optional()
 };
 
 const createArtifactSchema = {
@@ -221,26 +212,6 @@ export function createLocalToolRegistry(options: {
         execute: async (input): Promise<GraphifyContextResult> => {
           const parsed = z.object(traceGraphPathSchema).parse(input);
           return options.graphifyContext?.tracePath(parsed.from, parsed.to) as Promise<GraphifyContextResult>;
-        }
-      },
-      {
-        name: "save_graphify_result",
-        title: "Save Graphify result",
-        description: "Save a useful local Graphify Q&A result for future graph memory reflection.",
-        inputSchema: saveGraphifyResultSchema,
-        inputSchemaJson: {
-          type: "object",
-          properties: {
-            question: { type: "string" },
-            answer: { type: "string" },
-            type: { type: "string" },
-            nodes: { type: "array", items: { type: "string" } }
-          },
-          required: ["question", "answer"]
-        },
-        execute: async (input): Promise<string> => {
-          const parsed = z.object(saveGraphifyResultSchema).parse(input);
-          return options.graphifyContext?.saveResult(parsed as SaveGraphifyResultInput) as Promise<string>;
         }
       }
     );

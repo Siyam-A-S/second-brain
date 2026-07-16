@@ -100,9 +100,25 @@ const productionErrorMessage = "Something went wrong. Try again.";
 const minZoomFactor = 0.75;
 const maxZoomFactor = 1.6;
 const zoomStep = 0.1;
+const appUserModelId = "com.secondbrain.desktop";
+const toastActivatorClsid = "{8F8B6E6B-31E8-4E4C-9C8D-4C69D3219C55}";
 
 const rendererEntry = path.join(__dirname, "../renderer/index.html");
 const preloadEntry = path.join(__dirname, "../preload/preload.js");
+
+function installNotificationIdentity(): void {
+  if (process.platform !== "win32") {
+    return;
+  }
+
+  app.setAppUserModelId(appUserModelId);
+  const appWithToastActivator = app as typeof app & { setToastActivatorCLSID?: (id: string) => void };
+  appWithToastActivator.setToastActivatorCLSID?.(toastActivatorClsid);
+}
+
+function notificationIconPath(): string {
+  return app.isPackaged ? path.join(process.resourcesPath, "app-icon.png") : path.join(app.getAppPath(), "build", "icon.png");
+}
 
 function loadRenderer(window: BrowserWindow, windowName: "main" | "widget"): void {
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
@@ -394,7 +410,11 @@ async function createProjectRuntime(
   await tracker.initialize(storage);
   await chat.initialize();
   notificationService?.stop();
-  notificationService = new NotificationService(tracker);
+  notificationService = new NotificationService(tracker, {
+    sentKeysPath: path.join(app.getPath("userData"), "notifications", "tracker-notifications.json"),
+    iconPath: notificationIconPath(),
+    activateApp: restoreMainWindow
+  });
   notificationService.start();
 
   try {
@@ -693,6 +713,7 @@ function registerIpc(
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
+  installNotificationIdentity();
 
   const userDataPath = app.getPath("userData");
   buildInfo = await loadBuildInfo(app.getVersion());

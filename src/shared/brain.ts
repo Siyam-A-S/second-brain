@@ -237,8 +237,13 @@ export type GraphifyRuntimeSettings = {
   paperComponents: boolean;
 };
 
+export const userPersonas = ["dolphin", "jellyfish", "ant", "monkey", "hippo"] as const;
+
+export type UserPersona = (typeof userPersonas)[number];
+
 export type AppearanceSettings = {
   topBarMirrored: boolean;
+  persona: UserPersona;
 };
 
 export type AppSettings = {
@@ -386,13 +391,6 @@ export type ChatSendInput = {
   threadId?: string | undefined;
   message: string;
   budget?: number | undefined;
-};
-
-export type SaveGraphifyResultInput = {
-  question: string;
-  answer: string;
-  type?: string | undefined;
-  nodes?: string[] | undefined;
 };
 
 export type ChatResponse = {

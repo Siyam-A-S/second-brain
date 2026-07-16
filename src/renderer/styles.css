@@ -102,6 +102,105 @@ select {
   -webkit-app-region: no-drag;
 }
 
+.response-section:has(.add-to-brain-button:hover),
+.response-section:has(.add-to-brain-button:focus-visible) {
+  background: rgba(209, 250, 229, 0.45);
+  box-shadow:
+    inset 0 0 0 1px rgba(16, 185, 129, 0.28),
+    0 10px 28px rgba(16, 185, 129, 0.1);
+}
+
+.neuron-pulse {
+  width: 86px;
+  height: 34px;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.neuron-pulse__edge {
+  fill: none;
+  stroke: rgba(15, 118, 110, 0.24);
+  stroke-linecap: round;
+  stroke-width: 2.2;
+}
+
+.neuron-pulse__signal {
+  fill: none;
+  stroke: var(--color-led-status);
+  stroke-dasharray: 13 92;
+  stroke-linecap: round;
+  stroke-width: 2.8;
+  filter: drop-shadow(0 0 5px rgba(20, 184, 166, 0.65));
+  animation: neuron-signal 1.45s ease-in-out infinite;
+}
+
+.neuron-pulse__signal--two {
+  animation-delay: 0.28s;
+}
+
+.neuron-pulse__node {
+  fill: #ffffff;
+  stroke: var(--color-led-status);
+  stroke-width: 2;
+  transform-origin: center;
+  animation: neuron-node 1.45s ease-in-out infinite;
+}
+
+.neuron-pulse__node--2 {
+  animation-delay: 0.16s;
+}
+
+.neuron-pulse__node--3,
+.neuron-pulse__node--5 {
+  animation-delay: 0.32s;
+}
+
+.neuron-pulse__node--4,
+.neuron-pulse__node--6 {
+  animation-delay: 0.48s;
+}
+
+@keyframes neuron-signal {
+  0% {
+    stroke-dashoffset: 96;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes neuron-node {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(20, 184, 166, 0));
+    transform: scale(1);
+  }
+  42% {
+    filter: drop-shadow(0 0 6px rgba(20, 184, 166, 0.75));
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neuron-pulse__signal,
+  .neuron-pulse__node {
+    animation: none;
+  }
+
+  .neuron-pulse__signal {
+    opacity: 0.55;
+    stroke-dasharray: none;
+  }
+}
+
 @layer utilities {
   .shadow-keycap {
     box-shadow:

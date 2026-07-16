@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import ForceGraph2D from "react-force-graph-2d";
-import { AlertCircle, BookOpen, FileText, Layers3, Loader2, Network, RefreshCcw, Route, Search, X } from "lucide-react";
+import { AlertCircle, BookOpen, FileText, Layers3, Loader2, Network, RefreshCcw, Search, X } from "lucide-react";
 import type {
-  CallflowHtmlDocument,
   GraphBoardLink,
   GraphBoardNode,
   GraphBoardNodeDetails,
@@ -91,15 +90,12 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
   const [graph, setGraph] = useState<GraphBoardState | null>(null);
   const [details, setDetails] = useState<GraphBoardNodeDetails | null>(null);
   const [hoveredNode, setHoveredNode] = useState<GraphBoardNode | null>(null);
-  const [callflow, setCallflow] = useState<CallflowHtmlDocument | null>(null);
   const [query, setQuery] = useState("");
   const [loadState, setLoadState] = useState<LoadState>("idle");
-  const [callflowLoading, setCallflowLoading] = useState(false);
   const [definitionStatus, setDefinitionStatus] = useState<GraphDefinitionStatus | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteSaving, setNoteSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [callflowError, setCallflowError] = useState<string | null>(null);
 
   async function loadGraph(): Promise<void> {
     setLoadState("loading");
@@ -113,7 +109,6 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
       setGraph(state);
       setDefinitionStatus(status);
       setDetails(null);
-      setCallflow(null);
       setLoadState("ready");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load graph board.";
@@ -190,7 +185,6 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
   const selectedNode = details ?? hoveredNode;
 
   async function selectNode(node: GraphBoardNode | null): Promise<void> {
-    setCallflowError(null);
     if (!node) {
       setDetails(null);
       return;
@@ -242,25 +236,6 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
       });
     } finally {
       setNoteSaving(false);
-    }
-  }
-
-  async function generateCallflow(): Promise<void> {
-    if (!details) {
-      return;
-    }
-
-    setCallflowLoading(true);
-    setCallflowError(null);
-
-    try {
-      setCallflow(await window.api.graphBoard.generateCallflow(details.id));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to generate call flow.";
-      console.error("Unable to generate call flow", error);
-      setCallflowError(message);
-    } finally {
-      setCallflowLoading(false);
     }
   }
 
@@ -417,7 +392,6 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                 type="button"
                 onClick={() => {
                   setDetails(null);
-                  setCallflow(null);
                 }}
               >
                 <X size={15} />
@@ -576,41 +550,12 @@ export function GraphBoardRenderer({ refreshKey }: GraphBoardRendererProps): JSX
                   </section>
                 ) : null}
 
-                {details ? (
-                  <section>
-                    <button
-                      className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-keycap px-3 font-mono text-sm font-semibold text-legend shadow-keycap transition hover:text-highlight active:translate-y-[2px] active:shadow-inner disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={callflowLoading}
-                      type="button"
-                      onClick={() => void generateCallflow()}
-                    >
-                      {callflowLoading ? <Loader2 className="animate-spin" size={15} /> : <Route size={15} />}
-                      Generate Call Flow
-                    </button>
-                    {callflowError ? (
-                      <pre className="mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-rose-200 bg-rose-50 p-3 text-xs leading-5 text-rose-900">
-                        {callflowError}
-                      </pre>
-                    ) : null}
-                  </section>
-                ) : null}
               </div>
             )}
           </div>
         </aside>
       </section>
 
-      {callflow ? (
-        <section className="mx-3 mb-3 flex min-h-72 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <header className="flex h-10 shrink-0 items-center justify-between border-b border-slate-200 px-4 text-xs text-slate-500">
-            <span className="truncate">{callflow.path}</span>
-            <button className="font-semibold text-slate-700" type="button" onClick={() => setCallflow(null)}>
-              Close
-            </button>
-          </header>
-          <iframe className="min-h-0 flex-1 border-0" sandbox="allow-scripts" srcDoc={callflow.html} title="Graphify call flow" />
-        </section>
-      ) : null}
     </main>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AccountAuthState, AppBuildInfo, AppSettings, ProcessDroppedItemsResult } from "../../shared/ipc";
+import type { AccountAuthState, AppBuildInfo, AppSettings, ProcessDroppedItemsResult, UserPersona } from "../../shared/ipc";
 import type { ThemeMode } from "../components/TitleBar";
 import { TitleBar } from "../components/TitleBar";
 import { Sidebar } from "../components/Sidebar";
@@ -18,7 +18,15 @@ const accentHueStorageKey = "second-brain.accentHue";
 const activeViewStorageKey = "second-brain.activeView";
 const leftPanelCollapsedStorageKey = "second-brain.leftPanelCollapsed";
 const topBarMirroredStorageKey = "second-brain.topBarMirrored";
+const personaOnboardingStorageKey = "second-brain.personaOnboardingComplete";
 const defaultAccentHue = 110;
+const personaAssets: Record<UserPersona, { label: string; src: string }> = {
+  dolphin: { label: "Dolphin", src: new URL("../../../build/Dolphin.PNG", import.meta.url).href },
+  jellyfish: { label: "Jellyfish", src: new URL("../../../build/Jellyfish.PNG", import.meta.url).href },
+  ant: { label: "Ant", src: new URL("../../../build/Ant.PNG", import.meta.url).href },
+  monkey: { label: "Monkey", src: new URL("../../../build/Monkey.PNG", import.meta.url).href },
+  hippo: { label: "Hippo", src: new URL("../../../build/Hippo.PNG", import.meta.url).href }
+};
 const themeVariableNames = [
   "--color-frame",
   "--color-panel",
@@ -99,6 +107,8 @@ export function MainApp(): JSX.Element {
   const [themeMode, setThemeMode] = useState<ThemeMode>(initialThemeMode);
   const [accentHue, setAccentHue] = useState(initialAccentHue);
   const [topBarMirrored, setTopBarMirrored] = useState(() => initialStoredBoolean(topBarMirroredStorageKey));
+  const [persona, setPersona] = useState<UserPersona>("dolphin");
+  const [personaOnboardingOpen, setPersonaOnboardingOpen] = useState(false);
   const [buildInfo, setBuildInfo] = useState<AppBuildInfo | null>(null);
   const [accountState, setAccountState] = useState<AccountAuthState | null>(null);
   const [accountLoading, setAccountLoading] = useState(true);
@@ -201,6 +211,7 @@ export function MainApp(): JSX.Element {
       .then((settings) => {
         if (mounted) {
           setTopBarMirrored(settings.appearance.topBarMirrored);
+          setPersona(settings.appearance.persona);
         }
       })
       .catch(() => undefined);
@@ -209,6 +220,16 @@ export function MainApp(): JSX.Element {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (buildInfo === null || (productionBuild && !accountState?.signedIn)) {
+      return;
+    }
+
+    if (window.localStorage.getItem(personaOnboardingStorageKey) !== "true") {
+      setPersonaOnboardingOpen(true);
+    }
+  }, [accountState?.signedIn, buildInfo, productionBuild]);
 
   useEffect(() => {
     if (buildInfo === null || (productionBuild && !accountState?.signedIn)) {
@@ -247,6 +268,29 @@ export function MainApp(): JSX.Element {
 
   function handleSettingsSaved(settings: AppSettings): void {
     setTopBarMirrored(settings.appearance.topBarMirrored);
+    setPersona(settings.appearance.persona);
+    setRefreshKey((key) => key + 1);
+  }
+
+  async function selectPersona(nextPersona: UserPersona): Promise<void> {
+    setPersona(nextPersona);
+    window.localStorage.setItem(personaOnboardingStorageKey, "true");
+    setPersonaOnboardingOpen(false);
+    try {
+      const settings = await window.api.settings.updateApp({
+        appearance: {
+          persona: nextPersona
+        }
+      });
+      handleSettingsSaved(settings);
+    } catch (error) {
+      setAccountStatus(presentError(error, "Unable to save persona.", buildInfo));
+    }
+  }
+
+  function skipPersonaOnboarding(): void {
+    window.localStorage.setItem(personaOnboardingStorageKey, "true");
+    setPersonaOnboardingOpen(false);
   }
 
   async function handleAccountSignIn(): Promise<void> {
@@ -448,6 +492,45 @@ export function MainApp(): JSX.Element {
           </div>
         </div>
       </div>
+      {personaOnboardingOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/20 px-4 backdrop-blur-sm">
+          <section className="material-frosted w-full max-w-md rounded-xl border border-black/10 bg-panel p-5 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-xs font-semibold uppercase text-highlight">Persona</p>
+                <h2 className="mt-1 text-xl font-semibold text-textMain">Choose your chat icon</h2>
+              </div>
+              <button
+                className="rounded-md px-2 py-1 text-xs font-semibold text-legend/70 transition hover:bg-white/60 hover:text-legend"
+                type="button"
+                onClick={skipPersonaOnboarding}
+              >
+                Skip
+              </button>
+            </div>
+            <div className="mt-5 grid grid-cols-5 gap-2">
+              {(Object.entries(personaAssets) as Array<[UserPersona, (typeof personaAssets)[UserPersona]]>).map(([nextPersona, asset]) => {
+                const selected = persona === nextPersona;
+                return (
+                  <button
+                    key={nextPersona}
+                    className={`flex min-w-0 flex-col items-center gap-1 rounded-lg border px-2 py-2 text-xs font-semibold transition ${
+                      selected
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-800 shadow-[0_0_14px_rgba(16,185,129,0.22)]"
+                        : "border-black/10 bg-white/65 text-legend hover:border-emerald-200 hover:bg-emerald-50/80"
+                    }`}
+                    type="button"
+                    onClick={() => void selectPersona(nextPersona)}
+                  >
+                    <img alt="" className="h-11 w-11 rounded-full object-cover" src={asset.src} />
+                    <span className="max-w-full truncate">{asset.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} onSettingsSaved={handleSettingsSaved} />
     </div>
   );

@@ -20,7 +20,8 @@ import type {
   AppSettings,
   DependencyRuntimeStatus,
   ProjectStorageUsage,
-  ResearchDependencyReport
+  ResearchDependencyReport,
+  UserPersona
 } from "../../shared/ipc";
 import { isProductionBuild, presentError } from "../lib/errorPresentation";
 
@@ -28,6 +29,14 @@ type SettingsPanelProps = {
   open: boolean;
   onClose: () => void;
   onSettingsSaved?: (settings: AppSettings) => void;
+};
+
+const personaAssets: Record<UserPersona, { label: string; src: string }> = {
+  dolphin: { label: "Dolphin", src: new URL("../../../build/Dolphin.PNG", import.meta.url).href },
+  jellyfish: { label: "Jellyfish", src: new URL("../../../build/Jellyfish.PNG", import.meta.url).href },
+  ant: { label: "Ant", src: new URL("../../../build/Ant.PNG", import.meta.url).href },
+  monkey: { label: "Monkey", src: new URL("../../../build/Monkey.PNG", import.meta.url).href },
+  hippo: { label: "Hippo", src: new URL("../../../build/Hippo.PNG", import.meta.url).href }
 };
 
 function numberValue(value: string, fallback: number): number {
@@ -49,7 +58,7 @@ function formatAccountDate(value: string): string {
 function statusLabel(status: AppSettings["account"]["status"]): string {
   switch (status) {
     case "trialing":
-      return "Trial";
+      return "Active";
     case "active":
       return "Active";
     case "past_due":
@@ -179,6 +188,9 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
   const isProxyMode = productionBuild || aiMode === "proxy";
   const account = productionBuild ? accountState : settings?.account;
   const accountSignedIn = productionBuild ? Boolean(accountState?.signedIn) : Boolean(settings?.account.secretKey);
+  const planName = account?.planName || "Second Brain Free";
+  const proPlan = /pro/i.test(planName);
+  const freePlan = !proPlan && (/free/i.test(planName) || (account?.usage?.limit ?? 0) <= 250);
   const usagePercent =
     account?.usage && account.usage.limit > 0
       ? Math.min(100, Math.round((account.usage.used / account.usage.limit) * 100))
@@ -362,6 +374,38 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                   }
                 />
               </label>
+              <div className="mt-3">
+                <p className="text-xs font-semibold uppercase text-slate-500">Chat persona</p>
+                <div className="mt-2 grid grid-cols-5 gap-2">
+                  {(Object.entries(personaAssets) as Array<[UserPersona, (typeof personaAssets)[UserPersona]]>).map(([persona, asset]) => {
+                    const selected = (settings?.appearance.persona ?? "dolphin") === persona;
+                    return (
+                      <button
+                        key={persona}
+                        className={`flex min-w-0 flex-col items-center gap-1 rounded-md border px-2 py-2 text-xs font-semibold transition ${
+                          selected
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 shadow-[0_0_14px_rgba(16,185,129,0.18)]"
+                            : "border-slate-200 bg-white/65 text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/70"
+                        }`}
+                        type="button"
+                        onClick={() =>
+                          setSettings((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  appearance: { ...current.appearance, persona }
+                                }
+                              : current
+                          )
+                        }
+                      >
+                        <img alt="" className="h-9 w-9 rounded-full object-cover" src={asset.src} />
+                        <span className="max-w-full truncate">{asset.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white/55 p-4 lg:col-span-2">
@@ -409,18 +453,22 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-slate-200 bg-white/65 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Access</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-950">{account?.planName || "Second Brain"}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Plan</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-950">{planName}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Trial ends {formatAccountDate(account?.trialEndsAt ?? "")}
+                    {proPlan
+                      ? "Pro includes 1,000 daily requests at $10/month."
+                      : `Free includes ${account?.usage?.limit?.toLocaleString() ?? "250"} daily requests.`}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Renews {formatAccountDate(account?.subscriptionRenewsAt ?? "")}
-                  </p>
+                  {account?.subscriptionRenewsAt ? (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Renews {formatAccountDate(account.subscriptionRenewsAt)}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="rounded-md border border-slate-200 bg-white/65 p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    {account?.usage?.label ?? "Usage"}
+                    {account?.usage?.label ?? "Daily requests"}
                   </p>
                   {account?.usage ? (
                     <>
@@ -433,7 +481,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                       <p className="mt-1 text-xs text-slate-500">Resets {formatAccountDate(account.usage.resetAt ?? "")}</p>
                     </>
                   ) : (
-                    <p className="mt-2 text-sm text-slate-500">Usage sync will appear here when the account API is available.</p>
+                    <p className="mt-2 text-sm text-slate-500">Daily request usage appears here when the account API is available.</p>
                   )}
                 </div>
               </div>
@@ -546,7 +594,7 @@ export function SettingsPanel({ open, onClose, onSettingsSaved }: SettingsPanelP
                   onClick={() => void openAccountUrl(account?.checkoutUrl)}
                 >
                   <CreditCard size={15} />
-                  Manage trial
+                  {freePlan ? "Upgrade to Pro" : "Manage plan"}
                 </button>
               </div>
             </section>

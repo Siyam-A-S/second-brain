@@ -62,6 +62,7 @@ import type {
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
+  UserPersona,
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";
@@ -154,6 +155,7 @@ export type {
   UpdateNodeSignalsInput,
   UpdateResearchPaperStatusInput,
   UpdateTrackerInput,
+  UserPersona,
   UserValidationState,
   WriteBrainNodeInput
 } from "./brain";

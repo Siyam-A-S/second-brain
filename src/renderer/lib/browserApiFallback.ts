@@ -160,7 +160,8 @@ let browserAppSettings: AppSettings = {
     paperComponents: true
   },
   appearance: {
-    topBarMirrored: false
+    topBarMirrored: false,
+    persona: "dolphin"
   },
   updatedAt: new Date().toISOString()
 };

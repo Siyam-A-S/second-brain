@@ -1,6 +1,6 @@
 # Website Server Handoff For Second Brain Desktop
 
-This handoff is for the agent working on `www.downloadsecondbrain.com` and the managed desktop backend. The production desktop app now authenticates with Supabase email/password and sends Supabase session bearer tokens to website and proxy APIs.
+This handoff is for the agent working on `www.downloadsecondbrain.com` and the managed desktop backend. The production desktop app authenticates with Supabase email/password and sends Supabase session bearer tokens to website and proxy APIs.
 
 ## Required Public Build Config
 
@@ -31,7 +31,19 @@ Desktop stores Supabase access and refresh tokens in Electron Main using secure 
 Authorization: Bearer <supabase_access_token>
 ```
 
-The server should validate the bearer token against Supabase on every privileged desktop request, derive the user ID from the validated token, then load plan, trial, usage, and entitlement state server-side.
+The server should validate the bearer token against Supabase on every privileged desktop request, derive the user ID from the validated token, then load plan, usage, billing, and entitlement state server-side.
+
+## Freemium And Pro Entitlements
+
+Production access is signed-in freemium, not anonymous free trial.
+
+- Every valid signed-in Supabase user gets Free access by default.
+- Free plan is `Second Brain Free` with a daily request limit from server config, defaulting to `250`.
+- Pro plan is `Second Brain Pro`, costs `$10/month`, and raises the daily request limit to `1000`.
+- Canceled, expired, or missing Pro billing should fall back to Free unless the account is explicitly disabled.
+- Every managed AI proxy call counts as one request, including desktop chat, Graphify enrichment, artifact planning, and OpenAI-compatible Graphify calls.
+
+Stripe remains the billing source of truth for Pro. Supabase remains the access and usage source of truth for website, desktop, and proxy checks.
 
 ## Required Website API
 
@@ -46,7 +58,7 @@ Authorization: Bearer <supabase_access_token>
 Purpose:
 
 - Verify the desktop user session.
-- Return account, plan, trial, subscription, and usage state.
+- Return account, plan, subscription, and daily usage state.
 - Provide enough status for the desktop app to decide whether managed AI access should be active.
 
 Recommended response shape:
@@ -55,15 +67,16 @@ Recommended response shape:
 {
   "email": "user@example.com",
   "userId": "supabase-user-id",
-  "status": "trialing",
-  "planName": "Second Brain Pro",
-  "trialEndsAt": "2026-08-01T00:00:00.000Z",
+  "status": "active",
+  "planName": "Second Brain Free",
+  "trialEndsAt": null,
   "subscriptionRenewsAt": null,
   "usage": {
-    "periodStart": "2026-07-01T00:00:00.000Z",
-    "periodEnd": "2026-08-01T00:00:00.000Z",
-    "requests": 42,
-    "requestLimit": 1000
+    "label": "Daily requests",
+    "used": 42,
+    "limit": 250,
+    "resetAt": "2026-07-14T00:00:00.000Z",
+    "updatedAt": "2026-07-13T12:00:00.000Z"
   }
 }
 ```
@@ -78,6 +91,8 @@ past_due
 canceled
 expired
 ```
+
+The desktop app accepts either the normalized usage shape above or the older server shape `{ "requests": 42, "requestLimit": 250, "periodEnd": "..." }`, but new server work should return `label`, `used`, `limit`, `resetAt`, and `updatedAt`.
 
 The desktop app should never need a service key, Stripe secret, or proxy signing credential.
 
@@ -136,10 +151,11 @@ Authorization: Bearer <supabase_access_token>
 Proxy responsibilities:
 
 - Validate the Supabase token server-side.
-- Resolve the user, plan, subscription/trial state, and usage limits.
+- Resolve the user, plan, subscription state, and daily usage limits.
 - Reject inactive or over-limit accounts with a compact JSON error.
 - Forward approved requests to Vertex/OpenAI-compatible backend.
 - Return chat-compatible JSON to the desktop app.
+- Call Supabase usage metering before forwarding any accepted model request.
 
 Desktop Graphify proxy mode passes:
 
@@ -150,6 +166,51 @@ OPENAI_MODEL=<managed model>
 ```
 
 So the proxy must support OpenAI-compatible `/v1/chat/completions` behavior for Graphify CLI subprocesses, in addition to the app chat endpoint currently used by desktop.
+
+### `consume_proxy_usage` RPC Contract
+
+The proxy calls Supabase RPC `consume_proxy_usage` with:
+
+```json
+{ "p_user_id": "supabase-user-id", "p_increment": 1 }
+```
+
+The RPC should atomically:
+
+- Resolve Free vs Pro entitlement.
+- Create or reuse the current daily usage bucket.
+- Reject when `used >= limit`.
+- Increment the counter for accepted requests.
+- Return compact usage fields only.
+
+Allowed response shape:
+
+```json
+{
+  "allowed": true,
+  "reason": null,
+  "planName": "Second Brain Free",
+  "used": 43,
+  "limit": 250,
+  "resetAt": "2026-07-14T00:00:00.000Z",
+  "updatedAt": "2026-07-13T12:01:00.000Z"
+}
+```
+
+Over limit response:
+
+```json
+{
+  "allowed": false,
+  "reason": "over_limit",
+  "planName": "Second Brain Free",
+  "used": 250,
+  "limit": 250,
+  "resetAt": "2026-07-14T00:00:00.000Z"
+}
+```
+
+Do not store prompts, document text, embeddings, file paths, raw model responses, bearer tokens, Stripe secrets, or service-role keys in usage rows.
 
 ## Release Asset Integration
 

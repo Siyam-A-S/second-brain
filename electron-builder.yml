@@ -16,6 +16,8 @@ extraResources:
     to: runtime
     filter:
       - "**/*"
+  - from: build/icon.png
+    to: app-icon.png
 
 asar: true
 

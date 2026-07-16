@@ -4,10 +4,10 @@ import { safeStorage } from "electron";
 import type {
   AccountAuthState,
   AccountSignInInput,
-  AccountUsageSnapshot,
   AppBuildInfo,
   AccountAccessStatus
 } from "../../shared/brain";
+import { normalizeAccountUsageSnapshot } from "../../shared/accountUsage";
 
 type StoredSession = {
   accessToken: string;
@@ -52,23 +52,6 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
-}
-
-function normalizeUsage(value: unknown): AccountUsageSnapshot | null {
-  const parsed = asRecord(value);
-  const used = Number(parsed.used);
-  const limit = Number(parsed.limit);
-  if (!Number.isFinite(used) || !Number.isFinite(limit)) {
-    return null;
-  }
-
-  return {
-    label: stringValue(parsed.label) || "AI usage",
-    used,
-    limit,
-    resetAt: stringValue(parsed.resetAt) || undefined,
-    updatedAt: stringValue(parsed.updatedAt) || undefined
-  };
 }
 
 export class AccountAuthService {
@@ -163,7 +146,7 @@ export class AccountAuthService {
       planName: stringValue(parsed.planName) || stringValue(parsed.plan_name) || defaultPlanName,
       trialEndsAt: stringValue(parsed.trialEndsAt) || stringValue(parsed.trial_end),
       subscriptionRenewsAt: stringValue(parsed.subscriptionRenewsAt) || stringValue(parsed.subscription_renews_at),
-      usage: normalizeUsage(parsed.usage),
+      usage: normalizeAccountUsageSnapshot(parsed.usage),
       websiteUrl: this.websiteUrl(),
       accountUrl: `${this.websiteUrl()}/login`,
       checkoutUrl: `${this.websiteUrl()}/checkout`,
