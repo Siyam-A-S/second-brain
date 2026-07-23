@@ -47,6 +47,10 @@ class UsageLimitExceeded(Exception):
         self.usage = usage
 
 
+class EmailVerificationRequired(Exception):
+    pass
+
+
 @app.exception_handler(UsageLimitExceeded)
 async def usage_limit_exceeded_handler(_request: Request, exc: UsageLimitExceeded) -> JSONResponse:
     return JSONResponse(
@@ -55,6 +59,20 @@ async def usage_limit_exceeded_handler(_request: Request, exc: UsageLimitExceede
             "error": "over_limit",
             "reason": "over_limit",
             **exc.usage,
+        },
+    )
+
+
+@app.exception_handler(EmailVerificationRequired)
+async def email_verification_required_handler(
+    _request: Request,
+    _exc: EmailVerificationRequired,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=403,
+        content={
+            "error": "email_verification_required",
+            "reason": "email_verification_required",
         },
     )
 
@@ -162,6 +180,11 @@ def verify_supabase_token(access_token: str) -> ProxyUser:
         raise HTTPException(status_code=401, detail="Invalid Supabase session.")
 
     email = payload.get("email")
+    confirmed_at = payload.get("email_confirmed_at") or payload.get("confirmed_at")
+
+    if not isinstance(email, str) or not confirmed_at:
+        raise EmailVerificationRequired()
+
     return ProxyUser(user_id=user_id, email=email if isinstance(email, str) else None)
 
 
